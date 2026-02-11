@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getGraphClient } from "../auth/graph-client.js";
 import type { MsalClient } from "../auth/msal-client.js";
-import { loadConfig } from "../config.js";
+import type { Config } from "../config.js";
 import { resolveUserPath } from "../schemas/common.js";
 import { ListEmailsParams } from "../schemas/mail.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
@@ -11,7 +11,7 @@ import { DEFAULT_SELECT, buildSelectParam, shapeListResponse } from "../utils/re
 
 const logger = createLogger("tools:mail");
 
-export function registerMailTools(server: McpServer, msalClient: MsalClient): void {
+export function registerMailTools(server: McpServer, msalClient: MsalClient, config: Config): void {
   server.tool(
     "list_emails",
     "List emails from a mailbox folder with optional filtering, search and pagination. Returns email metadata (subject, from, date, preview) optimized for LLM context. Use folder parameter for specific folders (inbox, sentitems, drafts). Supports OData $filter for structured queries and KQL search for full-text search.",
@@ -19,7 +19,6 @@ export function registerMailTools(server: McpServer, msalClient: MsalClient): vo
     async (params) => {
       try {
         const parsed = ListEmailsParams.parse(params);
-        const config = loadConfig();
         const client = getGraphClient(msalClient);
 
         const userPath = resolveUserPath(parsed.user_id);
@@ -79,11 +78,13 @@ function formatEmailSummary(email: Record<string, unknown>): string {
 }
 
 function getFromAddress(email: Record<string, unknown>): string {
-  const from = email.from as Record<string, unknown> | undefined;
-  if (!from) return "(unknown)";
-  const addr = from.emailAddress as Record<string, unknown> | undefined;
-  if (!addr) return "(unknown)";
-  const name = addr.name ? String(addr.name) : "";
-  const address = addr.address ? String(addr.address) : "";
-  return name ? `${name} <${address}>` : address;
+  const from = email.from;
+  if (typeof from !== "object" || from === null) return "(unknown)";
+  const fromObj = from as Record<string, unknown>;
+  const addr = fromObj.emailAddress;
+  if (typeof addr !== "object" || addr === null) return "(unknown)";
+  const addrObj = addr as Record<string, unknown>;
+  const name = typeof addrObj.name === "string" ? addrObj.name : "";
+  const address = typeof addrObj.address === "string" ? addrObj.address : "";
+  return name ? `${name} <${address}>` : address || "(unknown)";
 }

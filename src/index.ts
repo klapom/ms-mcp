@@ -12,6 +12,11 @@ const server = new McpServer({
   version: "0.0.1",
 });
 
+/** Tool registration functions — each receives the shared server, auth client, and config. */
+const registrations: Array<(server: McpServer, msalClient: MsalClient, config: Config) => void> = [
+  registerMailTools,
+];
+
 async function main() {
   let config: Config;
   try {
@@ -26,7 +31,9 @@ async function main() {
 
   const msalClient = new MsalClient(config.azure.tenantId, config.azure.clientId);
 
-  registerMailTools(server, msalClient);
+  for (const register of registrations) {
+    register(server, msalClient, config);
+  }
 
   const transport = new StdioServerTransport();
   await server.connect(transport);

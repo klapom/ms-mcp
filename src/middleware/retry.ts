@@ -8,6 +8,7 @@
  */
 
 import type { Context, Middleware } from "@microsoft/microsoft-graph-client";
+import { parseRetryAfterMs } from "../utils/http-helpers.js";
 import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger("graph-retry");
@@ -40,31 +41,6 @@ function computeBackoffDelay(attempt: number, baseDelay: number, maxDelay: numbe
   const exponential = baseDelay * 2 ** attempt;
   const jitter = Math.random() * baseDelay;
   return Math.min(exponential + jitter, maxDelay);
-}
-
-/**
- * Parse the Retry-After header value into milliseconds.
- * Supports both delta-seconds and HTTP-date formats.
- * Returns undefined if the header is missing or unparseable.
- */
-function parseRetryAfterMs(response: Response): number | undefined {
-  const header = response.headers.get("Retry-After");
-  if (!header) {
-    return undefined;
-  }
-
-  const seconds = Number(header);
-  if (!Number.isNaN(seconds)) {
-    return seconds * 1000;
-  }
-
-  // Try HTTP-date format
-  const dateMs = Date.parse(header);
-  if (!Number.isNaN(dateMs)) {
-    return Math.max(0, dateMs - Date.now());
-  }
-
-  return undefined;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -135,9 +111,9 @@ export class RetryMiddleware implements Middleware {
    */
   private getDelayMs(response: Response, attempt: number): number {
     if (this.config.respectRetryAfter && response.status === 429) {
-      const retryAfterMs = parseRetryAfterMs(response);
-      if (retryAfterMs !== undefined) {
-        return Math.min(retryAfterMs, this.config.maxDelay);
+      const header = response.headers.get("Retry-After");
+      if (header) {
+        return Math.min(parseRetryAfterMs(response), this.config.maxDelay);
       }
     }
     return computeBackoffDelay(attempt, this.config.baseDelay, this.config.maxDelay);

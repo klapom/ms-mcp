@@ -19,6 +19,7 @@ import {
   ServiceError,
   ValidationError,
 } from "../utils/errors.js";
+import { parseRetryAfterMs } from "../utils/http-helpers.js";
 
 /** Shape of the Graph API JSON error body. */
 interface GraphErrorBody {
@@ -33,6 +34,18 @@ interface GraphErrorBody {
 }
 
 /**
+ * Type guard: check if an unknown JSON value matches the GraphErrorBody shape.
+ */
+function isGraphErrorBody(json: unknown): json is GraphErrorBody {
+  if (typeof json !== "object" || json === null) return false;
+  const obj = json as Record<string, unknown>;
+  if (!("error" in obj)) return false;
+  const error = obj.error;
+  if (typeof error !== "object" || error === null) return true; // has error field, we'll handle nulls
+  return true;
+}
+
+/**
  * Safely parse the response body as JSON.
  * Returns undefined if the body cannot be parsed.
  */
@@ -41,35 +54,13 @@ async function tryParseErrorBody(response: Response): Promise<GraphErrorBody | u
     // Clone so the body remains available for downstream consumers.
     const cloned = response.clone();
     const json: unknown = await cloned.json();
-    if (typeof json === "object" && json !== null) {
-      return json as GraphErrorBody;
+    if (isGraphErrorBody(json)) {
+      return json;
     }
   } catch {
     // Body is not JSON — ignore.
   }
   return undefined;
-}
-
-/**
- * Parse Retry-After header from a 429 response into milliseconds.
- */
-function parseRetryAfterMs(response: Response): number {
-  const header = response.headers.get("Retry-After");
-  if (!header) {
-    return 1000; // 1s default
-  }
-
-  const seconds = Number(header);
-  if (!Number.isNaN(seconds)) {
-    return seconds * 1000;
-  }
-
-  const dateMs = Date.parse(header);
-  if (!Number.isNaN(dateMs)) {
-    return Math.max(0, dateMs - Date.now());
-  }
-
-  return 1000;
 }
 
 /**

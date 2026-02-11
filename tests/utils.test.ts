@@ -311,12 +311,14 @@ describe("shapeListResponse", () => {
 
   afterEach(() => {
     if (savedTenant === undefined) {
-      process.env.AZURE_TENANT_ID = undefined;
+      // biome-ignore lint/performance/noDelete: process.env requires delete to truly unset (assignment sets string "undefined")
+      delete process.env.AZURE_TENANT_ID;
     } else {
       process.env.AZURE_TENANT_ID = savedTenant;
     }
     if (savedClient === undefined) {
-      process.env.AZURE_CLIENT_ID = undefined;
+      // biome-ignore lint/performance/noDelete: process.env requires delete to truly unset (assignment sets string "undefined")
+      delete process.env.AZURE_CLIENT_ID;
     } else {
       process.env.AZURE_CLIENT_ID = savedClient;
     }

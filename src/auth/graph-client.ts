@@ -27,7 +27,11 @@ class AuthMiddleware implements Middleware {
     const token = await this.msalClient.getAccessToken();
     const bearerValue = `Bearer ${token}`;
 
-    // Set the Authorization header on the request options.
+    // The headers property follows the Fetch API's HeadersInit type which can be:
+    // - Headers object: use .set()
+    // - string[][]: push a tuple
+    // - Record<string, string>: set as property
+    // We handle all three variants to be compatible with the Graph SDK's FetchOptions.
     if (!context.options) {
       context.options = { headers: new Headers({ Authorization: bearerValue }) };
     } else if (!context.options.headers) {
@@ -93,6 +97,10 @@ export function createGraphClient(msalClient: MsalClient): Client {
  * Prevents redundant client creation for the same identity — each unique
  * MsalClient identity gets exactly one Graph client with its own middleware
  * chain.
+ *
+ * NOTE: This cache has no eviction strategy. For the current single-tenant use case
+ * this is fine (typically 1 entry). For multi-tenant scenarios (Phase 5+), consider
+ * adding LRU eviction or TTL-based cleanup to prevent memory leaks.
  */
 const clientCache = new Map<string, Client>();
 

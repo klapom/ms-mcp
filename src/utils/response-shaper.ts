@@ -1,4 +1,3 @@
-import { loadConfig } from "../config.js";
 import { createLogger } from "../utils/logger.js";
 
 const log = createLogger("response-shaper");
@@ -41,6 +40,9 @@ export function truncateBody(body: string, maxLength: number, suffix = "... [tru
   }
   return body.slice(0, truncatedLength) + suffix;
 }
+
+// The cast to Record<string, unknown> is intentional — these helpers operate
+// on arbitrary nested objects where the shape is not statically known.
 
 /**
  * Retrieves a nested property value from an object using a dot-separated path.
@@ -90,9 +92,8 @@ export function shapeListResponse<T extends Record<string, unknown>>(
   options: ShapeOptions,
   bodyFields?: string[],
 ): { items: T[]; paginationHint: string } {
-  const config = loadConfig();
-  const maxItems = options.maxItems ?? config.limits.maxItems;
-  const maxBodyLength = options.maxBodyLength ?? config.limits.maxBodyLength;
+  const maxItems = options.maxItems ?? 25;
+  const maxBodyLength = options.maxBodyLength ?? 500;
 
   const limited = items.slice(0, maxItems);
 
