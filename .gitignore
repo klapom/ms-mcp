@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage/
+
+# Logs
+*.log
+logs/
+
+# MSAL token cache
+.msal-cache/
+msal-cache.json
+
+# TypeDoc
+docs/api/
+
+# Husky
+.husky/_/

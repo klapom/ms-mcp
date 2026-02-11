@@ -1,0 +1,20 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users('me')/messages",
+  "@odata.count": 2,
+  "value": [
+    {
+      "id": "msg-001",
+      "subject": "Test Email 1",
+      "from": {
+        "emailAddress": {
+          "name": "Max Mustermann",
+          "address": "max@example.com"
+        }
+      },
+      "receivedDateTime": "2026-02-11T10:00:00Z",
+      "bodyPreview": "This is a test email preview.",
+      "isRead": false,
+      "importance": "normal"
+    }
+  ]
+}

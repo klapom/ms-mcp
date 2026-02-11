@@ -1,0 +1,39 @@
+name: E2E Tests
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # Nightly 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    environment: e2e
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: E2E Tests
+        run: pnpm run test:e2e
+        env:
+          M365_TENANT_ID: ${{ secrets.M365_TENANT_ID }}
+          M365_CLIENT_ID: ${{ secrets.M365_CLIENT_ID }}
+          M365_CLIENT_SECRET: ${{ secrets.M365_CLIENT_SECRET }}
+
+      - name: Upload Fixtures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-fixtures
+          path: tests/mocks/fixtures/
+          retention-days: 30

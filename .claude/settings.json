@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm run *)",
+      "Bash(pnpm *)",
+      "Bash(npx vitest *)",
+      "Bash(npx biome *)",
+      "Bash(npx tsup *)",
+      "Bash(npx tsx *)",
+      "Bash(node *)",
+      "Bash(git *)"
+    ],
+    "deny": []
+  }
+}

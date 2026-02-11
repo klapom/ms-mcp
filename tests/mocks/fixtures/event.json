@@ -1,0 +1,22 @@
+{
+  "id": "evt-001",
+  "subject": "Team Meeting",
+  "start": {
+    "dateTime": "2026-02-12T14:00:00",
+    "timeZone": "Europe/Berlin"
+  },
+  "end": {
+    "dateTime": "2026-02-12T15:00:00",
+    "timeZone": "Europe/Berlin"
+  },
+  "location": {
+    "displayName": "Meeting Room A"
+  },
+  "organizer": {
+    "emailAddress": {
+      "name": "Max Mustermann",
+      "address": "max@example.com"
+    }
+  },
+  "isAllDay": false
+}
