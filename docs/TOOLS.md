@@ -4,16 +4,8 @@
 
 ## Implementierte Tools
 
-_Noch keine Tools implementiert. Wird ab Phase 2 befüllt._
+| Tool | Beschreibung | Modul | Klassifizierung |
+|---|---|---|---|
+| `list_emails` | List emails from a mailbox folder with optional filtering, search and pagination. Returns email metadata (subject, from, date, preview) optimized for LLM context. Use folder parameter for specific folders (inbox, sentitems, drafts). Supports OData $filter for structured queries and KQL search for full-text search. | mail | 🟢 safe |
 
-## Tool-Format
-
-Jedes Tool hat:
-- **Name:** snake_case Bezeichner
-- **Description:** Für LLM-Auswahl optimierte Beschreibung
-- **Input Schema:** JSON Schema (generiert aus Zod)
-- **Klassifizierung:** safe | moderate | destructive
-
-## Geplante Tools
-
-Siehe Project_Description.md Abschnitte 2.3 und 8 für die vollständige Liste.
+_1 Tools registriert._

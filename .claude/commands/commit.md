@@ -63,3 +63,64 @@ Am Ende: Zeige eine Zusammenfassung mit:
 - Welche Docs aktualisiert wurden
 - Die Commit-Message
 - Den Push-Status
+
+### 5. Code Review (3 Perspektiven)
+
+Nach der Push-Zusammenfassung: Analysiere die committen Änderungen (`git diff HEAD~1`) aus drei Perspektiven und gib die Ergebnisse aus.
+
+#### Senior Software Developer
+
+Prüfe die Änderungen auf:
+- Code-Qualität: Naming, Lesbarkeit, DRY-Prinzip
+- Fehlerbehandlung: Werden Fehler korrekt gefangen und propagiert?
+- Type Safety: Gibt es `any`, unsafe casts, fehlende Typen?
+- Security: Injection-Risiken, PII-Leaks, unsichere Defaults?
+- Dependencies: Werden neue Deps sinnvoll eingesetzt?
+
+Gib Findings als Liste aus mit Severity (CRITICAL / IMPORTANT / NICE-TO-HAVE) und betroffener Datei:Zeile.
+
+#### Senior Tester
+
+Prüfe die Änderungen auf:
+- Test-Abdeckung: Wurden neue Funktionen/Pfade getestet?
+- Fehlende Tests: Edge Cases, Fehlerszenarien, Boundary Values
+- Test-Qualität: Sind bestehende Tests aussagekräftig? Testen sie Verhalten oder Implementation?
+- Mocking: Werden Mocks korrekt eingesetzt? Fehlen MSW-Handler?
+- Coverage: Gibt es Hinweise auf Coverage-Lücken?
+
+Gib Findings als Liste aus mit Severity und konkreten Vorschlägen für fehlende Tests.
+
+#### Senior Architect
+
+Prüfe die Änderungen auf:
+- Architektur-Konformität: Passen die Änderungen zur bestehenden Schichtung (schemas → tools → middleware → utils)?
+- Patterns: Werden etablierte Patterns korrekt eingesetzt (Zod SSOT, Cross-Cutting Concerns)?
+- Coupling: Entstehen unerwünschte Abhängigkeiten oder zirkuläre Imports?
+- Skalierbarkeit: Skaliert der Ansatz wenn weitere Tools/Module hinzukommen?
+- API-Design: Sind Schnittstellen konsistent und erweiterbar?
+
+Gib Findings als Liste aus mit Severity und Architektur-Empfehlungen.
+
+#### Format
+
+Gib die Reviews in diesem Format aus:
+
+```
+## Code Review
+
+### Senior Developer
+- [CRITICAL] datei.ts:42 — Beschreibung des Problems
+- [IMPORTANT] datei.ts:10 — Beschreibung
+- [NICE-TO-HAVE] datei.ts:5 — Beschreibung
+
+### Senior Tester
+- [CRITICAL] Fehlender Test für ...
+- [IMPORTANT] Edge Case nicht abgedeckt: ...
+
+### Senior Architect
+- [IMPORTANT] Coupling zwischen X und Y ...
+- [NICE-TO-HAVE] Pattern Z wäre hier besser ...
+```
+
+Falls keine Findings in einer Kategorie: "Keine Findings." ausgeben.
+Der User entscheidet selbst, welche Findings er umsetzen möchte.

@@ -6,8 +6,8 @@
 
 | Scope | Begründung | Tools |
 |---|---|---|
-| Mail.ReadWrite | E-Mails lesen, verschieben, löschen | — |
-| Mail.Send | E-Mails senden, antworten, weiterleiten | — |
+| Mail.ReadWrite | E-Mails lesen, verschieben, löschen | `list_emails` |
+| Mail.Send | E-Mails senden, antworten, weiterleiten | `list_emails` |
 | Calendars.ReadWrite | Kalender lesen und Termine erstellen/ändern | — |
 | Files.ReadWrite | OneDrive Dateien lesen und schreiben | — |
 | Contacts.ReadWrite | Kontakte verwalten | — |
