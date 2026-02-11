@@ -396,17 +396,17 @@ describe("ErrorMappingMiddleware", () => {
   });
 
   it("should throw ValidationError for 400", async () => {
-    const middleware = new ErrorMappingMiddleware();
     const body = { error: { code: "BadRequest", message: "Invalid filter" } };
-    const response = createMockResponse(400, body);
-    const next = createNextMiddleware(response);
-    middleware.setNext(next);
 
-    const context = createMockContext();
-    await expect(middleware.execute(context)).rejects.toThrow(ValidationError);
+    const middleware1 = new ErrorMappingMiddleware();
+    middleware1.setNext(createNextMiddleware(createMockResponse(400, body)));
+    await expect(middleware1.execute(createMockContext())).rejects.toThrow(ValidationError);
 
+    const middleware2 = new ErrorMappingMiddleware();
+    middleware2.setNext(createNextMiddleware(createMockResponse(400, body)));
     try {
-      await middleware.execute(createMockContext());
+      await middleware2.execute(createMockContext());
+      expect.unreachable("Should have thrown");
     } catch (e) {
       expect(e).toBeInstanceOf(ValidationError);
       expect((e as ValidationError).httpStatus).toBe(400);
@@ -588,6 +588,27 @@ describe("ErrorMappingMiddleware", () => {
 
     const context = createMockContext();
     await expect(middleware.execute(context)).rejects.toThrow(NetworkError);
+  });
+
+  it("should wrap MSAL network failures thrown by auth middleware as NetworkError", async () => {
+    const middleware = new ErrorMappingMiddleware();
+    const msalNetworkErr = new Error("connect ECONNREFUSED 168.63.129.16:443");
+    Object.assign(msalNetworkErr, { code: "ECONNREFUSED", syscall: "connect" });
+
+    const next = createNextMiddlewareWithFn(async () => {
+      throw msalNetworkErr;
+    });
+    middleware.setNext(next);
+
+    const context = createMockContext();
+    try {
+      await middleware.execute(context);
+      expect.unreachable("Should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(NetworkError);
+      expect((e as NetworkError).message).toContain("ECONNREFUSED");
+      expect((e as NetworkError).syscall).toBe("connect");
+    }
   });
 
   it("should rethrow non-network errors as-is", async () => {

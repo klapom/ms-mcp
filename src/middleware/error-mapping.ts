@@ -41,7 +41,7 @@ function isGraphErrorBody(json: unknown): json is GraphErrorBody {
   const obj = json as Record<string, unknown>;
   if (!("error" in obj)) return false;
   const error = obj.error;
-  if (typeof error !== "object" || error === null) return true; // has error field, we'll handle nulls
+  if (typeof error !== "object" || error === null) return false;
   return true;
 }
 
@@ -155,7 +155,9 @@ async function mapResponseToError(
     case 409:
       throw new ConflictError(errorMessage);
     case 429:
-      throw new RateLimitError(context.response ? parseRetryAfterMs(context.response) : 1000);
+      throw new RateLimitError(
+        context.response ? (parseRetryAfterMs(context.response) ?? 1000) : 1000,
+      );
     default:
       if (status >= 500 && status <= 599) {
         throw new ServiceError(errorMessage, status);

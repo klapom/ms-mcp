@@ -3,8 +3,8 @@ import { createLogger } from "../utils/logger.js";
 const log = createLogger("response-shaper");
 
 export interface ShapeOptions {
-  maxItems?: number;
-  maxBodyLength?: number;
+  maxItems: number;
+  maxBodyLength: number;
   fields?: string[];
   summaryMode?: boolean;
 }
@@ -92,8 +92,8 @@ export function shapeListResponse<T extends Record<string, unknown>>(
   options: ShapeOptions,
   bodyFields?: string[],
 ): { items: T[]; paginationHint: string } {
-  const maxItems = options.maxItems ?? 25;
-  const maxBodyLength = options.maxBodyLength ?? 500;
+  const maxItems = options.maxItems;
+  const maxBodyLength = options.maxBodyLength;
 
   const limited = items.slice(0, maxItems);
 

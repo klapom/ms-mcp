@@ -1,11 +1,11 @@
 /**
  * Parse the Retry-After header value into milliseconds.
  * Supports both delta-seconds and HTTP-date formats.
- * Returns the provided defaultMs if the header is missing or unparseable.
+ * Returns undefined if the header is missing or unparseable.
  */
-export function parseRetryAfterMs(response: Response, defaultMs = 1000): number {
+export function parseRetryAfterMs(response: Response): number | undefined {
   const header = response.headers.get("Retry-After");
-  if (!header) return defaultMs;
+  if (!header) return undefined;
 
   const seconds = Number(header);
   if (!Number.isNaN(seconds)) return seconds * 1000;
@@ -13,5 +13,5 @@ export function parseRetryAfterMs(response: Response, defaultMs = 1000): number 
   const dateMs = Date.parse(header);
   if (!Number.isNaN(dateMs)) return Math.max(0, dateMs - Date.now());
 
-  return defaultMs;
+  return undefined;
 }

@@ -77,19 +77,31 @@ describe("MsalClient", () => {
       });
     });
 
-    it("should use default scopes when none provided", () => {
+    it("should use default scopes when none provided", async () => {
       const client = new MsalClient(TENANT_ID, CLIENT_ID);
 
-      // Verify default scopes are used by triggering device code flow
-      // and checking the scopes passed to acquireTokenByDeviceCode
-      expect(client).toBeDefined();
+      mockPca.acquireTokenByDeviceCode.mockResolvedValueOnce(mockAuthResult);
+      await client.getAccessToken();
+
+      expect(mockPca.acquireTokenByDeviceCode).toHaveBeenCalledWith(
+        expect.objectContaining({
+          scopes: expect.arrayContaining(["User.Read"]),
+        }),
+      );
     });
 
-    it("should use custom scopes when provided", () => {
+    it("should use custom scopes when provided", async () => {
       const customScopes = ["Mail.Read", "Calendars.Read"];
       const client = new MsalClient(TENANT_ID, CLIENT_ID, customScopes);
 
-      expect(client).toBeDefined();
+      mockPca.acquireTokenByDeviceCode.mockResolvedValueOnce(mockAuthResult);
+      await client.getAccessToken();
+
+      expect(mockPca.acquireTokenByDeviceCode).toHaveBeenCalledWith(
+        expect.objectContaining({
+          scopes: customScopes,
+        }),
+      );
     });
   });
 

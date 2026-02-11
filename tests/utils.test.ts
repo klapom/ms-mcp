@@ -325,32 +325,40 @@ describe("shapeListResponse", () => {
   });
 
   it("should limit items to maxItems", () => {
-    const { items } = shapeListResponse(sampleItems, 3, { maxItems: 2 });
+    const { items } = shapeListResponse(sampleItems, 3, { maxItems: 2, maxBodyLength: 500 });
     expect(items).toHaveLength(2);
   });
 
   it("should truncate body fields", () => {
-    const { items } = shapeListResponse(sampleItems, 3, { maxBodyLength: 10 }, ["bodyPreview"]);
+    const { items } = shapeListResponse(sampleItems, 3, { maxItems: 100, maxBodyLength: 10 }, [
+      "bodyPreview",
+    ]);
     for (const item of items) {
       expect(String(item.bodyPreview).length).toBeLessThanOrEqual(10);
     }
   });
 
   it("should include pagination hint with more results", () => {
-    const { paginationHint } = shapeListResponse(sampleItems, 10, { maxItems: 3 });
+    const { paginationHint } = shapeListResponse(sampleItems, 10, {
+      maxItems: 3,
+      maxBodyLength: 500,
+    });
     expect(paginationHint).toContain("3 von 10");
     expect(paginationHint).toContain("skip");
   });
 
   it("should show all results hint when no more pages", () => {
-    const { paginationHint } = shapeListResponse(sampleItems, 3, { maxItems: 10 });
+    const { paginationHint } = shapeListResponse(sampleItems, 3, {
+      maxItems: 10,
+      maxBodyLength: 500,
+    });
     expect(paginationHint).toContain("3 von 3");
     expect(paginationHint).not.toContain("skip");
   });
 
   it("should not mutate original items", () => {
     const original = [{ id: "1", bodyPreview: "a".repeat(100) }];
-    shapeListResponse(original, 1, { maxBodyLength: 10 }, ["bodyPreview"]);
+    shapeListResponse(original, 1, { maxItems: 100, maxBodyLength: 10 }, ["bodyPreview"]);
     expect(original[0].bodyPreview.length).toBe(100);
   });
 });

@@ -111,9 +111,9 @@ export class RetryMiddleware implements Middleware {
    */
   private getDelayMs(response: Response, attempt: number): number {
     if (this.config.respectRetryAfter && response.status === 429) {
-      const header = response.headers.get("Retry-After");
-      if (header) {
-        return Math.min(parseRetryAfterMs(response), this.config.maxDelay);
+      const retryAfterMs = parseRetryAfterMs(response);
+      if (retryAfterMs !== undefined) {
+        return Math.min(retryAfterMs, this.config.maxDelay);
       }
     }
     return computeBackoffDelay(attempt, this.config.baseDelay, this.config.maxDelay);

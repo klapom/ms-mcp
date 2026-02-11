@@ -5,26 +5,32 @@ import { ErrorMappingMiddleware } from "../middleware/error-mapping.js";
 import { LoggingMiddleware } from "../middleware/logging.js";
 import { RetryMiddleware } from "../middleware/retry.js";
 import { createLogger } from "../utils/logger.js";
-import type { MsalClient } from "./msal-client.js";
 
 const logger = createLogger("graph-client");
+
+/** Minimal interface for Graph client authentication dependencies. */
+export interface GraphClientDeps {
+  readonly tenantId: string;
+  readonly clientId: string;
+  getAccessToken(): Promise<string>;
+}
 
 /**
  * Middleware that attaches an OAuth Bearer token to outgoing requests.
  *
- * Acquires the token from the provided MsalClient on every request so that
+ * Acquires the token from the provided GraphClientDeps on every request so that
  * expired tokens are transparently refreshed via MSAL's silent flow.
  */
 class AuthMiddleware implements Middleware {
   private nextMiddleware?: Middleware;
-  private readonly msalClient: MsalClient;
+  private readonly deps: GraphClientDeps;
 
-  constructor(msalClient: MsalClient) {
-    this.msalClient = msalClient;
+  constructor(deps: GraphClientDeps) {
+    this.deps = deps;
   }
 
   async execute(context: Context): Promise<void> {
-    const token = await this.msalClient.getAccessToken();
+    const token = await this.deps.getAccessToken();
     const bearerValue = `Bearer ${token}`;
 
     // The headers property follows the Fetch API's HeadersInit type which can be:
@@ -65,11 +71,11 @@ class AuthMiddleware implements Middleware {
  * - AuthMiddleware attaches the Bearer token.
  * - HTTPMessageHandler performs the actual network fetch.
  */
-function buildMiddlewareChain(msalClient: MsalClient): Middleware {
+function buildMiddlewareChain(deps: GraphClientDeps): Middleware {
   const loggingMiddleware = new LoggingMiddleware();
   const retryMiddleware = new RetryMiddleware();
   const errorMappingMiddleware = new ErrorMappingMiddleware();
-  const authMiddleware = new AuthMiddleware(msalClient);
+  const authMiddleware = new AuthMiddleware(deps);
   const httpMessageHandler = new HTTPMessageHandler();
 
   loggingMiddleware.setNext(retryMiddleware);
@@ -85,9 +91,9 @@ function buildMiddlewareChain(msalClient: MsalClient): Middleware {
  *
  * Middleware order: Logging -> Retry -> ErrorMapping -> Auth -> HTTPMessageHandler
  */
-export function createGraphClient(msalClient: MsalClient): Client {
+export function createGraphClient(deps: GraphClientDeps): Client {
   logger.debug("Creating Graph client with middleware chain");
-  const middleware = buildMiddlewareChain(msalClient);
+  const middleware = buildMiddlewareChain(deps);
   return Client.initWithMiddleware({ middleware, defaultVersion: "v1.0" });
 }
 
@@ -111,15 +117,22 @@ const clientCache = new Map<string, Client>();
  * The cache key is derived from the MsalClient's tenantId and clientId,
  * so identical credentials always share a single client instance.
  */
-export function getGraphClient(msalClient: MsalClient): Client {
-  const key = `${msalClient.tenantId}:${msalClient.clientId}`;
+export function getGraphClient(deps: GraphClientDeps): Client {
+  const key = `${deps.tenantId}:${deps.clientId}`;
   let client = clientCache.get(key);
   if (!client) {
-    client = createGraphClient(msalClient);
+    client = createGraphClient(deps);
     clientCache.set(key, client);
-    logger.debug({ tenantId: msalClient.tenantId }, "Graph client cached");
+    logger.debug({ tenantId: deps.tenantId }, "Graph client cached");
   }
   return client;
+}
+
+/**
+ * Clears the client cache. Intended for testing only.
+ */
+export function clearClientCache(): void {
+  clientCache.clear();
 }
 
 /**

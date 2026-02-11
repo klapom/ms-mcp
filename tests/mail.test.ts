@@ -1,6 +1,7 @@
 import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
 import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it } from "vitest";
+import { ErrorMappingMiddleware } from "../src/middleware/error-mapping.js";
 import { resolveUserPath } from "../src/schemas/common.js";
 import { ListEmailsParams } from "../src/schemas/mail.js";
 import { fetchPage } from "../src/utils/pagination.js";
@@ -104,6 +105,21 @@ function createTestGraphClient(): Client {
   });
 }
 
+/**
+ * Creates a Graph client with ErrorMappingMiddleware in the chain.
+ * This mirrors the production middleware pipeline (minus auth/retry/logging)
+ * so we can assert on typed errors.
+ */
+function createTestGraphClientWithErrorMapping(): Client {
+  const errorMapping = new ErrorMappingMiddleware();
+  const httpHandler = new HTTPMessageHandler();
+  errorMapping.setNext(httpHandler);
+  return Client.initWithMiddleware({
+    middleware: errorMapping,
+    defaultVersion: "v1.0",
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Graph API integration tests (MSW-backed)
 // ---------------------------------------------------------------------------
@@ -171,24 +187,51 @@ describe("list_emails Graph API integration", () => {
   });
 
   describe("error responses", () => {
-    it("should receive 404 for non-existent folder", async () => {
-      await expect(
-        fetchPage<Record<string, unknown>>(client, "/me/mailFolders/nonexistent/messages"),
-      ).rejects.toThrow();
+    // The Graph SDK's Client wraps middleware errors in GraphError.
+    // Our ErrorMappingMiddleware throws typed errors (NotFoundError, etc.)
+    // which are preserved in GraphError.code and GraphError.message.
+    let errorClient: Client;
+
+    beforeEach(() => {
+      errorClient = createTestGraphClientWithErrorMapping();
     });
 
-    it("should receive 429 for rate-limited folder", async () => {
-      await expect(
-        fetchPage<Record<string, unknown>>(client, "/me/mailFolders/rate-limited/messages"),
-      ).rejects.toThrow();
+    it("should map 404 to NotFoundError via ErrorMappingMiddleware", async () => {
+      try {
+        await fetchPage<Record<string, unknown>>(
+          errorClient,
+          "/me/mailFolders/nonexistent/messages",
+        );
+        expect.unreachable("Should have thrown");
+      } catch (e) {
+        expect(e).toHaveProperty("code", "NotFoundError");
+        expect(e).toHaveProperty("message", expect.stringContaining("not found"));
+      }
     });
 
-    it("should receive 401 when trigger_401 filter is used", async () => {
-      await expect(
-        fetchPage<Record<string, unknown>>(client, "/me/mailFolders/inbox/messages", {
+    it("should map 429 to RateLimitError via ErrorMappingMiddleware", async () => {
+      try {
+        await fetchPage<Record<string, unknown>>(
+          errorClient,
+          "/me/mailFolders/rate-limited/messages",
+        );
+        expect.unreachable("Should have thrown");
+      } catch (e) {
+        expect(e).toHaveProperty("code", "RateLimitError");
+        expect(e).toHaveProperty("message", expect.stringContaining("Rate limit"));
+      }
+    });
+
+    it("should map 401 to AuthError via ErrorMappingMiddleware", async () => {
+      try {
+        await fetchPage<Record<string, unknown>>(errorClient, "/me/mailFolders/inbox/messages", {
           filter: "trigger_401",
-        }),
-      ).rejects.toThrow();
+        });
+        expect.unreachable("Should have thrown");
+      } catch (e) {
+        expect(e).toHaveProperty("code", "AuthError");
+        expect(e).toHaveProperty("message", expect.stringContaining("expired"));
+      }
     });
   });
 
@@ -215,7 +258,7 @@ describe("list_emails Graph API integration", () => {
       const { items, paginationHint } = shapeListResponse(
         page.items,
         page.totalCount,
-        { maxItems: 25 },
+        { maxItems: 25, maxBodyLength: 500 },
         ["bodyPreview"],
       );
 

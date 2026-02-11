@@ -32,18 +32,18 @@ vi.mock("../src/utils/logger.js", () => ({
   }),
 }));
 
-const { createGraphClient, getGraphClient, generateRequestId } = await import(
+const { createGraphClient, getGraphClient, generateRequestId, clearClientCache } = await import(
   "../src/auth/graph-client.js"
 );
 const { Client } = await import("@microsoft/microsoft-graph-client");
 
-interface MockMsalClient {
-  tenantId: string;
-  clientId: string;
+interface MockGraphClientDeps {
+  readonly tenantId: string;
+  readonly clientId: string;
   getAccessToken: ReturnType<typeof vi.fn>;
 }
 
-function createMockMsalClient(tenantId = "tenant1", clientId = "client1"): MockMsalClient {
+function createMockMsalClient(tenantId = "tenant1", clientId = "client1"): MockGraphClientDeps {
   return {
     tenantId,
     clientId,
@@ -53,15 +53,14 @@ function createMockMsalClient(tenantId = "tenant1", clientId = "client1"): MockM
 
 describe("graph-client", () => {
   beforeEach(() => {
-    // Clear the internal clientCache between tests by creating fresh clients
-    // with unique identities
+    clearClientCache();
     vi.clearAllMocks();
   });
 
   describe("createGraphClient", () => {
     it("should return a Client instance", () => {
       const msalClient = createMockMsalClient("create-tenant", "create-client");
-      const client = createGraphClient(msalClient as never);
+      const client = createGraphClient(msalClient);
 
       expect(client).toBeInstanceOf(Client);
     });
@@ -71,8 +70,8 @@ describe("graph-client", () => {
     it("should return the same client for the same tenantId:clientId", () => {
       const msalClient = createMockMsalClient("same-tenant", "same-client");
 
-      const client1 = getGraphClient(msalClient as never);
-      const client2 = getGraphClient(msalClient as never);
+      const client1 = getGraphClient(msalClient);
+      const client2 = getGraphClient(msalClient);
 
       expect(client1).toBe(client2);
     });
@@ -81,8 +80,8 @@ describe("graph-client", () => {
       const msalClient1 = createMockMsalClient("tenant-a", "client-a");
       const msalClient2 = createMockMsalClient("tenant-b", "client-b");
 
-      const client1 = getGraphClient(msalClient1 as never);
-      const client2 = getGraphClient(msalClient2 as never);
+      const client1 = getGraphClient(msalClient1);
+      const client2 = getGraphClient(msalClient2);
 
       expect(client1).not.toBe(client2);
     });
@@ -91,15 +90,15 @@ describe("graph-client", () => {
       const msalClient1 = createMockMsalClient("shared-tenant", "client-x");
       const msalClient2 = createMockMsalClient("shared-tenant", "client-y");
 
-      const client1 = getGraphClient(msalClient1 as never);
-      const client2 = getGraphClient(msalClient2 as never);
+      const client1 = getGraphClient(msalClient1);
+      const client2 = getGraphClient(msalClient2);
 
       expect(client1).not.toBe(client2);
     });
 
     it("should return a Client instance", () => {
       const msalClient = createMockMsalClient("instance-tenant", "instance-client");
-      const client = getGraphClient(msalClient as never);
+      const client = getGraphClient(msalClient);
 
       expect(client).toBeInstanceOf(Client);
     });

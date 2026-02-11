@@ -41,4 +41,6 @@ export function loadConfig(): Config {
   });
 }
 
-export { type Config, ConfigSchema, type ToolPreset };
+type LimitsConfig = Config["limits"];
+
+export { type Config, ConfigSchema, type LimitsConfig, type ToolPreset };

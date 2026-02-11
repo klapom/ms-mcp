@@ -1,5 +1,7 @@
+import type { Client } from "@microsoft/microsoft-graph-client";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { getGraphClient } from "./auth/graph-client.js";
 import { MsalClient } from "./auth/msal-client.js";
 import { type Config, loadConfig } from "./config.js";
 import { registerMailTools } from "./tools/mail.js";
@@ -12,8 +14,8 @@ const server = new McpServer({
   version: "0.0.1",
 });
 
-/** Tool registration functions — each receives the shared server, auth client, and config. */
-const registrations: Array<(server: McpServer, msalClient: MsalClient, config: Config) => void> = [
+/** Tool registration functions — each receives the shared server, graph client, and config. */
+const registrations: Array<(server: McpServer, graphClient: Client, config: Config) => void> = [
   registerMailTools,
 ];
 
@@ -30,9 +32,10 @@ async function main() {
   }
 
   const msalClient = new MsalClient(config.azure.tenantId, config.azure.clientId);
+  const graphClient = getGraphClient(msalClient);
 
   for (const register of registrations) {
-    register(server, msalClient, config);
+    register(server, graphClient, config);
   }
 
   const transport = new StdioServerTransport();

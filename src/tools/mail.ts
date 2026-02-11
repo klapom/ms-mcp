@@ -1,6 +1,5 @@
+import type { Client } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { getGraphClient } from "../auth/graph-client.js";
-import type { MsalClient } from "../auth/msal-client.js";
 import type { Config } from "../config.js";
 import { resolveUserPath } from "../schemas/common.js";
 import { ListEmailsParams } from "../schemas/mail.js";
@@ -8,10 +7,11 @@ import { McpToolError, formatErrorForUser } from "../utils/errors.js";
 import { createLogger } from "../utils/logger.js";
 import { fetchPage } from "../utils/pagination.js";
 import { DEFAULT_SELECT, buildSelectParam, shapeListResponse } from "../utils/response-shaper.js";
+import { isRecordObject } from "../utils/type-guards.js";
 
 const logger = createLogger("tools:mail");
 
-export function registerMailTools(server: McpServer, msalClient: MsalClient, config: Config): void {
+export function registerMailTools(server: McpServer, graphClient: Client, config: Config): void {
   server.tool(
     "list_emails",
     "List emails from a mailbox folder with optional filtering, search and pagination. Returns email metadata (subject, from, date, preview) optimized for LLM context. Use folder parameter for specific folders (inbox, sentitems, drafts). Supports OData $filter for structured queries and KQL search for full-text search.",
@@ -19,13 +19,12 @@ export function registerMailTools(server: McpServer, msalClient: MsalClient, con
     async (params) => {
       try {
         const parsed = ListEmailsParams.parse(params);
-        const client = getGraphClient(msalClient);
 
         const userPath = resolveUserPath(parsed.user_id);
         const folder = parsed.folder ?? "inbox";
         const url = `${userPath}/mailFolders/${folder}/messages`;
 
-        const page = await fetchPage<Record<string, unknown>>(client, url, {
+        const page = await fetchPage<Record<string, unknown>>(graphClient, url, {
           top: parsed.top ?? config.limits.maxItems,
           skip: parsed.skip,
           select: buildSelectParam(DEFAULT_SELECT.mail),
@@ -36,7 +35,10 @@ export function registerMailTools(server: McpServer, msalClient: MsalClient, con
         const { items, paginationHint } = shapeListResponse(
           page.items,
           page.totalCount,
-          { maxItems: parsed.top ?? config.limits.maxItems },
+          {
+            maxItems: parsed.top ?? config.limits.maxItems,
+            maxBodyLength: config.limits.maxBodyLength,
+          },
           ["bodyPreview"],
         );
 
@@ -78,13 +80,10 @@ function formatEmailSummary(email: Record<string, unknown>): string {
 }
 
 function getFromAddress(email: Record<string, unknown>): string {
-  const from = email.from;
-  if (typeof from !== "object" || from === null) return "(unknown)";
-  const fromObj = from as Record<string, unknown>;
-  const addr = fromObj.emailAddress;
-  if (typeof addr !== "object" || addr === null) return "(unknown)";
-  const addrObj = addr as Record<string, unknown>;
-  const name = typeof addrObj.name === "string" ? addrObj.name : "";
-  const address = typeof addrObj.address === "string" ? addrObj.address : "";
+  if (!isRecordObject(email.from)) return "(unknown)";
+  if (!isRecordObject(email.from.emailAddress)) return "(unknown)";
+  const name = typeof email.from.emailAddress.name === "string" ? email.from.emailAddress.name : "";
+  const address =
+    typeof email.from.emailAddress.address === "string" ? email.from.emailAddress.address : "";
   return name ? `${name} <${address}>` : address || "(unknown)";
 }
