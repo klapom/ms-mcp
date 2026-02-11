@@ -590,13 +590,13 @@ describe("ErrorMappingMiddleware", () => {
     await expect(middleware.execute(context)).rejects.toThrow(NetworkError);
   });
 
-  it("should wrap MSAL network failures thrown by auth middleware as NetworkError", async () => {
+  it("should wrap DNS resolution failures as NetworkError", async () => {
     const middleware = new ErrorMappingMiddleware();
-    const msalNetworkErr = new Error("connect ECONNREFUSED 168.63.129.16:443");
-    Object.assign(msalNetworkErr, { code: "ECONNREFUSED", syscall: "connect" });
+    const dnsErr = new Error("getaddrinfo ENOTFOUND login.microsoftonline.com");
+    Object.assign(dnsErr, { code: "ENOTFOUND", syscall: "getaddrinfo" });
 
     const next = createNextMiddlewareWithFn(async () => {
-      throw msalNetworkErr;
+      throw dnsErr;
     });
     middleware.setNext(next);
 
@@ -606,8 +606,8 @@ describe("ErrorMappingMiddleware", () => {
       expect.unreachable("Should have thrown");
     } catch (e) {
       expect(e).toBeInstanceOf(NetworkError);
-      expect((e as NetworkError).message).toContain("ECONNREFUSED");
-      expect((e as NetworkError).syscall).toBe("connect");
+      expect((e as NetworkError).message).toContain("ENOTFOUND");
+      expect((e as NetworkError).syscall).toBe("getaddrinfo");
     }
   });
 

@@ -14,10 +14,36 @@ export interface ShapeOptions {
  */
 export const DEFAULT_SELECT: Record<string, string[]> = {
   mail: ["id", "subject", "from", "receivedDateTime", "bodyPreview", "isRead", "importance"],
+  mailDetail: [
+    "id",
+    "subject",
+    "from",
+    "toRecipients",
+    "ccRecipients",
+    "bccRecipients",
+    "body",
+    "receivedDateTime",
+    "sentDateTime",
+    "hasAttachments",
+    "importance",
+    "isRead",
+    "conversationId",
+    "internetMessageId",
+    "replyTo",
+    "parentFolderId",
+  ],
   event: ["id", "subject", "start", "end", "location", "organizer", "isAllDay"],
   file: ["id", "name", "size", "lastModifiedDateTime", "webUrl", "file", "folder"],
   contact: ["id", "displayName", "emailAddresses", "businessPhones", "companyName"],
   task: ["id", "title", "status", "dueDateTime", "importance"],
+  mailFolder: [
+    "id",
+    "displayName",
+    "parentFolderId",
+    "childFolderCount",
+    "totalItemCount",
+    "unreadItemCount",
+  ],
 };
 
 /**

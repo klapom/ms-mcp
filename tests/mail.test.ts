@@ -1,4 +1,4 @@
-import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
+import { Client, GraphError, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
 import { http, HttpResponse } from "msw";
 import { beforeEach, describe, expect, it } from "vitest";
 import { ErrorMappingMiddleware } from "../src/middleware/error-mapping.js";
@@ -186,10 +186,21 @@ describe("list_emails Graph API integration", () => {
     });
   });
 
+  /**
+   * Error response tests.
+   *
+   * **Important assumption:** The Graph SDK's `Client` catches any error thrown
+   * by middleware and wraps it in a `GraphError` instance. Our
+   * `ErrorMappingMiddleware` throws typed errors (NotFoundError, RateLimitError,
+   * AuthError, etc.), but by the time they reach the caller, the SDK has
+   * re-wrapped them. The original error class name is preserved in
+   * `GraphError.code` and the message in `GraphError.message`. The HTTP status
+   * is available as `GraphError.statusCode`.
+   *
+   * Guard assertions below verify this wrapping behaviour so that changes in
+   * the SDK's error handling are caught immediately.
+   */
   describe("error responses", () => {
-    // The Graph SDK's Client wraps middleware errors in GraphError.
-    // Our ErrorMappingMiddleware throws typed errors (NotFoundError, etc.)
-    // which are preserved in GraphError.code and GraphError.message.
     let errorClient: Client;
 
     beforeEach(() => {
@@ -204,6 +215,10 @@ describe("list_emails Graph API integration", () => {
         );
         expect.unreachable("Should have thrown");
       } catch (e) {
+        // Guard: verify Graph SDK wraps our errors in GraphError
+        expect(e).toBeInstanceOf(GraphError);
+        expect(e).toHaveProperty("statusCode"); // GraphError sets statusCode
+        // Our error mapping preserves the error class name in .code
         expect(e).toHaveProperty("code", "NotFoundError");
         expect(e).toHaveProperty("message", expect.stringContaining("not found"));
       }

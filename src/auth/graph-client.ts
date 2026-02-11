@@ -101,7 +101,7 @@ export function createGraphClient(deps: GraphClientDeps): Client {
  * Cache of Graph client instances keyed by "tenantId:clientId".
  *
  * Prevents redundant client creation for the same identity — each unique
- * MsalClient identity gets exactly one Graph client with its own middleware
+ * GraphClientDeps identity gets exactly one Graph client with its own middleware
  * chain.
  *
  * NOTE: This cache has no eviction strategy. For the current single-tenant use case
@@ -111,10 +111,10 @@ export function createGraphClient(deps: GraphClientDeps): Client {
 const clientCache = new Map<string, Client>();
 
 /**
- * Returns a cached Graph client for the given MsalClient, creating one if
+ * Returns a cached Graph client for the given GraphClientDeps, creating one if
  * it does not already exist.
  *
- * The cache key is derived from the MsalClient's tenantId and clientId,
+ * The cache key is derived from the GraphClientDeps's tenantId and clientId,
  * so identical credentials always share a single client instance.
  */
 export function getGraphClient(deps: GraphClientDeps): Client {

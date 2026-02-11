@@ -6,6 +6,9 @@
 
 | Tool | Beschreibung | Modul | Klassifizierung |
 |---|---|---|---|
+| `list_mail_folders` | List all mail folders in the mailbox. Returns folder name, item counts, and unread counts. Well-known folder names (inbox, sentitems, drafts, deleteditems, junkemail, outbox, archive) can be used as folder IDs in other mail tools. Use include_children=true to also list subfolders (1 level deep). | mail-folders | 🟢 safe |
+| `read_email` | Read a single email by ID with full body content and metadata. Returns subject, from, to, cc, bcc, body (text or HTML), dates, and conversation context. Use format= | mail-read | 🟢 safe |
+| `search_emails` | Search emails using KQL (Keyword Query Language). Optimized for full-text search across subject, body, from, and attachments. Examples:  | mail-search | 🟢 safe |
 | `list_emails` | List emails from a mailbox folder with optional filtering, search and pagination. Returns email metadata (subject, from, date, preview) optimized for LLM context. Use folder parameter for specific folders (inbox, sentitems, drafts). Supports OData $filter for structured queries and KQL search for full-text search. | mail | 🟢 safe |
 
-_1 Tools registriert._
+_4 Tools registriert._
