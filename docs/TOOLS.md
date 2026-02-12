@@ -6,6 +6,10 @@
 
 | Tool | Beschreibung | Modul | Klassifizierung |
 |---|---|---|---|
+| `list_events` | List calendar events with optional filtering and pagination. Returns event summary (subject, time, location, organizer). Use calendar_id for a specific calendar, or omit for the default calendar. Supports OData $filter for time range queries and $orderby for sorting. | calendar-events | 🟢 safe |
+| `get_event` | Get full details of a single calendar event including body, attendees, recurrence, online meeting info, and categories. Use format-optimized plain text body by default. | calendar-events | 🟢 safe |
+| `list_calendars` | List all calendars of the user. Returns calendar name, owner, color, and permissions. The default calendar is marked. Calendar IDs can be used in other calendar tools to target a specific calendar. | calendar-list | 🟢 safe |
+| `get_calendar_view` | Get a calendar view for a specific time range. Unlike list_events, this expands recurring events into individual occurrences. Requires startDateTime and endDateTime in ISO 8601 format. Use calendar_id for a specific calendar. | calendar-view | 🟢 safe |
 | `list_attachments` | List all attachments of an email with name, type, size, and inline status. Use download_attachment to retrieve file content. | mail-attachments | 🟢 safe |
 | `download_attachment` | Download a single attachment by ID. Only file attachments are supported. Text files are returned as UTF-8, binary files as base64. Files >4MB show a warning, >10MB are rejected. | mail-attachments | 🟢 safe |
 | `list_mail_folders` | List all mail folders in the mailbox. Returns folder name, item counts, and unread counts. Well-known folder names (inbox, sentitems, drafts, deleteditems, junkemail, outbox, archive) can be used as folder IDs in other mail tools. Use include_children=true to also list subfolders (1 level deep). | mail-folders | 🟢 safe |
@@ -17,4 +21,4 @@
 | `send_email` | Send a new email. Requires confirm=true to actually send — without it, returns a preview. Supports To, CC, BCC, subject, body (text or HTML), importance, and save_to_sent_items. Use idempotency_key to prevent duplicate sends. | mail-send | 🔴 destructive |
 | `list_emails` | List emails from a mailbox folder with optional filtering, search and pagination. Returns email metadata (subject, from, date, preview) optimized for LLM context. Use folder parameter for specific folders (inbox, sentitems, drafts). Supports OData $filter for structured queries and KQL search for full-text search. | mail | 🟢 safe |
 
-_10 Tools registriert._
+_14 Tools registriert._

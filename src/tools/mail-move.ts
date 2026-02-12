@@ -7,6 +7,7 @@ import { MoveEmailParams } from "../schemas/mail.js";
 import type { ToolResult } from "../types/tools.js";
 import { formatPreview } from "../utils/confirmation.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { encodeGraphId } from "../utils/graph-id.js";
 import { idempotencyCache } from "../utils/idempotency.js";
 import { createLogger } from "../utils/logger.js";
 
@@ -19,7 +20,7 @@ async function resolveFolderName(
 ): Promise<string> {
   try {
     const folder = (await graphClient
-      .api(`${userPath}/mailFolders/${encodeURIComponent(folderId)}`)
+      .api(`${userPath}/mailFolders/${encodeGraphId(folderId)}`)
       .select("displayName")
       .get()) as Record<string, unknown>;
     return String(folder.displayName ?? folderId);
@@ -34,7 +35,7 @@ async function buildMovePreview(
   userPath: string,
 ): Promise<ToolResult> {
   const original = (await graphClient
-    .api(`${userPath}/messages/${encodeURIComponent(parsed.message_id)}`)
+    .api(`${userPath}/messages/${encodeGraphId(parsed.message_id)}`)
     .select("subject,parentFolderId")
     .get()) as Record<string, unknown>;
 
@@ -64,7 +65,7 @@ async function executeMove(
   startTime: number,
 ): Promise<ToolResult> {
   const result = (await graphClient
-    .api(`${userPath}/messages/${encodeURIComponent(parsed.message_id)}/move`)
+    .api(`${userPath}/messages/${encodeGraphId(parsed.message_id)}/move`)
     .post({ destinationId: parsed.destination_folder })) as Record<string, unknown>;
 
   const newMessageId = String(result.id ?? "");

@@ -8,6 +8,7 @@ import type { ToolResult } from "../types/tools.js";
 import { extractAddress } from "../utils/address-format.js";
 import { checkConfirmation, formatPreview } from "../utils/confirmation.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { encodeGraphId } from "../utils/graph-id.js";
 import { idempotencyCache } from "../utils/idempotency.js";
 import { createLogger } from "../utils/logger.js";
 import { toRecipients } from "../utils/recipients.js";
@@ -20,7 +21,7 @@ async function buildForwardPreview(
   userPath: string,
 ): Promise<ToolResult> {
   const original = (await graphClient
-    .api(`${userPath}/messages/${parsed.message_id}`)
+    .api(`${userPath}/messages/${encodeGraphId(parsed.message_id)}`)
     .select("subject,from,hasAttachments")
     .get()) as Record<string, unknown>;
 
@@ -59,7 +60,9 @@ async function executeForward(
     requestBody.comment = parsed.comment;
   }
 
-  await graphClient.api(`${userPath}/messages/${parsed.message_id}/forward`).post(requestBody);
+  await graphClient
+    .api(`${userPath}/messages/${encodeGraphId(parsed.message_id)}/forward`)
+    .post(requestBody);
 
   const endTime = Date.now();
   logger.info(

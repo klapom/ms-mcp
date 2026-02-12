@@ -7,6 +7,7 @@ import { DownloadAttachmentParams, ListAttachmentsParams } from "../schemas/mail
 import type { ToolResult } from "../types/tools.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
 import { formatFileSize, isTextContent } from "../utils/file-size.js";
+import { encodeGraphId } from "../utils/graph-id.js";
 import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger("tools:mail-attachments");
@@ -48,7 +49,7 @@ async function handleListAttachments(
   const userPath = resolveUserPath(parsed.user_id);
 
   const response = (await graphClient
-    .api(`${userPath}/messages/${encodeURIComponent(parsed.message_id)}/attachments`)
+    .api(`${userPath}/messages/${encodeGraphId(parsed.message_id)}/attachments`)
     .select("id,name,contentType,size,isInline,lastModifiedDateTime")
     .get()) as Record<string, unknown>;
 
@@ -152,7 +153,7 @@ async function handleDownloadAttachment(
 ): Promise<ToolResult> {
   const startTime = Date.now();
   const userPath = resolveUserPath(parsed.user_id);
-  const apiPath = `${userPath}/messages/${encodeURIComponent(parsed.message_id)}/attachments/${encodeURIComponent(parsed.attachment_id)}`;
+  const apiPath = `${userPath}/messages/${encodeGraphId(parsed.message_id)}/attachments/${encodeGraphId(parsed.attachment_id)}`;
 
   // Step 1: Metadata-only GET
   const meta = (await graphClient

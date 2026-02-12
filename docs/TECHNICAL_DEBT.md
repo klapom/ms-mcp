@@ -11,11 +11,8 @@ Dieses Dokument sammelt Beobachtungen aus der laufenden Implementierung:
 
 ## Offene Items
 
-### encodeURIComponent für Graph API IDs
-- **Quelle:** Sprint 2.3 Review
-- **Status:** Neue Tools (mail-move, mail-attachments) haben Encoding. Bestehende Tools (mail-read, mail-reply, mail-forward, mail-search) nutzen noch raw IDs.
-- **Vorschlag:** Shared Helper `encodeGraphId()` in `src/utils/` erstellen und in ALLEN Tools anwenden.
-- **Risiko:** Gering (IDs kommen aus Graph API), aber unsicher bei manipulierten Inputs.
+### ~~encodeURIComponent für Graph API IDs~~ ✅ ERLEDIGT (Sprint 3.1)
+- **Erledigt:** `encodeGraphId()` in `src/utils/graph-id.ts` erstellt und in ALLEN Tools angewendet (mail + calendar).
 
 ### Attachment-Interfaces lokal statt shared
 - **Quelle:** Sprint 2.3 Review (Architect)
@@ -31,6 +28,18 @@ Dieses Dokument sammelt Beobachtungen aus der laufenden Implementierung:
 
 ### Mock-Handler-Dateien werden groß
 - **Quelle:** Sprint 2.3 Review (Developer)
-- **Status:** `mail-attachments.ts` Handler hat eine große Map mit 12 Einträgen.
+- **Status:** `mail-attachments.ts` Handler hat eine große Map mit 12 Einträgen. `calendar.ts` Handler wächst mit jeder neuen Tool-Gruppe.
 - **Vorschlag:** Bei weiterer Vergrößerung Mock-Daten in separate `fixtures/` Dateien auslagern.
 - **Risiko:** Wartbarkeit bei Erweiterung.
+
+### Temporal Validation (end >= start) in calendarView
+- **Quelle:** Sprint 3.1 Review
+- **Status:** Schema nutzt `.datetime()` für ISO-Validierung, aber keine `.refine()` für `end >= start`, weil `.refine()` → ZodEffects → `.shape` nicht verfügbar → MCP SDK inkompatibel.
+- **Vorschlag:** Validierung im Tool-Handler (nicht im Schema). Aktuell dokumentiert im JSDoc von `GetCalendarViewParams`.
+- **Risiko:** Gering — Graph API gibt 400 bei ungültigem Zeitraum.
+
+### GET_EVENT_DEFAULT_BODY_LENGTH könnte zentral definiert werden
+- **Quelle:** Sprint 3.1 Review
+- **Status:** `5000` als Konstante in `calendar-events.ts` und `mail-read.ts` (READ_EMAIL_DEFAULT_BODY_LENGTH). Gleicher Wert, verschiedene Namen.
+- **Vorschlag:** In `config.ts` als `limits.detailBodyLength` oder als shared Konstante in `response-shaper.ts`.
+- **Risiko:** Keins aktuell, nur Inkonsistenz.

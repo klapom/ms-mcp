@@ -8,6 +8,7 @@ import type { ToolResult } from "../types/tools.js";
 import { extractAddress, extractAddressList } from "../utils/address-format.js";
 import { checkConfirmation, formatPreview } from "../utils/confirmation.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { encodeGraphId } from "../utils/graph-id.js";
 import { idempotencyCache } from "../utils/idempotency.js";
 import { createLogger } from "../utils/logger.js";
 
@@ -19,7 +20,7 @@ async function buildReplyPreview(
   userPath: string,
 ): Promise<ToolResult> {
   const original = (await graphClient
-    .api(`${userPath}/messages/${parsed.message_id}`)
+    .api(`${userPath}/messages/${encodeGraphId(parsed.message_id)}`)
     .select("subject,from,toRecipients,ccRecipients")
     .get()) as Record<string, unknown>;
 
@@ -54,7 +55,7 @@ async function executeReply(
 ): Promise<ToolResult> {
   const endpoint = parsed.reply_all ? "replyAll" : "reply";
   await graphClient
-    .api(`${userPath}/messages/${parsed.message_id}/${endpoint}`)
+    .api(`${userPath}/messages/${encodeGraphId(parsed.message_id)}/${endpoint}`)
     .post({ comment: parsed.comment });
 
   const endTime = Date.now();

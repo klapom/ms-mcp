@@ -1,4 +1,5 @@
 import type { HttpHandler } from "msw";
+import { calendarHandlers } from "./calendar.js";
 import { mailAttachmentHandlers } from "./mail-attachments.js";
 import { mailForwardHandlers } from "./mail-forward.js";
 import { mailMoveHandlers } from "./mail-move.js";
@@ -14,6 +15,7 @@ import { mailHandlers } from "./mail.js";
  * - mail*Handlers: write POST handlers (send, reply, forward)
  */
 export const handlers: HttpHandler[] = [
+  ...calendarHandlers,
   ...mailAttachmentHandlers,
   ...mailMoveHandlers,
   ...mailHandlers,

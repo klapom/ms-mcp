@@ -4,6 +4,7 @@ import type { Config } from "../config.js";
 import { resolveUserPath } from "../schemas/common.js";
 import { ListEmailsParams } from "../schemas/mail.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { encodeGraphId } from "../utils/graph-id.js";
 import { createLogger } from "../utils/logger.js";
 import { fetchPage } from "../utils/pagination.js";
 import { DEFAULT_SELECT, buildSelectParam, shapeListResponse } from "../utils/response-shaper.js";
@@ -22,7 +23,7 @@ export function registerMailTools(server: McpServer, graphClient: Client, config
 
         const userPath = resolveUserPath(parsed.user_id);
         const folder = parsed.folder ?? "inbox";
-        const url = `${userPath}/mailFolders/${folder}/messages`;
+        const url = `${userPath}/mailFolders/${encodeGraphId(folder)}/messages`;
 
         const page = await fetchPage<Record<string, unknown>>(graphClient, url, {
           top: parsed.top ?? config.limits.maxItems,

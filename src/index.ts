@@ -4,6 +4,9 @@ import { type GraphClientDeps, getGraphClient } from "./auth/graph-client.js";
 import { MsalClient } from "./auth/msal-client.js";
 import { createCachePlugin } from "./auth/token-cache.js";
 import { type Config, loadConfig } from "./config.js";
+import { registerCalendarEventTools } from "./tools/calendar-events.js";
+import { registerCalendarListTools } from "./tools/calendar-list.js";
+import { registerCalendarViewTools } from "./tools/calendar-view.js";
 import { registerMailAttachmentTools } from "./tools/mail-attachments.js";
 import { registerMailFolderTools } from "./tools/mail-folders.js";
 import { registerMailForwardTools } from "./tools/mail-forward.js";
@@ -50,6 +53,9 @@ const registrations: ToolRegistrationFn[] = [
   registerMailForwardTools,
   registerMailMoveTools,
   registerMailAttachmentTools,
+  registerCalendarListTools,
+  registerCalendarEventTools,
+  registerCalendarViewTools,
 ];
 
 async function main() {

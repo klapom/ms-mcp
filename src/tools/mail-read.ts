@@ -1,11 +1,12 @@
 import type { Client } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { convert as htmlToText } from "html-to-text";
 import type { Config } from "../config.js";
 import { resolveUserPath } from "../schemas/common.js";
 import { ReadEmailParams } from "../schemas/mail.js";
 import { extractAddress, extractAddressListFiltered } from "../utils/address-format.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { encodeGraphId } from "../utils/graph-id.js";
+import { convertHtmlToText } from "../utils/html-convert.js";
 import { createLogger } from "../utils/logger.js";
 import { DEFAULT_SELECT, buildSelectParam, truncateBody } from "../utils/response-shaper.js";
 import { isRecordObject } from "../utils/type-guards.js";
@@ -32,22 +33,10 @@ function extractBody(
   const contentType =
     typeof response.body.contentType === "string" ? response.body.contentType : "text";
 
-  let bodyContent: string;
   if (format === "text" && contentType.toLowerCase() === "html") {
-    bodyContent = htmlToText(rawContent, {
-      wordwrap: 120,
-      selectors: [
-        { selector: "a", options: { hideLinkHrefIfSameAsText: true } },
-        { selector: "img", format: "skip" },
-      ],
-    });
-    // Strip dangerous protocol URLs that html-to-text renders as text in link brackets
-    bodyContent = bodyContent.replace(/\[javascript:[^\]]*\]/gi, "");
-  } else {
-    bodyContent = rawContent;
+    return convertHtmlToText(rawContent, maxLen);
   }
-
-  return truncateBody(bodyContent, maxLen);
+  return truncateBody(rawContent, maxLen);
 }
 
 /**
@@ -121,7 +110,7 @@ async function fetchEmail(
   parsed: { user_id?: string; message_id: string; include_internet_headers: boolean },
 ): Promise<unknown> {
   const userPath = resolveUserPath(parsed.user_id);
-  const url = `${userPath}/messages/${parsed.message_id}`;
+  const url = `${userPath}/messages/${encodeGraphId(parsed.message_id)}`;
 
   const selectFields = [...DEFAULT_SELECT.mailDetail];
   if (parsed.include_internet_headers) {

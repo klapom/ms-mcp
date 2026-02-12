@@ -5,6 +5,7 @@ import { resolveUserPath } from "../schemas/common.js";
 import { ListMailFoldersParams } from "../schemas/mail.js";
 import { batchFetchSettled } from "../utils/batch.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { encodeGraphId } from "../utils/graph-id.js";
 import { createLogger } from "../utils/logger.js";
 import { fetchPage } from "../utils/pagination.js";
 import { DEFAULT_SELECT, buildSelectParam, shapeListResponse } from "../utils/response-shaper.js";
@@ -89,7 +90,7 @@ async function expandChildFolders(
     foldersWithChildren.map((folder) =>
       fetchPage<Record<string, unknown>>(
         client,
-        `${userPath}/mailFolders/${folder.id as string}/childFolders`,
+        `${userPath}/mailFolders/${encodeGraphId(folder.id as string)}/childFolders`,
         { select: buildSelectParam(DEFAULT_SELECT.mailFolder) },
       ).then((page) => ({
         parentId: folder.id as string,

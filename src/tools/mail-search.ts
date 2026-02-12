@@ -5,6 +5,7 @@ import { resolveUserPath } from "../schemas/common.js";
 import type { SearchEmailsParamsType } from "../schemas/mail.js";
 import { SearchEmailsParams } from "../schemas/mail.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { encodeGraphId } from "../utils/graph-id.js";
 import { createLogger } from "../utils/logger.js";
 import { DEFAULT_SELECT, buildSelectParam, shapeListResponse } from "../utils/response-shaper.js";
 import { isRecordObject } from "../utils/type-guards.js";
@@ -103,7 +104,7 @@ export function registerMailSearchTools(
         const userPath = resolveUserPath(parsed.user_id);
 
         const basePath = parsed.folder
-          ? `${userPath}/mailFolders/${parsed.folder}/messages`
+          ? `${userPath}/mailFolders/${encodeGraphId(parsed.folder)}/messages`
           : `${userPath}/messages`;
 
         let request = graphClient.api(basePath);

@@ -38,10 +38,15 @@ export async function fetchPage<T>(
     select?: string;
     filter?: string;
     orderby?: string;
+    /** Arbitrary query parameters (e.g. calendarView's startDateTime/endDateTime). */
+    query?: Record<string, string>;
   },
 ): Promise<PaginatedResponse<T>> {
   let request = client.api(url);
 
+  if (params?.query) {
+    request = request.query(params.query);
+  }
   if (params?.top !== undefined) {
     request = request.top(params.top);
   }
