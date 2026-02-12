@@ -43,3 +43,21 @@ Dieses Dokument sammelt Beobachtungen aus der laufenden Implementierung:
 - **Status:** `5000` als Konstante in `calendar-events.ts` und `mail-read.ts` (READ_EMAIL_DEFAULT_BODY_LENGTH). Gleicher Wert, verschiedene Namen.
 - **Vorschlag:** In `config.ts` als `limits.detailBodyLength` oder als shared Konstante in `response-shaper.ts`.
 - **Risiko:** Keins aktuell, nur Inkonsistenz.
+
+### Response-Strings auf Englisch vereinheitlichen
+- **Quelle:** Sprint 3.2 Vorbereitung
+- **Status:** Tool-Responses nutzen gemischt Deutsch ("Keine Events gefunden.", "ganztägig", "kein Betreff") und Englisch ("Subject:", "Location:", "CANCELLED"). Tool-Descriptions und MCP-Protokoll sind durchgehend Englisch.
+- **Vorschlag:** Nach Abschluss Phase 3 alle User-facing Strings einmalig auf Englisch vereinheitlichen. Kein i18n-Framework nötig — Strings-Konstanten in einer Datei (z.B. `src/utils/strings.ts`).
+- **Risiko:** Keins funktional, nur inkonsistentes UX. LLMs verstehen beides.
+
+### Attendees-Mapping dupliziert (calendar-create + calendar-update)
+- **Quelle:** Sprint 3.2 Review
+- **Status:** `buildAttendeesBody()` in `calendar-create.ts` und inline in `buildPatchBody()` in `calendar-update.ts` mappen beide `{email, name, type}` → `{emailAddress: {address, name}, type}`.
+- **Vorschlag:** Shared `toAttendees()` Utility in `src/utils/recipients.ts` (analog zu `toRecipients()`).
+- **Risiko:** Keins aktuell, nur Duplizierung bei Erweiterung.
+
+### Multi-Tenant Test-Assertions in calendar-availability
+- **Quelle:** Sprint 3.2 Review
+- **Status:** `calendar-availability.test.ts` Multi-Tenant-Test assertet `toHaveLength(2)` — gibt immer die gleiche Mock-Response zurück, testet nicht wirklich Routing-Unterschiede.
+- **Vorschlag:** MSW-Handler für Multi-Tenant eigene Response liefern lassen oder Request-URL asserten.
+- **Risiko:** Gering — Routing wird durch andere Tools implizit getestet.

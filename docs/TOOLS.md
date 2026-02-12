@@ -6,9 +6,14 @@
 
 | Tool | Beschreibung | Modul | Klassifizierung |
 |---|---|---|---|
+| `check_availability` | Check availability (free/busy) for one or more users in a time window. Returns per-user availability view with status codes (free, tentative, busy, oof, workingElsewhere). Safe operation — no confirmation required. | calendar-availability | 🔴 destructive |
+| `create_event` | Create a new calendar event. Requires confirm=true to actually create — without it, returns a preview. Supports subject, start/end (with timezone), location, body, attendees, online meeting, importance, sensitivity, show_as, categories, and reminder. Use calendar_id for a specific calendar. Use idempotency_key to prevent duplicate creates. | calendar-create | 🟡 moderate |
+| `delete_event` | Delete a calendar event. Requires confirm=true to actually delete — without it, fetches the event and returns a preview. Use idempotency_key to prevent duplicate deletes. | calendar-delete | 🔴 destructive |
 | `list_events` | List calendar events with optional filtering and pagination. Returns event summary (subject, time, location, organizer). Use calendar_id for a specific calendar, or omit for the default calendar. Supports OData $filter for time range queries and $orderby for sorting. | calendar-events | 🟢 safe |
 | `get_event` | Get full details of a single calendar event including body, attendees, recurrence, online meeting info, and categories. Use format-optimized plain text body by default. | calendar-events | 🟢 safe |
 | `list_calendars` | List all calendars of the user. Returns calendar name, owner, color, and permissions. The default calendar is marked. Calendar IDs can be used in other calendar tools to target a specific calendar. | calendar-list | 🟢 safe |
+| `respond_to_event` | Respond to a calendar event invitation (accept, decline, or tentativelyAccept). Requires confirm=true to actually respond — without it, fetches the event and returns a preview. Errors if you are the organizer. Use idempotency_key to prevent duplicate responses. | calendar-respond | 🟢 safe |
+| `update_event` | Update an existing calendar event. Requires confirm=true to actually update — without it, fetches the current event and returns a preview with current vs new values. At least one updatable field must be provided. Use idempotency_key to prevent duplicate updates. | calendar-update | 🟡 moderate |
 | `get_calendar_view` | Get a calendar view for a specific time range. Unlike list_events, this expands recurring events into individual occurrences. Requires startDateTime and endDateTime in ISO 8601 format. Use calendar_id for a specific calendar. | calendar-view | 🟢 safe |
 | `list_attachments` | List all attachments of an email with name, type, size, and inline status. Use download_attachment to retrieve file content. | mail-attachments | 🟢 safe |
 | `download_attachment` | Download a single attachment by ID. Only file attachments are supported. Text files are returned as UTF-8, binary files as base64. Files >4MB show a warning, >10MB are rejected. | mail-attachments | 🟢 safe |
@@ -21,4 +26,4 @@
 | `send_email` | Send a new email. Requires confirm=true to actually send — without it, returns a preview. Supports To, CC, BCC, subject, body (text or HTML), importance, and save_to_sent_items. Use idempotency_key to prevent duplicate sends. | mail-send | 🔴 destructive |
 | `list_emails` | List emails from a mailbox folder with optional filtering, search and pagination. Returns email metadata (subject, from, date, preview) optimized for LLM context. Use folder parameter for specific folders (inbox, sentitems, drafts). Supports OData $filter for structured queries and KQL search for full-text search. | mail | 🟢 safe |
 
-_14 Tools registriert._
+_19 Tools registriert._

@@ -1,5 +1,8 @@
 # MS-MCP – Office 365 MCP Server
 
+## Allgemein
+Annahmen MÜSSEN IMMER verifiziert sein. Handle nur wenn du dir sicher bist
+
 ## Projekt
 Office 365 MCP-Server für Claude Desktop / Cowork.
 Eigenentwicklung von Pommer IT-Consulting GmbH.
