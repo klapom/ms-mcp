@@ -164,3 +164,33 @@ export const ForwardEmailParams = WriteParams.extend({
 });
 
 export type ForwardEmailParamsType = z.infer<typeof ForwardEmailParams>;
+
+/**
+ * Parameters for move_email tool.
+ */
+export const MoveEmailParams = WriteParams.extend({
+  message_id: z.string().min(1).describe("ID der E-Mail"),
+  destination_folder: z.string().min(1).describe("Zielordner: Well-Known-Name oder Folder-ID"),
+  dry_run: z.boolean().default(false).describe("Vorschau ohne Ausführung, überschreibt confirm"),
+});
+
+export type MoveEmailParamsType = z.infer<typeof MoveEmailParams>;
+
+/**
+ * Parameters for list_attachments tool.
+ */
+export const ListAttachmentsParams = BaseParams.extend({
+  message_id: z.string().min(1).describe("ID der E-Mail"),
+});
+
+export type ListAttachmentsParamsType = z.infer<typeof ListAttachmentsParams>;
+
+/**
+ * Parameters for download_attachment tool.
+ */
+export const DownloadAttachmentParams = BaseParams.extend({
+  message_id: z.string().min(1).describe("ID der E-Mail"),
+  attachment_id: z.string().min(1).describe("ID des Anhangs (aus list_attachments)"),
+});
+
+export type DownloadAttachmentParamsType = z.infer<typeof DownloadAttachmentParams>;

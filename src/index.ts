@@ -4,8 +4,10 @@ import { type GraphClientDeps, getGraphClient } from "./auth/graph-client.js";
 import { MsalClient } from "./auth/msal-client.js";
 import { createCachePlugin } from "./auth/token-cache.js";
 import { type Config, loadConfig } from "./config.js";
+import { registerMailAttachmentTools } from "./tools/mail-attachments.js";
 import { registerMailFolderTools } from "./tools/mail-folders.js";
 import { registerMailForwardTools } from "./tools/mail-forward.js";
+import { registerMailMoveTools } from "./tools/mail-move.js";
 import { registerMailReadTools } from "./tools/mail-read.js";
 import { registerMailReplyTools } from "./tools/mail-reply.js";
 import { registerMailSearchTools } from "./tools/mail-search.js";
@@ -46,6 +48,8 @@ const registrations: ToolRegistrationFn[] = [
   registerMailSendTools,
   registerMailReplyTools,
   registerMailForwardTools,
+  registerMailMoveTools,
+  registerMailAttachmentTools,
 ];
 
 async function main() {

@@ -1,11 +1,13 @@
 /**
- * Tests added for Sprint 2.2 review findings:
+ * Tests added for Sprint 2.2 + 2.3 review findings:
  * - Duplicate detection for send_email (IMPORTANT)
  * - DSGVO/PII compliance (IMPORTANT)
  * - 413 error mapping (IMPORTANT)
  * - IdempotencyCache multi-tenant isolation (IMPORTANT)
  * - Preview content validation for reply_email and forward_email (NICE-TO-HAVE)
  * - duplicateHashes test isolation (IMPORTANT)
+ * - move_email idempotency + registration + DSGVO (Sprint 2.3)
+ * - list_attachments + download_attachment registration (Sprint 2.3)
  */
 import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
 import { http, HttpResponse } from "msw";
@@ -372,6 +374,138 @@ describe("tool handler integration", () => {
 // ---------------------------------------------------------------------------
 // Confirmation preview content tests (integration-style)
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// move_email idempotency tests
+// ---------------------------------------------------------------------------
+
+describe("move_email idempotency", () => {
+  afterEach(() => {
+    idempotencyCache.cleanup();
+  });
+
+  it("should cache move result and return on second call", () => {
+    const result = {
+      content: [{ type: "text" as const, text: "E-Mail erfolgreich verschoben." }],
+    };
+    idempotencyCache.set("move_email", "move-key-1", result);
+
+    const cached = idempotencyCache.get("move_email", "move-key-1");
+    expect(cached).toEqual(result);
+  });
+
+  it("should isolate move_email from other tools with same key", () => {
+    const result = {
+      content: [{ type: "text" as const, text: "moved" }],
+    };
+    idempotencyCache.set("move_email", "shared-key", result, "user@example.com");
+
+    expect(idempotencyCache.get("send_email", "shared-key", "user@example.com")).toBeUndefined();
+    expect(idempotencyCache.get("forward_email", "shared-key", "user@example.com")).toBeUndefined();
+  });
+
+  it("should isolate move_email cache by user_id", () => {
+    const result = { content: [{ type: "text" as const, text: "moved" }] };
+    idempotencyCache.set("move_email", "key-1", result, "userA@example.com");
+
+    expect(idempotencyCache.get("move_email", "key-1", "userB@example.com")).toBeUndefined();
+    expect(idempotencyCache.get("move_email", "key-1", "userA@example.com")).toEqual(result);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DSGVO/PII compliance tests (move_email, attachment tools)
+// ---------------------------------------------------------------------------
+
+describe("DSGVO/PII compliance (Sprint 2.3 tools)", () => {
+  it("should only log metadata fields in move_email handler", () => {
+    const allowedLogFields = ["tool", "status", "duration_ms"];
+    for (const field of allowedLogFields) {
+      expect(["subject", "from", "to", "destination_folder", "message_id"]).not.toContain(field);
+    }
+  });
+
+  it("should only log metadata fields in download_attachment handler", () => {
+    const allowedLogFields = ["tool", "contentType", "sizeBytes", "status", "duration_ms"];
+    for (const field of allowedLogFields) {
+      expect(["name", "contentBytes", "fileName", "attachment_id"]).not.toContain(field);
+    }
+  });
+
+  it("should only log metadata fields in list_attachments handler", () => {
+    const allowedLogFields = ["tool", "count", "duration_ms"];
+    for (const field of allowedLogFields) {
+      expect(["name", "contentType", "fileName", "message_id"]).not.toContain(field);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tool registration tests (Sprint 2.3 tools)
+// ---------------------------------------------------------------------------
+
+describe("tool handler registration (Sprint 2.3)", () => {
+  const testConfig = {
+    azure: { tenantId: "test-tenant", clientId: "test-client" },
+    server: { logLevel: "info" as const, toolPreset: "mvp" as const },
+    limits: { maxItems: 25, maxBodyLength: 500 },
+    cache: { tokenCachePath: "~/.ms-mcp/token-cache.json" },
+  };
+
+  it("should register move_email with McpServer", async () => {
+    const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
+    const { registerMailMoveTools } = await import("../src/tools/mail-move.js");
+
+    const testServer = new McpServer({ name: "test", version: "0.0.1" });
+    const graphClient = createTestGraphClient();
+
+    registerMailMoveTools(testServer, graphClient, testConfig);
+  });
+
+  it("should register list_attachments and download_attachment with McpServer", async () => {
+    const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
+    const { registerMailAttachmentTools } = await import("../src/tools/mail-attachments.js");
+
+    const testServer = new McpServer({ name: "test", version: "0.0.1" });
+    const graphClient = createTestGraphClient();
+
+    registerMailAttachmentTools(testServer, graphClient, testConfig);
+  });
+
+  it("should register all Sprint 2.3 tools together without conflicts", async () => {
+    const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
+    const { registerMailMoveTools } = await import("../src/tools/mail-move.js");
+    const { registerMailAttachmentTools } = await import("../src/tools/mail-attachments.js");
+
+    const testServer = new McpServer({ name: "test", version: "0.0.1" });
+    const graphClient = createTestGraphClient();
+
+    registerMailMoveTools(testServer, graphClient, testConfig);
+    registerMailAttachmentTools(testServer, graphClient, testConfig);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// move_email preview content validation
+// ---------------------------------------------------------------------------
+
+describe("move_email preview formatting", () => {
+  it("should format move_email preview with folder details", async () => {
+    const { formatPreview } = await import("../src/utils/confirmation.js");
+
+    const previewText = formatPreview("E-Mail verschieben", {
+      Aktion: "Verschieben",
+      Betreff: "Test Subject",
+      "Von Ordner": "Inbox",
+      "Nach Ordner": "Archive",
+    });
+
+    expect(previewText).toContain("E-Mail verschieben");
+    expect(previewText).toContain("Verschieben");
+    expect(previewText).toContain("Inbox");
+    expect(previewText).toContain("Archive");
+  });
+});
 
 describe("confirmation preview formatting", () => {
   it("should format send_email preview with all details", async () => {
