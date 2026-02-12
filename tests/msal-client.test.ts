@@ -77,6 +77,34 @@ describe("MsalClient", () => {
       });
     });
 
+    it("should pass cachePlugin to PCA config when provided", () => {
+      const mockCachePlugin = {
+        beforeCacheAccess: vi.fn(),
+        afterCacheAccess: vi.fn(),
+      };
+
+      new MsalClient(TENANT_ID, CLIENT_ID, undefined, mockCachePlugin);
+
+      expect(PublicClientApplication).toHaveBeenCalledWith({
+        auth: {
+          clientId: CLIENT_ID,
+          authority: `https://login.microsoftonline.com/${TENANT_ID}`,
+        },
+        cache: { cachePlugin: mockCachePlugin },
+      });
+    });
+
+    it("should not include cache config when no cachePlugin provided", () => {
+      new MsalClient(TENANT_ID, CLIENT_ID);
+
+      expect(PublicClientApplication).toHaveBeenCalledWith({
+        auth: {
+          clientId: CLIENT_ID,
+          authority: `https://login.microsoftonline.com/${TENANT_ID}`,
+        },
+      });
+    });
+
     it("should use default scopes when none provided", async () => {
       const client = new MsalClient(TENANT_ID, CLIENT_ID);
 

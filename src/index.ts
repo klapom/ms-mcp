@@ -1,8 +1,11 @@
+import { homedir } from "node:os";
+import { resolve } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { GraphClientDeps } from "./auth/graph-client.js";
 import { getGraphClient } from "./auth/graph-client.js";
 import { MsalClient } from "./auth/msal-client.js";
+import { createCachePlugin } from "./auth/token-cache.js";
 import { type Config, loadConfig } from "./config.js";
 import { registerMailFolderTools } from "./tools/mail-folders.js";
 import { registerMailReadTools } from "./tools/mail-read.js";
@@ -19,11 +22,28 @@ const server = new McpServer({
 });
 
 /**
- * Creates the default GraphClientDeps using MSAL Device Code Flow.
- * Override this factory for testing or alternative auth flows (Phase 5+).
+ * Resolves a path that may start with `~` to an absolute path using os.homedir().
  */
-function createDefaultAuthDeps(config: Config): GraphClientDeps {
-  const msalClient = new MsalClient(config.azure.tenantId, config.azure.clientId);
+function resolveTildePath(p: string): string {
+  if (p.startsWith("~/") || p === "~") {
+    return resolve(homedir(), p.slice(2));
+  }
+  return resolve(p);
+}
+
+/**
+ * Creates the default GraphClientDeps using MSAL Device Code Flow
+ * with persistent token cache for cross-restart auth persistence.
+ */
+async function createDefaultAuthDeps(config: Config): Promise<GraphClientDeps> {
+  const cachePath = resolveTildePath(config.cache.tokenCachePath);
+  const cachePlugin = await createCachePlugin(cachePath);
+  const msalClient = new MsalClient(
+    config.azure.tenantId,
+    config.azure.clientId,
+    undefined,
+    cachePlugin,
+  );
   return msalClient;
 }
 
@@ -46,7 +66,7 @@ async function main() {
     process.exit(1);
   }
 
-  const authDeps = createDefaultAuthDeps(config);
+  const authDeps = await createDefaultAuthDeps(config);
   const graphClient = getGraphClient(authDeps);
 
   for (const register of registrations) {

@@ -92,7 +92,9 @@ and enter the code XXXXXXXX to authenticate.
 
 Nach erfolgreicher Anmeldung zeigt der Server `pommer-m365-mcp server started`.
 
-> **Tipp:** Der Token wird im Arbeitsspeicher gecacht. Bei erneutem Start musst du dich erneut anmelden. Persistenter Token-Cache kommt in einer späteren Phase.
+> **Tipp:** Der Token wird automatisch persistent gespeichert (Standard: `~/.ms-mcp/token-cache.json`). Bei erneutem Start ist **keine erneute Anmeldung** nötig — der Server nutzt den gespeicherten Refresh-Token. Das funktioniert auch wenn Claude Code/Desktop den Server als Subprocess startet.
+
+> **Cache-Pfad ändern:** Setze die Umgebungsvariable `TOKEN_CACHE_PATH` auf einen alternativen Pfad (absolut oder mit `~/` Prefix).
 
 ## Schritt 5: Claude Desktop konfigurieren
 
@@ -163,7 +165,7 @@ Claude wird:
 
 ### "Access token has expired"
 
-Token abgelaufen. Server neu starten, erneut authentifizieren.
+Token abgelaufen. In der Regel reicht ein Server-Neustart -- der persistente Cache enthält den Refresh-Token, der automatisch ein neues Access-Token holt. Falls das nicht hilft, lösche die Cache-Datei (`~/.ms-mcp/token-cache.json`) und authentifiziere dich erneut im Terminal via `pnpm dev`.
 
 ### "ErrorAccessDenied" / "Insufficient privileges"
 
@@ -192,6 +194,7 @@ Der öffentliche Client-Flow ist nicht aktiviert. Prüfe Schritt 1 unter "Öffen
 | `AZURE_TENANT_ID` | Ja | -- | Azure AD Tenant-ID |
 | `AZURE_CLIENT_ID` | Ja | -- | App Registration Client-ID |
 | `AZURE_CLIENT_SECRET` | Nein | -- | Für Client Credentials Flow (CI/CD) |
+| `TOKEN_CACHE_PATH` | Nein | `~/.ms-mcp/token-cache.json` | Pfad zur persistenten Token-Cache-Datei |
 | `LOG_LEVEL` | Nein | `info` | trace, debug, info, warn, error, fatal |
 | `TOOL_PRESET` | Nein | `mvp` | readonly, mvp, full |
 | `MAX_ITEMS` | Nein | `25` | Max Ergebnisse pro Abfrage |

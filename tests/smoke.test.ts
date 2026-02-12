@@ -13,6 +13,7 @@ describe("smoke tests", () => {
         azure: { tenantId: "test-tenant", clientId: "test-client" },
         server: {},
         limits: {},
+        cache: {},
       });
       expect(result.success).toBe(true);
     });

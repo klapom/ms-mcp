@@ -2,6 +2,7 @@ import {
   type AccountInfo,
   type AuthenticationResult,
   type DeviceCodeRequest,
+  type ICachePlugin,
   PublicClientApplication,
 } from "@azure/msal-node";
 import { createLogger } from "../utils/logger.js";
@@ -24,9 +25,9 @@ const DEFAULT_SCOPES = [
  * Supports Device Code Flow for interactive auth with silent token
  * acquisition for subsequent requests.
  *
- * Token cache is in-memory only for now.
- * TODO (Phase 2): Add persistent token cache via msal-node-extensions
- * using PersistenceCreator + PersistenceCachePlugin for cross-restart persistence.
+ * Optionally accepts an ICachePlugin for persistent token storage
+ * across server restarts (via @azure/msal-node-extensions).
+ * Without a plugin, tokens are kept in-memory only.
  */
 export class MsalClient {
   readonly tenantId: string;
@@ -35,7 +36,7 @@ export class MsalClient {
   private account: AccountInfo | null = null;
   private scopes: string[];
 
-  constructor(tenantId: string, clientId: string, scopes?: string[]) {
+  constructor(tenantId: string, clientId: string, scopes?: string[], cachePlugin?: ICachePlugin) {
     this.tenantId = tenantId;
     this.clientId = clientId;
     this.scopes = scopes ?? DEFAULT_SCOPES;
@@ -45,6 +46,7 @@ export class MsalClient {
         clientId,
         authority: `https://login.microsoftonline.com/${tenantId}`,
       },
+      ...(cachePlugin ? { cache: { cachePlugin } } : {}),
     });
 
     logger.info({ tenantId }, "MsalClient initialized");

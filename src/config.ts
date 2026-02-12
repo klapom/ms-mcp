@@ -17,6 +17,9 @@ const ConfigSchema = z.object({
     maxItems: z.number().int().positive().default(25),
     maxBodyLength: z.number().int().positive().default(500),
   }),
+  cache: z.object({
+    tokenCachePath: z.string().default("~/.ms-mcp/token-cache.json"),
+  }),
 });
 
 type Config = z.infer<typeof ConfigSchema>;
@@ -37,6 +40,9 @@ export function loadConfig(): Config {
       maxBodyLength: process.env.MAX_BODY_LENGTH
         ? Number.parseInt(process.env.MAX_BODY_LENGTH, 10)
         : 500,
+    },
+    cache: {
+      tokenCachePath: process.env.TOKEN_CACHE_PATH ?? "~/.ms-mcp/token-cache.json",
     },
   });
 }
