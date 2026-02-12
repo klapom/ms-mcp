@@ -27,8 +27,10 @@ function createDefaultAuthDeps(config: Config): GraphClientDeps {
   return msalClient;
 }
 
-/** Tool registration functions — each receives the shared server, graph client, and config. */
-const registrations: Array<(server: McpServer, graphClient: Client, config: Config) => void> = [
+/** Signature for tool registration functions. */
+type ToolRegistrationFn = (server: McpServer, graphClient: Client, config: Config) => void;
+
+const registrations: ToolRegistrationFn[] = [
   registerMailTools,
   registerMailReadTools,
   registerMailFolderTools,

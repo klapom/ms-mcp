@@ -44,6 +44,13 @@ function logUnsupportedParams(parsed: SearchEmailsParamsType): void {
       "$skip ignored: not supported with $search (Graph API limitation). Use @odata.nextLink for pagination.",
     );
   }
+
+  if (parsed.filter) {
+    logger.info(
+      { tool: "search_emails" },
+      "$filter combined with $search: only certain fields (from, subject, receivedDateTime) are supported by Graph API",
+    );
+  }
 }
 
 function buildOutputLines(

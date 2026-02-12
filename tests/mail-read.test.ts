@@ -174,6 +174,32 @@ describe("read_email", () => {
         expect(e).toHaveProperty("message", expect.stringContaining("not found"));
       }
     });
+
+    it("should map 401 for expired token to AuthError", async () => {
+      const { http, HttpResponse } = await import("msw");
+      const { server: mswServer } = await import("./mocks/server.js");
+      mswServer.use(
+        http.get("https://graph.microsoft.com/v1.0/me/messages/auth-fail-msg", () => {
+          return HttpResponse.json(
+            {
+              error: {
+                code: "InvalidAuthenticationToken",
+                message: "Access token has expired.",
+              },
+            },
+            { status: 401 },
+          );
+        }),
+      );
+
+      try {
+        await errorClient.api("/me/messages/auth-fail-msg").get();
+        expect.unreachable("Should have thrown");
+      } catch (e) {
+        expect(e).toHaveProperty("code", "AuthError");
+        expect(e).toHaveProperty("message", expect.stringContaining("expired"));
+      }
+    });
   });
 
   // HTML to Text conversion
@@ -212,6 +238,31 @@ describe("read_email", () => {
         '<div dir="ltr"><div class="gmail_default"><span style="font-size:small">Text content</span></div></div>';
       const text = convert(html, { wordwrap: 120 });
       expect(text).toContain("Text content");
+    });
+
+    it("should strip script tags from HTML", () => {
+      const html = '<p>Hello</p><script>alert("xss")</script><p>World</p>';
+      const text = convert(html, { wordwrap: 120 });
+      expect(text).toContain("Hello");
+      expect(text).toContain("World");
+      expect(text).not.toContain("alert");
+      expect(text).not.toContain("<script>");
+    });
+
+    it("should strip iframe tags", () => {
+      const html = '<p>Content</p><iframe src="https://evil.com"></iframe>';
+      const text = convert(html, { wordwrap: 120 });
+      expect(text).toContain("Content");
+      expect(text).not.toContain("iframe");
+      expect(text).not.toContain("evil.com");
+    });
+
+    it("should handle form-based content safely", () => {
+      const html =
+        '<form action="https://evil.com"><input type="text" value="phishing"></form><p>Real content</p>';
+      const text = convert(html, { wordwrap: 120 });
+      expect(text).toContain("Real content");
+      expect(text).not.toContain("action=");
     });
   });
 

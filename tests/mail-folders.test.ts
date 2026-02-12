@@ -116,6 +116,35 @@ describe("list_mail_folders", () => {
       expect(page.items[0]).toHaveProperty("displayName", "Inbox");
     });
 
+    it("should handle child folder fetch errors gracefully", async () => {
+      const { http, HttpResponse } = await import("msw");
+      const { server: mswServer } = await import("./mocks/server.js");
+
+      // Override to return 403 for child folders
+      mswServer.use(
+        http.get("https://graph.microsoft.com/v1.0/me/mailFolders/:folderId/childFolders", () => {
+          return HttpResponse.json(
+            {
+              error: {
+                code: "ErrorAccessDenied",
+                message: "Access denied",
+              },
+            },
+            { status: 403 },
+          );
+        }),
+      );
+
+      // The parent folder fetch should still work
+      const page = await fetchPage<Record<string, unknown>>(client, "/me/mailFolders", {
+        select: buildSelectParam(DEFAULT_SELECT.mailFolder),
+      });
+
+      expect(page.items.length).toBe(6);
+      // Parent folders should be returned even if child fetch fails
+      expect(page.items[0]).toHaveProperty("displayName", "Inbox");
+    });
+
     it("should shape folder response with pagination hint", () => {
       const folders = [
         {

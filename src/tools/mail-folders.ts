@@ -33,8 +33,11 @@ export function registerMailFolderTools(
 
         // If include_children is true, fetch child folders for each folder
         let items = page.items;
+        let failedCount = 0;
         if (parsed.include_children) {
-          items = await expandChildFolders(graphClient, userPath, items);
+          const result = await expandChildFolders(graphClient, userPath, items);
+          items = result.expanded;
+          failedCount = result.failedCount;
         }
 
         const { items: shaped, paginationHint } = shapeListResponse(items, page.totalCount, {
@@ -42,11 +45,13 @@ export function registerMailFolderTools(
           maxBodyLength: config.limits.maxBodyLength,
         });
 
-        const text = [
-          ...shaped.map((folder) => formatFolderSummary(folder)),
-          "",
-          paginationHint,
-        ].join("\n");
+        const lines = [...shaped.map((folder) => formatFolderSummary(folder)), "", paginationHint];
+        if (parsed.include_children && failedCount > 0) {
+          lines.push(
+            `Hinweis: Unterordner von ${failedCount} Ordner(n) konnten nicht geladen werden (fehlende Berechtigung?).`,
+          );
+        }
+        const text = lines.join("\n");
 
         logger.info(
           { tool: "list_mail_folders", folderCount: shaped.length },
@@ -71,32 +76,60 @@ async function expandChildFolders(
   client: Client,
   userPath: string,
   folders: Record<string, unknown>[],
-): Promise<Record<string, unknown>[]> {
+): Promise<{ expanded: Record<string, unknown>[]; failedCount: number }> {
+  // Identify folders that have children
+  const foldersWithChildren = folders.filter(
+    (f) =>
+      typeof f.childFolderCount === "number" && f.childFolderCount > 0 && typeof f.id === "string",
+  );
+
+  // Fetch all child folders in parallel
+  const childResults = await Promise.allSettled(
+    foldersWithChildren.map((folder) =>
+      fetchPage<Record<string, unknown>>(
+        client,
+        `${userPath}/mailFolders/${folder.id as string}/childFolders`,
+        { select: buildSelectParam(DEFAULT_SELECT.mailFolder) },
+      ).then((page) => ({
+        parentId: folder.id as string,
+        parentName: folder.displayName,
+        children: page.items,
+      })),
+    ),
+  );
+
+  // Build a map of parentId -> children
+  const childMap = new Map<string, Record<string, unknown>[]>();
+  let failedCount = 0;
+  for (const result of childResults) {
+    if (result.status === "fulfilled") {
+      childMap.set(
+        result.value.parentId,
+        result.value.children.map((child) => ({
+          ...child,
+          _isChild: true,
+          _parentName: result.value.parentName,
+        })),
+      );
+    } else {
+      failedCount++;
+      logger.warn("Failed to fetch child folders for a folder");
+    }
+  }
+
+  // Build expanded list maintaining order
   const expanded: Record<string, unknown>[] = [];
   for (const folder of folders) {
     expanded.push(folder);
-    const childCount = typeof folder.childFolderCount === "number" ? folder.childFolderCount : 0;
-    if (childCount > 0 && typeof folder.id === "string") {
-      try {
-        const childPage = await fetchPage<Record<string, unknown>>(
-          client,
-          `${userPath}/mailFolders/${folder.id}/childFolders`,
-          { select: buildSelectParam(DEFAULT_SELECT.mailFolder) },
-        );
-        for (const child of childPage.items) {
-          expanded.push({
-            ...child,
-            _isChild: true,
-            _parentName: folder.displayName,
-          });
-        }
-      } catch {
-        // Skip child folder fetch errors silently
-        logger.warn({ folderId: folder.id }, "Failed to fetch child folders");
+    if (typeof folder.id === "string") {
+      const children = childMap.get(folder.id);
+      if (children) {
+        expanded.push(...children);
       }
     }
   }
-  return expanded;
+
+  return { expanded, failedCount };
 }
 
 function formatFolderSummary(folder: Record<string, unknown>): string {
