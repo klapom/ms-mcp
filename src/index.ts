@@ -12,10 +12,15 @@ import { registerCalendarListTools } from "./tools/calendar-list.js";
 import { registerCalendarRespondTools } from "./tools/calendar-respond.js";
 import { registerCalendarUpdateTools } from "./tools/calendar-update.js";
 import { registerCalendarViewTools } from "./tools/calendar-view.js";
+import { registerDriveCopyTools } from "./tools/drive-copy.js";
 import { registerDriveDownloadTools } from "./tools/drive-download.js";
+import { registerDriveFolderTools } from "./tools/drive-folder.js";
 import { registerDriveListTools } from "./tools/drive-list.js";
 import { registerDriveMetadataTools } from "./tools/drive-metadata.js";
+import { registerDriveMoveTools } from "./tools/drive-move.js";
 import { registerDriveSearchTools } from "./tools/drive-search.js";
+import { registerDriveShareTools } from "./tools/drive-share.js";
+import { registerDriveUploadTools } from "./tools/drive-upload.js";
 import { registerMailAttachmentTools } from "./tools/mail-attachments.js";
 import { registerMailFolderTools } from "./tools/mail-folders.js";
 import { registerMailForwardTools } from "./tools/mail-forward.js";
@@ -74,6 +79,11 @@ const registrations: ToolRegistrationFn[] = [
   registerDriveSearchTools,
   registerDriveMetadataTools,
   registerDriveDownloadTools,
+  registerDriveUploadTools,
+  registerDriveFolderTools,
+  registerDriveMoveTools,
+  registerDriveCopyTools,
+  registerDriveShareTools,
 ];
 
 async function main() {
