@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BaseParams, ListParams } from "./common.js";
+import { BaseParams, ListParams, WriteParams } from "./common.js";
 
 /**
  * Parameters for list_emails tool.
@@ -94,3 +94,73 @@ export const SearchEmailsParams = ListParams.extend({
 });
 
 export type SearchEmailsParamsType = z.infer<typeof SearchEmailsParams>;
+
+/**
+ * Parameters for send_email tool.
+ */
+export const SendEmailParams = WriteParams.extend({
+  to: z
+    .array(z.string().email("Ungültige E-Mail-Adresse"))
+    .min(1)
+    .max(500)
+    .describe("Empfänger-E-Mail-Adressen (mindestens 1, max 500)"),
+  cc: z.array(z.string().email()).max(500).optional().describe("CC-Empfänger"),
+  bcc: z.array(z.string().email()).max(500).optional().describe("BCC-Empfänger"),
+  subject: z.string().min(1).max(255).describe("Betreff der E-Mail"),
+  body: z
+    .string()
+    .min(1)
+    .max(100_000)
+    .describe("E-Mail-Body (Plain-Text oder HTML je nach body_type)"),
+  body_type: z
+    .enum(["text", "html"])
+    .default("text")
+    .describe("Body-Format: 'text' für Plain-Text, 'html' für HTML"),
+  importance: z
+    .enum(["low", "normal", "high"])
+    .default("normal")
+    .describe("Wichtigkeit der E-Mail"),
+  save_to_sent_items: z
+    .boolean()
+    .default(true)
+    .describe("E-Mail in 'Gesendete Elemente' speichern (default: true)"),
+});
+
+export type SendEmailParamsType = z.infer<typeof SendEmailParams>;
+
+/**
+ * Parameters for reply_email tool.
+ */
+export const ReplyEmailParams = WriteParams.extend({
+  message_id: z.string().min(1).describe("ID der Original-E-Mail, auf die geantwortet wird"),
+  comment: z
+    .string()
+    .min(1)
+    .max(100_000)
+    .describe("Antwort-Text (wird als Kommentar über die Original-Mail gesetzt)"),
+  reply_all: z
+    .boolean()
+    .default(false)
+    .describe("Wenn true: Reply-All an alle Empfänger. Wenn false: nur an den Absender."),
+});
+
+export type ReplyEmailParamsType = z.infer<typeof ReplyEmailParams>;
+
+/**
+ * Parameters for forward_email tool.
+ */
+export const ForwardEmailParams = WriteParams.extend({
+  message_id: z.string().min(1).describe("ID der E-Mail, die weitergeleitet werden soll"),
+  to: z
+    .array(z.string().email("Ungültige E-Mail-Adresse"))
+    .min(1)
+    .max(500)
+    .describe("Empfänger der Weiterleitung (mindestens 1)"),
+  comment: z
+    .string()
+    .max(100_000)
+    .optional()
+    .describe("Optionaler Kommentar, der über die weitergeleitete E-Mail gesetzt wird"),
+});
+
+export type ForwardEmailParamsType = z.infer<typeof ForwardEmailParams>;

@@ -5,8 +5,11 @@ import { MsalClient } from "./auth/msal-client.js";
 import { createCachePlugin } from "./auth/token-cache.js";
 import { type Config, loadConfig } from "./config.js";
 import { registerMailFolderTools } from "./tools/mail-folders.js";
+import { registerMailForwardTools } from "./tools/mail-forward.js";
 import { registerMailReadTools } from "./tools/mail-read.js";
+import { registerMailReplyTools } from "./tools/mail-reply.js";
 import { registerMailSearchTools } from "./tools/mail-search.js";
+import { registerMailSendTools } from "./tools/mail-send.js";
 import { registerMailTools } from "./tools/mail.js";
 import type { ToolRegistrationFn } from "./types/tools.js";
 import { createLogger } from "./utils/logger.js";
@@ -40,6 +43,9 @@ const registrations: ToolRegistrationFn[] = [
   registerMailReadTools,
   registerMailFolderTools,
   registerMailSearchTools,
+  registerMailSendTools,
+  registerMailReplyTools,
+  registerMailForwardTools,
 ];
 
 async function main() {
