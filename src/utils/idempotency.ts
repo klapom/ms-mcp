@@ -19,19 +19,21 @@ export class IdempotencyCache {
   }
 
   /**
-   * Build a composite key from tool name and idempotency key.
+   * Build a composite key from tool name, idempotency key, and optional userId.
+   * Includes userId to ensure multi-tenant isolation.
    */
-  private buildKey(toolName: string, idempotencyKey: string): string {
-    return `${toolName}:${idempotencyKey}`;
+  private buildKey(toolName: string, idempotencyKey: string, userId?: string): string {
+    const userSegment = userId ?? "me";
+    return `${userSegment}:${toolName}:${idempotencyKey}`;
   }
 
   /**
    * Check if a result exists for this key.
    * Returns the cached result or undefined.
    */
-  get(toolName: string, idempotencyKey: string): unknown | undefined {
+  get(toolName: string, idempotencyKey: string, userId?: string): unknown | undefined {
     this.cleanup();
-    const key = this.buildKey(toolName, idempotencyKey);
+    const key = this.buildKey(toolName, idempotencyKey, userId);
     const entry = this.cache.get(key);
     if (entry === undefined) {
       return undefined;
@@ -43,9 +45,9 @@ export class IdempotencyCache {
   /**
    * Store a result for an idempotency key.
    */
-  set(toolName: string, idempotencyKey: string, result: unknown): void {
+  set(toolName: string, idempotencyKey: string, result: unknown, userId?: string): void {
     this.cleanup();
-    const key = this.buildKey(toolName, idempotencyKey);
+    const key = this.buildKey(toolName, idempotencyKey, userId);
     this.cache.set(key, { result, timestamp: Date.now() });
     log.debug({ toolName, idempotencyKey, cacheSize: this.cache.size }, "Idempotency cache set");
   }

@@ -4,6 +4,7 @@ import { convert as htmlToText } from "html-to-text";
 import type { Config } from "../config.js";
 import { resolveUserPath } from "../schemas/common.js";
 import { ReadEmailParams } from "../schemas/mail.js";
+import { extractAddress, extractAddressListFiltered } from "../utils/address-format.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
 import { createLogger } from "../utils/logger.js";
 import { DEFAULT_SELECT, buildSelectParam, truncateBody } from "../utils/response-shaper.js";
@@ -136,10 +137,10 @@ function formatEmailDetail(
   includeHeaders: boolean,
 ): string {
   const subject = String(email.subject ?? "(no subject)");
-  const from = formatAddress(email.from);
-  const to = formatAddressList(email.toRecipients);
-  const cc = formatAddressList(email.ccRecipients);
-  const bcc = formatAddressList(email.bccRecipients);
+  const from = extractAddress(email.from);
+  const to = extractAddressListFiltered(email.toRecipients);
+  const cc = extractAddressListFiltered(email.ccRecipients);
+  const bcc = extractAddressListFiltered(email.bccRecipients);
   const date = String(email.receivedDateTime ?? "");
   const sentDate = String(email.sentDateTime ?? "");
   const importance = String(email.importance ?? "normal");
@@ -168,21 +169,4 @@ function formatEmailDetail(
   lines.push("", "--- Body ---", bodyContent);
 
   return lines.join("\n");
-}
-
-function formatAddress(addressObj: unknown): string {
-  if (!isRecordObject(addressObj)) return "(unknown)";
-  if (!isRecordObject(addressObj.emailAddress)) return "(unknown)";
-  const name = typeof addressObj.emailAddress.name === "string" ? addressObj.emailAddress.name : "";
-  const address =
-    typeof addressObj.emailAddress.address === "string" ? addressObj.emailAddress.address : "";
-  return name ? `${name} <${address}>` : address || "(unknown)";
-}
-
-function formatAddressList(recipients: unknown): string {
-  if (!Array.isArray(recipients)) return "";
-  return recipients
-    .map((r: unknown) => formatAddress(r))
-    .filter((a) => a !== "(unknown)")
-    .join(", ");
 }

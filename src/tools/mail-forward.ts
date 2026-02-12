@@ -4,25 +4,15 @@ import type { Config } from "../config.js";
 import { resolveUserPath } from "../schemas/common.js";
 import type { ForwardEmailParamsType } from "../schemas/mail.js";
 import { ForwardEmailParams } from "../schemas/mail.js";
+import type { ToolResult } from "../types/tools.js";
+import { extractAddress } from "../utils/address-format.js";
 import { checkConfirmation, formatPreview } from "../utils/confirmation.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
 import { idempotencyCache } from "../utils/idempotency.js";
 import { createLogger } from "../utils/logger.js";
 import { toRecipients } from "../utils/recipients.js";
-import { isRecordObject } from "../utils/type-guards.js";
 
 const logger = createLogger("tools:mail-forward");
-
-type ToolResult = { content: Array<{ type: "text"; text: string }>; isError?: boolean };
-
-function extractAddress(addressObj: unknown): string {
-  if (!isRecordObject(addressObj)) return "(unknown)";
-  if (!isRecordObject(addressObj.emailAddress)) return "(unknown)";
-  const name = typeof addressObj.emailAddress.name === "string" ? addressObj.emailAddress.name : "";
-  const address =
-    typeof addressObj.emailAddress.address === "string" ? addressObj.emailAddress.address : "";
-  return name ? `${name} <${address}>` : address || "(unknown)";
-}
 
 async function buildForwardPreview(
   graphClient: Client,
@@ -71,13 +61,14 @@ async function executeForward(
 
   await graphClient.api(`${userPath}/messages/${parsed.message_id}/forward`).post(requestBody);
 
+  const endTime = Date.now();
   logger.info(
     {
       tool: "forward_email",
       recipientCount: parsed.to.length,
       hasComment: parsed.comment !== undefined,
       status: 202,
-      duration_ms: Date.now() - startTime,
+      duration_ms: endTime - startTime,
     },
     "forward_email completed",
   );
@@ -86,7 +77,7 @@ async function executeForward(
     content: [
       {
         type: "text",
-        text: `E-Mail erfolgreich weitergeleitet.\n\nZeitstempel: ${new Date().toISOString()}\nEmpfänger: ${parsed.to.length}`,
+        text: `E-Mail erfolgreich weitergeleitet.\n\nZeitstempel: ${new Date(endTime).toISOString()}\nEmpfänger: ${parsed.to.length}`,
       },
     ],
   };
@@ -112,14 +103,18 @@ export function registerMailForwardTools(
         }
 
         if (parsed.idempotency_key) {
-          const cached = idempotencyCache.get("forward_email", parsed.idempotency_key);
+          const cached = idempotencyCache.get(
+            "forward_email",
+            parsed.idempotency_key,
+            parsed.user_id,
+          );
           if (cached !== undefined) return cached as ToolResult;
         }
 
         const result = await executeForward(graphClient, parsed, userPath, startTime);
 
         if (parsed.idempotency_key) {
-          idempotencyCache.set("forward_email", parsed.idempotency_key, result);
+          idempotencyCache.set("forward_email", parsed.idempotency_key, result, parsed.user_id);
         }
 
         return result;

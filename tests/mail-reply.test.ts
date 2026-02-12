@@ -1,10 +1,9 @@
 import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
 import { http, HttpResponse } from "msw";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { ErrorMappingMiddleware } from "../src/middleware/error-mapping.js";
 import { resolveUserPath } from "../src/schemas/common.js";
 import { ReplyEmailParams } from "../src/schemas/mail.js";
-import { idempotencyCache } from "../src/utils/idempotency.js";
 import { server as mswServer } from "./mocks/server.js";
 
 // ---------------------------------------------------------------------------

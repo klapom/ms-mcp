@@ -5,6 +5,7 @@ import type { Config } from "../config.js";
 import { resolveUserPath } from "../schemas/common.js";
 import type { SendEmailParamsType } from "../schemas/mail.js";
 import { SendEmailParams } from "../schemas/mail.js";
+import type { ToolResult } from "../types/tools.js";
 import { checkConfirmation, formatPreview } from "../utils/confirmation.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
 import { idempotencyCache } from "../utils/idempotency.js";
@@ -12,8 +13,6 @@ import { createLogger } from "../utils/logger.js";
 import { toRecipients } from "../utils/recipients.js";
 
 const logger = createLogger("tools:mail-send");
-
-type ToolResult = { content: Array<{ type: "text"; text: string }>; isError?: boolean };
 
 const DUPLICATE_TTL_MS = 2 * 60 * 1000; // 2 minutes
 const duplicateHashes = new Map<string, number>();
@@ -94,6 +93,7 @@ async function executeSend(
 
   await graphClient.api(`${userPath}/sendMail`).post(requestBody);
 
+  const endTime = Date.now();
   logger.info(
     {
       tool: "send_email",
@@ -101,7 +101,7 @@ async function executeSend(
       bodyType: parsed.body_type,
       importance: parsed.importance,
       status: 202,
-      duration_ms: Date.now() - startTime,
+      duration_ms: endTime - startTime,
     },
     "send_email completed",
   );
@@ -110,7 +110,7 @@ async function executeSend(
     content: [
       {
         type: "text",
-        text: `E-Mail erfolgreich gesendet.${duplicateWarning}\n\nZeitstempel: ${new Date().toISOString()}\nEmpfänger: ${recipientCount}`,
+        text: `E-Mail erfolgreich gesendet.${duplicateWarning}\n\nZeitstempel: ${new Date(endTime).toISOString()}\nEmpfänger: ${recipientCount}`,
       },
     ],
   };
@@ -134,14 +134,14 @@ export function registerMailSendTools(
         if (previewResult) return previewResult;
 
         if (parsed.idempotency_key) {
-          const cached = idempotencyCache.get("send_email", parsed.idempotency_key);
+          const cached = idempotencyCache.get("send_email", parsed.idempotency_key, parsed.user_id);
           if (cached !== undefined) return cached as ToolResult;
         }
 
         const result = await executeSend(graphClient, parsed, startTime);
 
         if (parsed.idempotency_key) {
-          idempotencyCache.set("send_email", parsed.idempotency_key, result);
+          idempotencyCache.set("send_email", parsed.idempotency_key, result, parsed.user_id);
         }
 
         return result;

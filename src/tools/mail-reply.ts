@@ -4,29 +4,14 @@ import type { Config } from "../config.js";
 import { resolveUserPath } from "../schemas/common.js";
 import type { ReplyEmailParamsType } from "../schemas/mail.js";
 import { ReplyEmailParams } from "../schemas/mail.js";
+import type { ToolResult } from "../types/tools.js";
+import { extractAddress, extractAddressList } from "../utils/address-format.js";
 import { checkConfirmation, formatPreview } from "../utils/confirmation.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
 import { idempotencyCache } from "../utils/idempotency.js";
 import { createLogger } from "../utils/logger.js";
-import { isRecordObject } from "../utils/type-guards.js";
 
 const logger = createLogger("tools:mail-reply");
-
-type ToolResult = { content: Array<{ type: "text"; text: string }>; isError?: boolean };
-
-function extractAddress(addressObj: unknown): string {
-  if (!isRecordObject(addressObj)) return "(unknown)";
-  if (!isRecordObject(addressObj.emailAddress)) return "(unknown)";
-  const name = typeof addressObj.emailAddress.name === "string" ? addressObj.emailAddress.name : "";
-  const address =
-    typeof addressObj.emailAddress.address === "string" ? addressObj.emailAddress.address : "";
-  return name ? `${name} <${address}>` : address || "(unknown)";
-}
-
-function extractAddressList(recipients: unknown): string {
-  if (!Array.isArray(recipients)) return "";
-  return recipients.map((r: unknown) => extractAddress(r)).join(", ");
-}
 
 async function buildReplyPreview(
   graphClient: Client,
@@ -72,12 +57,13 @@ async function executeReply(
     .api(`${userPath}/messages/${parsed.message_id}/${endpoint}`)
     .post({ comment: parsed.comment });
 
+  const endTime = Date.now();
   logger.info(
     {
       tool: "reply_email",
       replyAll: parsed.reply_all,
       status: 202,
-      duration_ms: Date.now() - startTime,
+      duration_ms: endTime - startTime,
     },
     "reply_email completed",
   );
@@ -86,7 +72,7 @@ async function executeReply(
     content: [
       {
         type: "text",
-        text: `${parsed.reply_all ? "Reply-All" : "Antwort"} erfolgreich gesendet.\n\nZeitstempel: ${new Date().toISOString()}`,
+        text: `${parsed.reply_all ? "Reply-All" : "Antwort"} erfolgreich gesendet.\n\nZeitstempel: ${new Date(endTime).toISOString()}`,
       },
     ],
   };
@@ -112,14 +98,18 @@ export function registerMailReplyTools(
         }
 
         if (parsed.idempotency_key) {
-          const cached = idempotencyCache.get("reply_email", parsed.idempotency_key);
+          const cached = idempotencyCache.get(
+            "reply_email",
+            parsed.idempotency_key,
+            parsed.user_id,
+          );
           if (cached !== undefined) return cached as ToolResult;
         }
 
         const result = await executeReply(graphClient, parsed, userPath, startTime);
 
         if (parsed.idempotency_key) {
-          idempotencyCache.set("reply_email", parsed.idempotency_key, result);
+          idempotencyCache.set("reply_email", parsed.idempotency_key, result, parsed.user_id);
         }
 
         return result;
