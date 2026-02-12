@@ -64,12 +64,15 @@ export function formatEventSummary(index: number, event: Record<string, unknown>
   const showAs = typeof event.showAs === "string" ? event.showAs : "busy";
   const cancelledMarker = isCancelled ? " [CANCELLED]" : "";
 
+  const eventId = typeof event.id === "string" ? event.id : "";
+
   const lines = [`[${index}] ${dateRange} | ${subject}${cancelledMarker}`];
   const details: string[] = [];
   if (location) details.push(`Location: ${location}`);
   details.push(`Organizer: ${organizer}`);
   details.push(showAs);
   lines.push(`    ${details.join(" | ")}`);
+  if (eventId) lines.push(`    ID: ${eventId}`);
 
   return lines.join("\n");
 }
