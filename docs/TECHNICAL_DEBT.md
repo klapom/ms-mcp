@@ -63,6 +63,12 @@ Dieses Dokument sammelt Beobachtungen aus der laufenden Implementierung:
 - **Architektur:** Neues Modul `src/utils/user-settings.ts` mit `getUserTimezone(graphClient): Promise<string>`, intern gecacht. Kein Coupling mit Auth/Token-Refresh.
 - **Risiko:** Mittel — betrifft alle Calendar-Tools, aber rein additiv (Header hinzufügen).
 
+### proposedNewTime Support für respond_to_event
+- **Quelle:** E2E-Nutzung Sprint 3.2
+- **Status:** `respond_to_event` unterstützt nur accept/decline/tentativelyAccept ohne Zeitvorschlag. Graph API erlaubt `proposedNewTime` (Start + End + TimeZone) als optionalen Body-Parameter bei allen drei Actions.
+- **Vorschlag:** `RespondToEventParams` um optionales `proposed_new_time: { start: DateTimeTimeZone, end: DateTimeTimeZone }` erweitern. Im Handler als `proposedNewTime: { start, end }` an den POST-Body anhängen.
+- **Risiko:** Gering — rein additiv, keine Breaking Changes.
+
 ### Multi-Tenant Test-Assertions in calendar-availability
 - **Quelle:** Sprint 3.2 Review
 - **Status:** `calendar-availability.test.ts` Multi-Tenant-Test assertet `toHaveLength(2)` — gibt immer die gleiche Mock-Response zurück, testet nicht wirklich Routing-Unterschiede.
