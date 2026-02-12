@@ -386,7 +386,7 @@ describe("move_email idempotency", () => {
 
   it("should cache move result and return on second call", () => {
     const result = {
-      content: [{ type: "text" as const, text: "E-Mail erfolgreich verschoben." }],
+      content: [{ type: "text" as const, text: "Email moved successfully." }],
     };
     idempotencyCache.set("move_email", "move-key-1", result);
 
@@ -493,15 +493,15 @@ describe("move_email preview formatting", () => {
   it("should format move_email preview with folder details", async () => {
     const { formatPreview } = await import("../src/utils/confirmation.js");
 
-    const previewText = formatPreview("E-Mail verschieben", {
-      Aktion: "Verschieben",
-      Betreff: "Test Subject",
-      "Von Ordner": "Inbox",
-      "Nach Ordner": "Archive",
+    const previewText = formatPreview("Move email", {
+      Action: "Move",
+      Subject: "Test Subject",
+      "From Folder": "Inbox",
+      "To Folder": "Archive",
     });
 
-    expect(previewText).toContain("E-Mail verschieben");
-    expect(previewText).toContain("Verschieben");
+    expect(previewText).toContain("Move email");
+    expect(previewText).toContain("Move");
     expect(previewText).toContain("Inbox");
     expect(previewText).toContain("Archive");
   });
@@ -514,23 +514,23 @@ describe("confirmation preview formatting", () => {
     const preview = checkConfirmation(
       "destructive",
       false,
-      formatPreview("E-Mail senden", {
-        An: "test@example.com",
+      formatPreview("Send email", {
+        To: "test@example.com",
         CC: "cc@example.com",
-        Betreff: "Test Subject",
-        "Body-Auszug": "Hello World",
+        Subject: "Test Subject",
+        "Body Preview": "Hello World",
         Format: "text",
-        Wichtigkeit: "normal",
-        "In Gesendete speichern": "Ja",
+        Importance: "normal",
+        "Save to Sent Items": "Yes",
       }),
     );
 
     expect(preview).not.toBeNull();
-    expect(preview?.message).toContain("E-Mail senden");
+    expect(preview?.message).toContain("Send email");
     expect(preview?.message).toContain("test@example.com");
     expect(preview?.message).toContain("cc@example.com");
     expect(preview?.message).toContain("Test Subject");
-    expect(preview?.message).toContain("Bestätige mit confirm: true");
+    expect(preview?.message).toContain("Confirm with confirm: true");
   });
 
   it("should format reply_email preview with original context", async () => {
@@ -539,17 +539,17 @@ describe("confirmation preview formatting", () => {
     const preview = checkConfirmation(
       "destructive",
       false,
-      formatPreview("E-Mail beantworten", {
-        Aktion: "Antworten",
-        "Original-Betreff": "RE: Test",
-        "Original-Absender": "sender@example.com",
-        "Kommentar-Auszug": "My reply text",
+      formatPreview("Reply to email", {
+        Action: "Reply",
+        "Original Subject": "RE: Test",
+        "Original Sender": "sender@example.com",
+        "Comment Preview": "My reply text",
       }),
     );
 
     expect(preview).not.toBeNull();
-    expect(preview?.message).toContain("E-Mail beantworten");
-    expect(preview?.message).toContain("Antworten");
+    expect(preview?.message).toContain("Reply to email");
+    expect(preview?.message).toContain("Reply");
     expect(preview?.message).toContain("RE: Test");
     expect(preview?.message).toContain("sender@example.com");
   });
@@ -560,19 +560,19 @@ describe("confirmation preview formatting", () => {
     const preview = checkConfirmation(
       "destructive",
       false,
-      formatPreview("E-Mail weiterleiten", {
-        Aktion: "Weiterleiten",
-        "Original-Betreff": "FW: Original",
-        "Original-Absender": "original@example.com",
-        "Weiterleiten an": "forward@example.com",
-        Anhänge: "Ja (werden mitgesendet)",
+      formatPreview("Forward email", {
+        Action: "Forward",
+        "Original Subject": "FW: Original",
+        "Original Sender": "original@example.com",
+        "Forward To": "forward@example.com",
+        Attachments: "Yes (will be forwarded)",
       }),
     );
 
     expect(preview).not.toBeNull();
-    expect(preview?.message).toContain("E-Mail weiterleiten");
-    expect(preview?.message).toContain("Weiterleiten");
+    expect(preview?.message).toContain("Forward email");
+    expect(preview?.message).toContain("Forward");
     expect(preview?.message).toContain("forward@example.com");
-    expect(preview?.message).toContain("Ja (werden mitgesendet)");
+    expect(preview?.message).toContain("Yes (will be forwarded)");
   });
 });

@@ -40,10 +40,17 @@ export async function fetchPage<T>(
     orderby?: string;
     /** Arbitrary query parameters (e.g. calendarView's startDateTime/endDateTime). */
     query?: Record<string, string>;
+    /** HTTP headers to add to the request (e.g. Prefer for timezone). */
+    headers?: Record<string, string>;
   },
 ): Promise<PaginatedResponse<T>> {
   let request = client.api(url);
 
+  if (params?.headers) {
+    for (const [key, value] of Object.entries(params.headers)) {
+      request = request.header(key, value);
+    }
+  }
   if (params?.query) {
     request = request.query(params.query);
   }

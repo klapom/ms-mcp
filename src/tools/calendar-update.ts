@@ -11,7 +11,9 @@ import { McpToolError, ValidationError, formatErrorForUser } from "../utils/erro
 import { encodeGraphId } from "../utils/graph-id.js";
 import { idempotencyCache } from "../utils/idempotency.js";
 import { createLogger } from "../utils/logger.js";
+import { toAttendees } from "../utils/recipients.js";
 import { DEFAULT_SELECT, buildSelectParam } from "../utils/response-shaper.js";
+import { getUserTimezone } from "../utils/user-settings.js";
 
 const logger = createLogger("tools:calendar-update");
 
@@ -48,10 +50,7 @@ function buildPatchBody(parsed: UpdateEventParamsType): Record<string, unknown> 
     };
   }
   if (parsed.attendees !== undefined) {
-    body.attendees = parsed.attendees.map((a) => ({
-      emailAddress: { address: a.email, name: a.name },
-      type: a.type,
-    }));
+    body.attendees = toAttendees(parsed.attendees);
   }
   if (parsed.is_all_day !== undefined) body.isAllDay = parsed.is_all_day;
   if (parsed.is_online_meeting !== undefined) body.isOnlineMeeting = parsed.is_online_meeting;
@@ -74,29 +73,31 @@ async function buildUpdatePreview(
     ? `${userPath}/calendars/${encodeGraphId(parsed.calendar_id)}/events/${encodeGraphId(parsed.event_id)}`
     : `${userPath}/events/${encodeGraphId(parsed.event_id)}`;
 
+  const tz = await getUserTimezone(graphClient);
   const current = (await graphClient
     .api(url)
+    .header("Prefer", `outlook.timezone="${tz}"`)
     .select(buildSelectParam(DEFAULT_SELECT.eventDetail))
     .get()) as Record<string, unknown>;
 
   const details: Record<string, unknown> = {
-    "Event-ID": parsed.event_id,
-    "Aktueller Betreff": current.subject,
+    "Event ID": parsed.event_id,
+    "Current subject": current.subject,
   };
 
-  if (parsed.subject !== undefined) details["Neuer Betreff"] = parsed.subject;
+  if (parsed.subject !== undefined) details["New subject"] = parsed.subject;
   if (parsed.start !== undefined)
-    details["Neue Startzeit"] = `${parsed.start.dateTime} (${parsed.start.timeZone})`;
+    details["New start"] = `${parsed.start.dateTime} (${parsed.start.timeZone})`;
   if (parsed.end !== undefined)
-    details["Neue Endzeit"] = `${parsed.end.dateTime} (${parsed.end.timeZone})`;
-  if (parsed.location !== undefined) details["Neuer Ort"] = parsed.location;
+    details["New end"] = `${parsed.end.dateTime} (${parsed.end.timeZone})`;
+  if (parsed.location !== undefined) details["New location"] = parsed.location;
   if (parsed.attendees !== undefined)
-    details["Neue Teilnehmer"] = parsed.attendees.map((a) => a.email).join(", ");
-  if (parsed.importance !== undefined) details["Neue Wichtigkeit"] = parsed.importance;
+    details["New attendees"] = parsed.attendees.map((a) => a.email).join(", ");
+  if (parsed.importance !== undefined) details["New importance"] = parsed.importance;
   if (parsed.is_online_meeting !== undefined)
-    details["Online Meeting"] = parsed.is_online_meeting ? "Ja" : "Nein";
+    details["Online Meeting"] = parsed.is_online_meeting ? "Yes" : "No";
 
-  const previewText = formatPreview("Event aktualisieren", details);
+  const previewText = formatPreview("Update event", details);
   return { content: [{ type: "text", text: previewText }] };
 }
 
@@ -111,7 +112,11 @@ async function executeUpdate(
     : `${userPath}/events/${encodeGraphId(parsed.event_id)}`;
 
   const patchBody = buildPatchBody(parsed);
-  const result = (await graphClient.api(url).patch(patchBody)) as Record<string, unknown>;
+  const tz = await getUserTimezone(graphClient);
+  const result = (await graphClient
+    .api(url)
+    .header("Prefer", `outlook.timezone="${tz}"`)
+    .patch(patchBody)) as Record<string, unknown>;
 
   const endTime = Date.now();
   const fieldCount = Object.keys(patchBody).length;
@@ -125,7 +130,7 @@ async function executeUpdate(
     "update_event completed",
   );
 
-  const subject = String(result.subject ?? "(kein Betreff)");
+  const subject = String(result.subject ?? "(no subject)");
   const isAllDay = result.isAllDay === true;
   const dateRange = formatDateTimeRange(result.start, result.end, isAllDay);
 
@@ -133,7 +138,7 @@ async function executeUpdate(
     content: [
       {
         type: "text",
-        text: `Event erfolgreich aktualisiert.\n\nBetreff: ${subject}\nZeit: ${dateRange}\nGeänderte Felder: ${fieldCount}`,
+        text: `Event updated successfully.\n\nSubject: ${subject}\nTime: ${dateRange}\nFields changed: ${fieldCount}`,
       },
     ],
   };
@@ -174,7 +179,7 @@ export function registerCalendarUpdateTools(
         const parsed = UpdateEventParams.parse(params);
 
         if (!hasUpdatableField(parsed)) {
-          throw new ValidationError("Mindestens ein aktualisierbares Feld muss angegeben werden.");
+          throw new ValidationError("At least one updatable field must be provided.");
         }
 
         const userPath = resolveUserPath(parsed.user_id);

@@ -250,7 +250,7 @@ describe("list_mail_folders", () => {
       });
 
       expect(items).toHaveLength(2);
-      expect(paginationHint).toContain("2 von 6");
+      expect(paginationHint).toContain("2 of 6");
     });
   });
 

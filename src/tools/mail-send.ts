@@ -35,15 +35,15 @@ function buildSendPreview(parsed: SendEmailParamsType): ToolResult | null {
   const preview = checkConfirmation(
     "destructive",
     parsed.confirm,
-    formatPreview("E-Mail senden", {
-      An: parsed.to.join(", "),
+    formatPreview("Send email", {
+      To: parsed.to.join(", "),
       CC: parsed.cc?.join(", "),
       BCC: parsed.bcc?.join(", "),
-      Betreff: parsed.subject,
-      "Body-Auszug": parsed.body.slice(0, 200) + (parsed.body.length > 200 ? "…" : ""),
+      Subject: parsed.subject,
+      "Body excerpt": parsed.body.slice(0, 200) + (parsed.body.length > 200 ? "…" : ""),
       Format: parsed.body_type,
-      Wichtigkeit: parsed.importance,
-      "In Gesendete speichern": parsed.save_to_sent_items ? "Ja" : "Nein",
+      Importance: parsed.importance,
+      "Save to sent items": parsed.save_to_sent_items ? "Yes" : "No",
     }),
   );
   if (preview) {
@@ -57,9 +57,7 @@ function checkDuplicate(to: string[], subject: string, body: string): string {
   const dupHash = computeDuplicateHash(to, subject, body);
   const isDuplicate = duplicateHashes.has(dupHash);
   duplicateHashes.set(dupHash, Date.now());
-  return isDuplicate
-    ? "\n⚠ Mögliches Duplikat erkannt: Eine ähnliche E-Mail wurde kürzlich gesendet."
-    : "";
+  return isDuplicate ? "\n⚠ Possible duplicate detected: A similar email was sent recently." : "";
 }
 
 function buildGraphRequestBody(parsed: SendEmailParamsType): Record<string, unknown> {
@@ -110,7 +108,7 @@ async function executeSend(
     content: [
       {
         type: "text",
-        text: `E-Mail erfolgreich gesendet.${duplicateWarning}\n\nZeitstempel: ${new Date(endTime).toISOString()}\nEmpfänger: ${recipientCount}`,
+        text: `Email sent successfully.${duplicateWarning}\n\nTimestamp: ${new Date(endTime).toISOString()}\nRecipients: ${recipientCount}`,
       },
     ],
   };

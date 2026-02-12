@@ -173,6 +173,11 @@ const recurringOccurrence = {
 // ---------------------------------------------------------------------------
 
 export const calendarHandlers = [
+  // ---- mailboxSettings (for timezone) ----
+  http.get(`${GRAPH_BASE}/me/mailboxSettings`, () => {
+    return HttpResponse.json({ timeZone: "Europe/Berlin" });
+  }),
+
   // ---- list_calendars ----
 
   // GET /me/calendars → 3 calendars

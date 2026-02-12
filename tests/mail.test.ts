@@ -177,7 +177,7 @@ describe("list_emails Graph API integration", () => {
       for (const item of items) {
         expect(String(item.bodyPreview).length).toBeLessThanOrEqual(10);
       }
-      expect(paginationHint).toContain("2 von 2");
+      expect(paginationHint).toContain("2 of 2");
     });
 
     it("should resolve user_id path for delegated access", () => {
@@ -278,7 +278,7 @@ describe("list_emails Graph API integration", () => {
       );
 
       expect(items).toHaveLength(1);
-      expect(paginationHint).toContain("1 von 50");
+      expect(paginationHint).toContain("1 of 50");
       expect(paginationHint).toContain("skip");
     });
   });

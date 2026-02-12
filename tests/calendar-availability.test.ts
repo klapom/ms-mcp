@@ -96,7 +96,7 @@ describe("check_availability", () => {
 
     it("should work for multi-tenant", async () => {
       const result = (await client.api("/users/admin@tenant.com/calendar/getSchedule").post({
-        schedules: ["alice@example.com"],
+        schedules: ["alice@example.com", "bob@example.com"],
         startTime: validParams.start,
         endTime: validParams.end,
         availabilityViewInterval: 30,

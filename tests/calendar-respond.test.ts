@@ -83,6 +83,48 @@ describe("respond_to_event", () => {
       });
       expect(result.send_response).toBe(false);
     });
+
+    it("should accept proposed_new_time with decline", () => {
+      const result = RespondToEventParams.parse({
+        event_id: "evt-001",
+        action: "decline",
+        proposed_new_time: {
+          start: { dateTime: "2026-02-16T10:00:00", timeZone: "Europe/Berlin" },
+          end: { dateTime: "2026-02-16T11:00:00", timeZone: "Europe/Berlin" },
+        },
+      });
+      expect(result.proposed_new_time).toBeDefined();
+      expect(result.proposed_new_time?.start.dateTime).toBe("2026-02-16T10:00:00");
+    });
+
+    it("should accept proposed_new_time with tentativelyAccept", () => {
+      const result = RespondToEventParams.parse({
+        event_id: "evt-001",
+        action: "tentativelyAccept",
+        proposed_new_time: {
+          start: { dateTime: "2026-02-16T14:00:00", timeZone: "UTC" },
+          end: { dateTime: "2026-02-16T15:00:00", timeZone: "UTC" },
+        },
+      });
+      expect(result.proposed_new_time).toBeDefined();
+    });
+
+    it("should parse proposed_new_time as optional (omitted)", () => {
+      const result = RespondToEventParams.parse({
+        event_id: "evt-001",
+        action: "accept",
+      });
+      expect(result.proposed_new_time).toBeUndefined();
+    });
+
+    it("should reject proposed_new_time with invalid structure", () => {
+      const result = RespondToEventParams.safeParse({
+        event_id: "evt-001",
+        action: "decline",
+        proposed_new_time: { start: "invalid" },
+      });
+      expect(result.success).toBe(false);
+    });
   });
 
   describe("Graph API integration", () => {
@@ -111,6 +153,18 @@ describe("respond_to_event", () => {
       expect(result).toBeNull();
     });
 
+    it("should decline with proposedNewTime (202)", async () => {
+      const result = await client.api("/me/events/evt-001/decline").post({
+        sendResponse: true,
+        comment: "How about this time?",
+        proposedNewTime: {
+          start: { dateTime: "2026-02-16T10:00:00", timeZone: "Europe/Berlin" },
+          end: { dateTime: "2026-02-16T11:00:00", timeZone: "Europe/Berlin" },
+        },
+      });
+      expect(result).toBeNull();
+    });
+
     it("should return 403 for organizer event", async () => {
       const errorClient = createTestGraphClientWithErrorMapping();
       await expect(
@@ -128,9 +182,7 @@ describe("respond_to_event", () => {
     });
 
     it("should construct ValidationError for organizer", () => {
-      const error = new ValidationError(
-        "Sie sind der Organisator dieses Events und können nicht antworten.",
-      );
+      const error = new ValidationError("You are the organizer of this event and cannot respond.");
       expect(error.httpStatus).toBe(400);
       expect(error.code).toBe("VALIDATION_ERROR");
     });

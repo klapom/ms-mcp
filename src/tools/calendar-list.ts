@@ -8,6 +8,7 @@ import { createLogger } from "../utils/logger.js";
 import { fetchPage } from "../utils/pagination.js";
 import { DEFAULT_SELECT, buildSelectParam, shapeListResponse } from "../utils/response-shaper.js";
 import { isRecordObject } from "../utils/type-guards.js";
+import { getUserTimezone } from "../utils/user-settings.js";
 
 const logger = createLogger("tools:calendar-list");
 
@@ -25,11 +26,13 @@ export function registerCalendarListTools(
         const parsed = ListCalendarsParams.parse(params);
         const userPath = resolveUserPath(parsed.user_id);
         const url = `${userPath}/calendars`;
+        const tz = await getUserTimezone(graphClient);
 
         const page = await fetchPage<Record<string, unknown>>(graphClient, url, {
           top: parsed.top ?? config.limits.maxItems,
           skip: parsed.skip,
           select: buildSelectParam(DEFAULT_SELECT.calendar),
+          headers: { Prefer: `outlook.timezone="${tz}"` },
         });
 
         const { items, paginationHint } = shapeListResponse(page.items, page.totalCount, {
@@ -39,7 +42,7 @@ export function registerCalendarListTools(
 
         const text =
           items.length === 0
-            ? "Keine Kalender gefunden."
+            ? "No calendars found."
             : [...items.map((cal) => formatCalendarSummary(cal)), "", paginationHint].join("\n");
 
         logger.info(

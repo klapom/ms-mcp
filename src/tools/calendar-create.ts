@@ -10,18 +10,10 @@ import { McpToolError, formatErrorForUser } from "../utils/errors.js";
 import { encodeGraphId } from "../utils/graph-id.js";
 import { idempotencyCache } from "../utils/idempotency.js";
 import { createLogger } from "../utils/logger.js";
+import { toAttendees } from "../utils/recipients.js";
+import { getUserTimezone } from "../utils/user-settings.js";
 
 const logger = createLogger("tools:calendar-create");
-
-function buildAttendeesBody(
-  attendees: CreateEventParamsType["attendees"],
-): Array<Record<string, unknown>> | undefined {
-  if (!attendees || attendees.length === 0) return undefined;
-  return attendees.map((a) => ({
-    emailAddress: { address: a.email, name: a.name },
-    type: a.type,
-  }));
-}
 
 function buildCreateRequestBody(parsed: CreateEventParamsType): Record<string, unknown> {
   const body: Record<string, unknown> = {
@@ -43,9 +35,8 @@ function buildCreateRequestBody(parsed: CreateEventParamsType): Record<string, u
       content: parsed.body,
     };
   }
-  const attendeesBody = buildAttendeesBody(parsed.attendees);
-  if (attendeesBody) {
-    body.attendees = attendeesBody;
+  if (parsed.attendees && parsed.attendees.length > 0) {
+    body.attendees = toAttendees(parsed.attendees);
   }
   if (parsed.categories) {
     body.categories = parsed.categories;
@@ -60,15 +51,15 @@ function buildCreatePreview(parsed: CreateEventParamsType): ToolResult | null {
   const preview = checkConfirmation(
     "destructive",
     parsed.confirm,
-    formatPreview("Event erstellen", {
-      Betreff: parsed.subject,
+    formatPreview("Create event", {
+      Subject: parsed.subject,
       Start: `${parsed.start.dateTime} (${parsed.start.timeZone})`,
-      Ende: `${parsed.end.dateTime} (${parsed.end.timeZone})`,
-      Ort: parsed.location,
-      Ganztägig: parsed.is_all_day ? "Ja" : "Nein",
-      "Online Meeting": parsed.is_online_meeting ? "Ja" : "Nein",
-      Teilnehmer: parsed.attendees?.map((a) => a.email).join(", "),
-      Wichtigkeit: parsed.importance,
+      End: `${parsed.end.dateTime} (${parsed.end.timeZone})`,
+      Location: parsed.location,
+      "All-day": parsed.is_all_day ? "Yes" : "No",
+      "Online Meeting": parsed.is_online_meeting ? "Yes" : "No",
+      Attendees: parsed.attendees?.map((a) => a.email).join(", "),
+      Importance: parsed.importance,
     }),
   );
   if (preview) {
@@ -88,7 +79,11 @@ async function executeCreate(
     : `${userPath}/events`;
 
   const requestBody = buildCreateRequestBody(parsed);
-  const result = (await graphClient.api(url).post(requestBody)) as Record<string, unknown>;
+  const tz = await getUserTimezone(graphClient);
+  const result = (await graphClient
+    .api(url)
+    .header("Prefer", `outlook.timezone="${tz}"`)
+    .post(requestBody)) as Record<string, unknown>;
 
   const endTime = Date.now();
   logger.info(
@@ -109,7 +104,7 @@ async function executeCreate(
     content: [
       {
         type: "text",
-        text: `Event erfolgreich erstellt.\n\nID: ${eventId}\nBetreff: ${subject}\nZeitstempel: ${new Date(endTime).toISOString()}`,
+        text: `Event created successfully.\n\nID: ${eventId}\nSubject: ${subject}\nTimestamp: ${new Date(endTime).toISOString()}`,
       },
     ],
   };

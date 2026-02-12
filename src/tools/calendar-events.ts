@@ -21,6 +21,7 @@ import {
   truncateBody,
 } from "../utils/response-shaper.js";
 import { isRecordObject } from "../utils/type-guards.js";
+import { getUserTimezone } from "../utils/user-settings.js";
 
 const logger = createLogger("tools:calendar-events");
 
@@ -43,6 +44,7 @@ export function registerCalendarEventTools(
         const url = parsed.calendar_id
           ? `${userPath}/calendars/${encodeGraphId(parsed.calendar_id)}/events`
           : `${userPath}/events`;
+        const tz = await getUserTimezone(graphClient);
 
         const page = await fetchPage<Record<string, unknown>>(graphClient, url, {
           top: parsed.top ?? config.limits.maxItems,
@@ -50,6 +52,7 @@ export function registerCalendarEventTools(
           select: buildSelectParam(DEFAULT_SELECT.event),
           filter: parsed.filter,
           orderby: parsed.orderby ?? "start/dateTime asc",
+          headers: { Prefer: `outlook.timezone="${tz}"` },
         });
 
         const { items, paginationHint } = shapeListResponse(page.items, page.totalCount, {
@@ -59,7 +62,7 @@ export function registerCalendarEventTools(
 
         const text =
           items.length === 0
-            ? "Keine Events gefunden."
+            ? "No events found."
             : [...items.map((ev, i) => formatEventSummary(i + 1, ev)), "", paginationHint].join(
                 "\n",
               );
@@ -92,8 +95,10 @@ export function registerCalendarEventTools(
           ? `${userPath}/calendars/${encodeGraphId(parsed.calendar_id)}/events/${encodeGraphId(parsed.event_id)}`
           : `${userPath}/events/${encodeGraphId(parsed.event_id)}`;
 
+        const tz = await getUserTimezone(graphClient);
         const response = (await graphClient
           .api(url)
+          .header("Prefer", `outlook.timezone="${tz}"`)
           .select(buildSelectParam(DEFAULT_SELECT.eventDetail))
           .get()) as Record<string, unknown>;
 
@@ -116,7 +121,7 @@ export function registerCalendarEventTools(
 }
 
 function formatEventHeader(event: Record<string, unknown>): string[] {
-  const subject = String(event.subject ?? "(kein Betreff)");
+  const subject = String(event.subject ?? "(no subject)");
   const isAllDay = event.isAllDay === true;
   const dateRange = formatDateTimeRange(event.start, event.end, isAllDay);
   const location = getLocationName(event.location);

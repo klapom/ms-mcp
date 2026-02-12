@@ -12,13 +12,14 @@ import { encodeGraphId } from "../utils/graph-id.js";
 import { idempotencyCache } from "../utils/idempotency.js";
 import { createLogger } from "../utils/logger.js";
 import { DEFAULT_SELECT, buildSelectParam } from "../utils/response-shaper.js";
+import { getUserTimezone } from "../utils/user-settings.js";
 
 const logger = createLogger("tools:calendar-respond");
 
 const ACTION_LABELS: Record<string, string> = {
-  accept: "Zusagen",
-  decline: "Absagen",
-  tentativelyAccept: "Vorläufig zusagen",
+  accept: "Accept",
+  decline: "Decline",
+  tentativelyAccept: "Tentatively accept",
 };
 
 async function buildRespondPreview(
@@ -30,25 +31,30 @@ async function buildRespondPreview(
     ? `${userPath}/calendars/${encodeGraphId(parsed.calendar_id)}/events/${encodeGraphId(parsed.event_id)}`
     : `${userPath}/events/${encodeGraphId(parsed.event_id)}`;
 
+  const tz = await getUserTimezone(graphClient);
   const event = (await graphClient
     .api(url)
+    .header("Prefer", `outlook.timezone="${tz}"`)
     .select(buildSelectParam(DEFAULT_SELECT.event.concat("isOrganizer")))
     .get()) as Record<string, unknown>;
 
   if (event.isOrganizer === true) {
-    throw new ValidationError("Sie sind der Organisator dieses Events und können nicht antworten.");
+    throw new ValidationError("You are the organizer of this event and cannot respond to it.");
   }
 
-  const subject = String(event.subject ?? "(kein Betreff)");
+  const subject = String(event.subject ?? "(no subject)");
   const isAllDay = event.isAllDay === true;
   const dateRange = formatDateTimeRange(event.start, event.end, isAllDay);
 
-  const previewText = formatPreview("Auf Event antworten", {
-    Betreff: subject,
-    Zeit: dateRange,
-    Aktion: ACTION_LABELS[parsed.action] ?? parsed.action,
-    Kommentar: parsed.comment,
-    "Antwort senden": parsed.send_response ? "Ja" : "Nein",
+  const previewText = formatPreview("Respond to event", {
+    Subject: subject,
+    Time: dateRange,
+    Action: ACTION_LABELS[parsed.action] ?? parsed.action,
+    Comment: parsed.comment,
+    "Send response": parsed.send_response ? "Yes" : "No",
+    "Proposed new time": parsed.proposed_new_time
+      ? `${parsed.proposed_new_time.start.dateTime} (${parsed.proposed_new_time.start.timeZone}) – ${parsed.proposed_new_time.end.dateTime} (${parsed.proposed_new_time.end.timeZone})`
+      : undefined,
   });
 
   return { content: [{ type: "text", text: previewText }] };
@@ -70,6 +76,12 @@ async function executeRespond(
   if (parsed.comment) {
     requestBody.comment = parsed.comment;
   }
+  if (parsed.proposed_new_time) {
+    requestBody.proposedNewTime = {
+      start: parsed.proposed_new_time.start,
+      end: parsed.proposed_new_time.end,
+    };
+  }
 
   await graphClient.api(`${eventUrl}/${parsed.action}`).post(requestBody);
 
@@ -89,10 +101,30 @@ async function executeRespond(
     content: [
       {
         type: "text",
-        text: `Antwort erfolgreich gesendet: ${actionLabel}\n\nEvent-ID: ${parsed.event_id}\nZeitstempel: ${new Date(endTime).toISOString()}`,
+        text: `Response sent successfully: ${actionLabel}\n\nEvent ID: ${parsed.event_id}\nTimestamp: ${new Date(endTime).toISOString()}`,
       },
     ],
   };
+}
+
+async function handleRespondConfirmed(
+  graphClient: Client,
+  parsed: RespondToEventParamsType,
+  userPath: string,
+  startTime: number,
+): Promise<ToolResult> {
+  if (parsed.idempotency_key) {
+    const cached = idempotencyCache.get("respond_to_event", parsed.idempotency_key, parsed.user_id);
+    if (cached !== undefined) return cached as ToolResult;
+  }
+
+  const result = await executeRespond(graphClient, parsed, userPath, startTime);
+
+  if (parsed.idempotency_key) {
+    idempotencyCache.set("respond_to_event", parsed.idempotency_key, result, parsed.user_id);
+  }
+
+  return result;
 }
 
 export function registerCalendarRespondTools(
@@ -108,28 +140,20 @@ export function registerCalendarRespondTools(
       const startTime = Date.now();
       try {
         const parsed = RespondToEventParams.parse(params);
+
+        if (parsed.proposed_new_time && parsed.action === "accept") {
+          throw new ValidationError(
+            "proposed_new_time cannot be used with 'accept'. Use 'decline' or 'tentativelyAccept'.",
+          );
+        }
+
         const userPath = resolveUserPath(parsed.user_id);
 
         if (!parsed.confirm) {
           return await buildRespondPreview(graphClient, parsed, userPath);
         }
 
-        if (parsed.idempotency_key) {
-          const cached = idempotencyCache.get(
-            "respond_to_event",
-            parsed.idempotency_key,
-            parsed.user_id,
-          );
-          if (cached !== undefined) return cached as ToolResult;
-        }
-
-        const result = await executeRespond(graphClient, parsed, userPath, startTime);
-
-        if (parsed.idempotency_key) {
-          idempotencyCache.set("respond_to_event", parsed.idempotency_key, result, parsed.user_id);
-        }
-
-        return result;
+        return await handleRespondConfirmed(graphClient, parsed, userPath, startTime);
       } catch (error) {
         if (error instanceof McpToolError) {
           logger.warn(

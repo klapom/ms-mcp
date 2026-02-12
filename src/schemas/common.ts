@@ -4,7 +4,7 @@ import { z } from "zod";
  * Base parameters shared by ALL tools.
  */
 export const BaseParams = z.object({
-  user_id: z.string().optional().describe("User-ID oder UPN für delegierten Zugriff. Default: /me"),
+  user_id: z.string().optional().describe("User ID or UPN for delegated access. Default: /me"),
 });
 
 /**
@@ -15,13 +15,13 @@ export const WriteParams = BaseParams.extend({
     .string()
     .optional()
     .describe(
-      "Optionaler Idempotenz-Schlüssel. Bei gleichem Key wird die Operation nicht wiederholt, sondern das vorherige Ergebnis zurückgegeben.",
+      "Optional idempotency key. If the same key is used, the operation is not repeated and the previous result is returned.",
     ),
   confirm: z
     .boolean()
     .default(false)
     .describe(
-      "Bestätigung für destruktive Operationen. Ohne confirm=true wird nur eine Vorschau zurückgegeben.",
+      "Confirmation for destructive operations. Without confirm=true, only a preview is returned.",
     ),
 });
 
@@ -35,13 +35,13 @@ export const ListParams = BaseParams.extend({
     .positive()
     .max(100)
     .optional()
-    .describe("Maximale Anzahl Ergebnisse (default: 25, max: 100)"),
+    .describe("Maximum number of results (default: 25, max: 100)"),
   skip: z
     .number()
     .int()
     .nonnegative()
     .optional()
-    .describe("Anzahl Ergebnisse überspringen (für Pagination)"),
+    .describe("Number of results to skip (for pagination)"),
 });
 
 export type BaseParamsType = z.infer<typeof BaseParams>;

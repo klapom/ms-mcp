@@ -12,9 +12,7 @@ export function formatDateTimeRange(start: unknown, end: unknown, isAllDay: bool
   if (isAllDay) {
     const startDate = startStr.split("T")[0] ?? startStr;
     const endDate = endStr.split("T")[0] ?? endStr;
-    return startDate === endDate
-      ? `${startDate} (ganztägig)`
-      : `${startDate} – ${endDate} (ganztägig)`;
+    return startDate === endDate ? `${startDate} (all-day)` : `${startDate} – ${endDate} (all-day)`;
   }
 
   const startTz = getTimeZone(start);
@@ -55,7 +53,7 @@ export function getLocationName(location: unknown): string {
  * Used by both list_events and get_calendar_view.
  */
 export function formatEventSummary(index: number, event: Record<string, unknown>): string {
-  const subject = String(event.subject ?? "(kein Betreff)");
+  const subject = String(event.subject ?? "(no subject)");
   const isAllDay = event.isAllDay === true;
   const isCancelled = event.isCancelled === true;
   const dateRange = formatDateTimeRange(event.start, event.end, isAllDay);

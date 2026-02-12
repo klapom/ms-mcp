@@ -73,7 +73,7 @@ export function registerMailReadTools(
         if (!isRecordObject(response)) {
           return {
             content: [
-              { type: "text" as const, text: "Unerwartetes Antwortformat von der Graph API." },
+              { type: "text" as const, text: "Unexpected response format from Graph API." },
             ],
             isError: true,
           };

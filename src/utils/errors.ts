@@ -164,40 +164,40 @@ export function isRetryableError(error: unknown): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Helper: format error for user (German, per spec)
+// Helper: format error for user
 // ---------------------------------------------------------------------------
 
 export function formatErrorForUser(error: McpToolError): string {
   if (error instanceof ValidationError) {
-    return `Ungültige Parameter: ${error.details}`;
+    return `Invalid parameters: ${error.details}`;
   }
 
   if (error instanceof AuthError) {
     if (error.httpStatus === 403 && error.requiredScope) {
-      return `Fehlende Berechtigung: ${error.requiredScope}. Admin-Consent erforderlich.`;
+      return `Missing permission: ${error.requiredScope}. Admin consent required.`;
     }
-    return "Anmeldung abgelaufen. Bitte Token erneuern.";
+    return "Authentication expired. Please refresh your token.";
   }
 
   if (error instanceof NotFoundError) {
-    return `Ressource nicht gefunden: ${error.resourceType} mit ID ${error.resourceId}`;
+    return `Resource not found: ${error.resourceType} with ID ${error.resourceId}`;
   }
 
   if (error instanceof ConflictError) {
-    return `Konflikt: ${error.details}. Ressource wurde zwischenzeitlich geändert.`;
+    return `Conflict: ${error.details}. Resource was modified in the meantime.`;
   }
 
   if (error instanceof RateLimitError) {
     const seconds = Math.ceil(error.retryAfterMs / 1000);
-    return `Rate-Limit erreicht. Automatischer Retry in ${seconds} Sekunden.`;
+    return `Rate limit reached. Automatic retry in ${seconds} seconds.`;
   }
 
   if (error instanceof ServiceError) {
-    return "Microsoft Graph API temporär nicht verfügbar.";
+    return "Microsoft Graph API temporarily unavailable.";
   }
 
   if (error instanceof NetworkError) {
-    return "Keine Verbindung zu Microsoft Graph. Netzwerk prüfen.";
+    return "No connection to Microsoft Graph. Check your network.";
   }
 
   // Fallback for generic McpToolError / GraphApiError

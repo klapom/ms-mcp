@@ -9,6 +9,7 @@ import { encodeGraphId } from "../utils/graph-id.js";
 import { createLogger } from "../utils/logger.js";
 import { fetchPage } from "../utils/pagination.js";
 import { DEFAULT_SELECT, buildSelectParam, shapeListResponse } from "../utils/response-shaper.js";
+import { getUserTimezone } from "../utils/user-settings.js";
 
 const logger = createLogger("tools:calendar-view");
 
@@ -30,6 +31,8 @@ export function registerCalendarViewTools(
           ? `${userPath}/calendars/${encodeGraphId(parsed.calendar_id)}/calendarView`
           : `${userPath}/calendarView`;
 
+        const tz = await getUserTimezone(graphClient);
+
         const page = await fetchPage<Record<string, unknown>>(graphClient, url, {
           query: {
             startDateTime: parsed.start_date_time,
@@ -38,6 +41,7 @@ export function registerCalendarViewTools(
           top: parsed.top ?? config.limits.maxItems,
           skip: parsed.skip,
           select: buildSelectParam(DEFAULT_SELECT.event),
+          headers: { Prefer: `outlook.timezone="${tz}"` },
         });
 
         const { items, paginationHint } = shapeListResponse(page.items, page.totalCount, {
@@ -47,9 +51,9 @@ export function registerCalendarViewTools(
 
         const text =
           items.length === 0
-            ? `Keine Events im Zeitraum ${parsed.start_date_time} bis ${parsed.end_date_time}.`
+            ? `No events in range ${parsed.start_date_time} to ${parsed.end_date_time}.`
             : [
-                `Kalenderansicht: ${parsed.start_date_time} bis ${parsed.end_date_time}`,
+                `Calendar view: ${parsed.start_date_time} to ${parsed.end_date_time}`,
                 "",
                 ...items.map((ev, i) => formatEventSummary(i + 1, ev)),
                 "",

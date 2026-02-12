@@ -47,13 +47,13 @@ async function buildMovePreview(
   const targetName = await resolveFolderName(graphClient, userPath, parsed.destination_folder);
 
   const previewDetails: Record<string, unknown> = {
-    Aktion: "Verschieben",
-    Betreff: String(original.subject ?? "(kein Betreff)"),
-    "Von Ordner": sourceName,
-    "Nach Ordner": targetName,
+    Action: "Move",
+    Subject: String(original.subject ?? "(no subject)"),
+    "From folder": sourceName,
+    "To folder": targetName,
   };
 
-  const previewText = formatPreview("E-Mail verschieben", previewDetails);
+  const previewText = formatPreview("Move email", previewDetails);
 
   return { content: [{ type: "text", text: previewText }] };
 }
@@ -84,7 +84,7 @@ async function executeMove(
     content: [
       {
         type: "text",
-        text: `E-Mail erfolgreich verschoben.\n\nNeue Message-ID: ${newMessageId}\nHinweis: Die alte Message-ID ist nicht mehr gültig.`,
+        text: `Email moved successfully.\n\nNew Message ID: ${newMessageId}\nNote: The old message ID is no longer valid.`,
       },
     ],
   };

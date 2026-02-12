@@ -36,7 +36,7 @@ function formatAttachmentLine(index: number, att: AttachmentListItem): string {
   const typeName = getAttachmentTypeName(att["@odata.type"]);
   const inlineMarker = att.isInline ? ", inline" : "";
   const prefix = att.size > SIZE_WARNING_THRESHOLD ? "[!]" : `[${index}]`;
-  const warningNote = att.size > SIZE_WARNING_THRESHOLD ? " — Größer als 4 MB" : "";
+  const warningNote = att.size > SIZE_WARNING_THRESHOLD ? " — Larger than 4 MB" : "";
 
   return `${prefix} ${att.name} (${att.contentType}, ${sizeStr}${inlineMarker}) — ${typeName}${warningNote}`;
 }
@@ -60,7 +60,7 @@ async function handleListAttachments(
       { tool: "list_attachments", count: 0, duration_ms: Date.now() - startTime },
       "list_attachments completed",
     );
-    return { content: [{ type: "text", text: "Diese E-Mail hat keine Anhänge." }] };
+    return { content: [{ type: "text", text: "This email has no attachments." }] };
   }
 
   const lines = attachments.map((att, i) => formatAttachmentLine(i + 1, att));
@@ -90,10 +90,10 @@ function buildMetadataHeader(meta: AttachmentMetadata): string {
   const lines = [
     `Name: ${meta.name}`,
     `Content-Type: ${meta.contentType}`,
-    `Größe: ${formatFileSize(meta.size)}`,
+    `Size: ${formatFileSize(meta.size)}`,
   ];
   if (meta.isInline) {
-    lines.push("Inline: Ja");
+    lines.push("Inline: Yes");
   }
   if (meta.contentId) {
     lines.push(`Content-ID: ${meta.contentId}`);
@@ -107,7 +107,7 @@ function checkUnsupportedType(odataType: string): ToolResult | null {
       content: [
         {
           type: "text",
-          text: "Dieser Anhang ist ein eingebettetes Outlook-Element (Item Attachment) und kann nicht als Datei heruntergeladen werden. Item Attachments (z.B. weitergeleitete E-Mails, Kalendereinladungen) werden noch nicht unterstützt.",
+          text: "This attachment is an embedded Outlook item (Item Attachment) and cannot be downloaded as a file. Item Attachments (e.g. forwarded emails, calendar invitations) are not yet supported.",
         },
       ],
       isError: true,
@@ -118,7 +118,7 @@ function checkUnsupportedType(odataType: string): ToolResult | null {
       content: [
         {
           type: "text",
-          text: "Dieser Anhang ist eine Cloud-Referenz (Reference Attachment) auf eine Datei in OneDrive/SharePoint und enthält keine herunterladbaren Daten. Reference Attachments werden noch nicht unterstützt.",
+          text: "This attachment is a cloud reference (Reference Attachment) to a file in OneDrive/SharePoint and contains no downloadable data. Reference Attachments are not yet supported.",
         },
       ],
       isError: true,
@@ -140,7 +140,7 @@ function buildDownloadResult(full: FileAttachmentFull, warning: string | null): 
 
   const parts = [header];
   if (warning) {
-    parts.push(`\nWarnung: ${warning}`);
+    parts.push(`\nWarning: ${warning}`);
   }
   parts.push(`\n${body}`);
 
@@ -175,7 +175,7 @@ async function handleDownloadAttachment(
       content: [
         {
           type: "text",
-          text: `Anhang zu groß: ${formatFileSize(meta.size)} (max. 10 MB). Der Download wurde abgebrochen.`,
+          text: `Attachment too large: ${formatFileSize(meta.size)} (max 10 MB). Download aborted.`,
         },
       ],
       isError: true,
@@ -184,9 +184,7 @@ async function handleDownloadAttachment(
 
   // Size warning: >4MB
   const warning =
-    meta.size > SIZE_WARNING_THRESHOLD
-      ? `Dieser Anhang ist ${formatFileSize(meta.size)} groß.`
-      : null;
+    meta.size > SIZE_WARNING_THRESHOLD ? `This attachment is ${formatFileSize(meta.size)}.` : null;
 
   // Step 2: Full GET (with contentBytes)
   const full = (await graphClient.api(apiPath).get()) as FileAttachmentFull;

@@ -12,6 +12,7 @@ import { encodeGraphId } from "../utils/graph-id.js";
 import { idempotencyCache } from "../utils/idempotency.js";
 import { createLogger } from "../utils/logger.js";
 import { DEFAULT_SELECT, buildSelectParam } from "../utils/response-shaper.js";
+import { getUserTimezone } from "../utils/user-settings.js";
 
 const logger = createLogger("tools:calendar-delete");
 
@@ -24,18 +25,20 @@ async function buildDeletePreview(
     ? `${userPath}/calendars/${encodeGraphId(parsed.calendar_id)}/events/${encodeGraphId(parsed.event_id)}`
     : `${userPath}/events/${encodeGraphId(parsed.event_id)}`;
 
+  const tz = await getUserTimezone(graphClient);
   const event = (await graphClient
     .api(url)
+    .header("Prefer", `outlook.timezone="${tz}"`)
     .select(buildSelectParam(DEFAULT_SELECT.event))
     .get()) as Record<string, unknown>;
 
-  const subject = String(event.subject ?? "(kein Betreff)");
+  const subject = String(event.subject ?? "(no subject)");
   const isAllDay = event.isAllDay === true;
   const dateRange = formatDateTimeRange(event.start, event.end, isAllDay);
 
-  const previewText = formatPreview("Event löschen", {
-    Betreff: subject,
-    Zeit: dateRange,
+  const previewText = formatPreview("Delete event", {
+    Subject: subject,
+    Time: dateRange,
   });
 
   return { content: [{ type: "text", text: previewText }] };
@@ -67,7 +70,7 @@ async function executeDelete(
     content: [
       {
         type: "text",
-        text: `Event erfolgreich gelöscht.\n\nEvent-ID: ${parsed.event_id}\nZeitstempel: ${new Date(endTime).toISOString()}`,
+        text: `Event deleted successfully.\n\nEvent ID: ${parsed.event_id}\nTimestamp: ${new Date(endTime).toISOString()}`,
       },
     ],
   };

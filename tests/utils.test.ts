@@ -128,49 +128,49 @@ describe("error classes", () => {
 // ---------------------------------------------------------------------------
 
 describe("formatErrorForUser", () => {
-  it("should format ValidationError in German", () => {
+  it("should format ValidationError", () => {
     const error = new ValidationError("invalid top");
-    expect(formatErrorForUser(error)).toBe("Ungültige Parameter: invalid top");
+    expect(formatErrorForUser(error)).toBe("Invalid parameters: invalid top");
   });
 
   it("should format AuthError 403 with scope", () => {
     const error = new AuthError("forbidden", 403, "Mail.ReadWrite");
-    expect(formatErrorForUser(error)).toContain("Fehlende Berechtigung");
+    expect(formatErrorForUser(error)).toContain("Missing permission");
     expect(formatErrorForUser(error)).toContain("Mail.ReadWrite");
   });
 
   it("should format AuthError 401 as token expired", () => {
     const error = new AuthError("unauthorized", 401);
-    expect(formatErrorForUser(error)).toContain("Anmeldung abgelaufen");
+    expect(formatErrorForUser(error)).toContain("Authentication expired");
   });
 
-  it("should format NotFoundError in German", () => {
+  it("should format NotFoundError", () => {
     const error = new NotFoundError("email", "msg-001");
-    expect(formatErrorForUser(error)).toContain("Ressource nicht gefunden");
+    expect(formatErrorForUser(error)).toContain("Resource not found");
     expect(formatErrorForUser(error)).toContain("email");
     expect(formatErrorForUser(error)).toContain("msg-001");
   });
 
-  it("should format ConflictError in German", () => {
+  it("should format ConflictError", () => {
     const error = new ConflictError("already modified");
-    expect(formatErrorForUser(error)).toContain("Konflikt");
+    expect(formatErrorForUser(error)).toContain("Conflict");
   });
 
   it("should format RateLimitError with seconds", () => {
     const error = new RateLimitError(5000);
     const msg = formatErrorForUser(error);
-    expect(msg).toContain("Rate-Limit");
-    expect(msg).toContain("5 Sekunden");
+    expect(msg).toContain("Rate limit");
+    expect(msg).toContain("5 seconds");
   });
 
   it("should format ServiceError", () => {
     const error = new ServiceError("unavailable", 503);
-    expect(formatErrorForUser(error)).toContain("temporär nicht verfügbar");
+    expect(formatErrorForUser(error)).toContain("temporarily unavailable");
   });
 
   it("should format NetworkError", () => {
     const error = new NetworkError("no connection");
-    expect(formatErrorForUser(error)).toContain("Keine Verbindung");
+    expect(formatErrorForUser(error)).toContain("No connection");
   });
 
   it("should fall back to error.message for generic McpToolError", () => {
@@ -343,7 +343,7 @@ describe("shapeListResponse", () => {
       maxItems: 3,
       maxBodyLength: 500,
     });
-    expect(paginationHint).toContain("3 von 10");
+    expect(paginationHint).toContain("3 of 10");
     expect(paginationHint).toContain("skip");
   });
 
@@ -352,7 +352,7 @@ describe("shapeListResponse", () => {
       maxItems: 10,
       maxBodyLength: 500,
     });
-    expect(paginationHint).toContain("3 von 3");
+    expect(paginationHint).toContain("3 of 3");
     expect(paginationHint).not.toContain("skip");
   });
 
@@ -401,11 +401,11 @@ describe("checkConfirmation", () => {
 
 describe("formatPreview", () => {
   it("should format action and details", () => {
-    const result = formatPreview("E-Mail löschen", {
+    const result = formatPreview("Delete email", {
       subject: "Test",
       id: "msg-001",
     });
-    expect(result).toContain("Vorschau: E-Mail löschen");
+    expect(result).toContain("Preview: Delete email");
     expect(result).toContain("subject: Test");
     expect(result).toContain("id: msg-001");
     expect(result).toContain("confirm: true");

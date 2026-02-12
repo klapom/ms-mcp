@@ -26,22 +26,22 @@ async function buildForwardPreview(
     .get()) as Record<string, unknown>;
 
   const previewDetails: Record<string, unknown> = {
-    Aktion: "Weiterleiten",
-    "Original-Betreff": String(original.subject ?? "(kein Betreff)"),
-    "Original-Absender": extractAddress(original.from),
-    "Weiterleiten an": parsed.to.join(", "),
-    Anhänge: original.hasAttachments === true ? "Ja (werden mitgesendet)" : "Nein",
+    Action: "Forward",
+    "Original subject": String(original.subject ?? "(no subject)"),
+    "Original sender": extractAddress(original.from),
+    "Forward to": parsed.to.join(", "),
+    Attachments: original.hasAttachments === true ? "Yes (included)" : "No",
   };
 
   if (parsed.comment) {
-    previewDetails["Kommentar-Auszug"] =
+    previewDetails["Comment excerpt"] =
       parsed.comment.slice(0, 200) + (parsed.comment.length > 200 ? "…" : "");
   }
 
   const preview = checkConfirmation(
     "destructive",
     false,
-    formatPreview("E-Mail weiterleiten", previewDetails),
+    formatPreview("Forward email", previewDetails),
   );
 
   return { content: [{ type: "text", text: preview?.message ?? "" }] };
@@ -80,7 +80,7 @@ async function executeForward(
     content: [
       {
         type: "text",
-        text: `E-Mail erfolgreich weitergeleitet.\n\nZeitstempel: ${new Date(endTime).toISOString()}\nEmpfänger: ${parsed.to.length}`,
+        text: `Email forwarded successfully.\n\nTimestamp: ${new Date(endTime).toISOString()}\nRecipients: ${parsed.to.length}`,
       },
     ],
   };

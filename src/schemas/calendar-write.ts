@@ -108,6 +108,13 @@ export const RespondToEventParams = WriteParams.extend({
     .describe("Response action: accept, decline, or tentativelyAccept"),
   comment: z.string().max(1000).optional().describe("Optional comment with the response"),
   send_response: z.boolean().default(true).describe("Send response to organizer (default: true)"),
+  proposed_new_time: z
+    .object({
+      start: DateTimeTimeZone.describe("Proposed new start date/time"),
+      end: DateTimeTimeZone.describe("Proposed new end date/time"),
+    })
+    .optional()
+    .describe("Propose a new time (only with tentativelyAccept or decline)"),
   calendar_id: z.string().optional().describe("Calendar ID. Default: default calendar"),
 });
 

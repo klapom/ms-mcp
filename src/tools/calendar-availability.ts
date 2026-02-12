@@ -6,6 +6,7 @@ import { resolveUserPath } from "../schemas/common.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
 import { createLogger } from "../utils/logger.js";
 import { isRecordObject } from "../utils/type-guards.js";
+import { getUserTimezone } from "../utils/user-settings.js";
 
 const logger = createLogger("tools:calendar-availability");
 
@@ -79,8 +80,10 @@ export function registerCalendarAvailabilityTools(
           availabilityViewInterval: parsed.availability_view_interval,
         };
 
+        const tz = await getUserTimezone(graphClient);
         const result = (await graphClient
           .api(`${userPath}/calendar/getSchedule`)
+          .header("Prefer", `outlook.timezone="${tz}"`)
           .post(requestBody)) as Record<string, unknown>;
 
         const schedules = Array.isArray(result.value) ? result.value : [];
@@ -98,7 +101,7 @@ export function registerCalendarAvailabilityTools(
 
         const text =
           schedules.length === 0
-            ? "Keine Verfügbarkeitsdaten gefunden."
+            ? "No availability data found."
             : schedules.map((s: unknown) => formatScheduleItem(s)).join("\n\n");
 
         return { content: [{ type: "text" as const, text }] };

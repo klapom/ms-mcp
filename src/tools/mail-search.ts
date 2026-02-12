@@ -64,7 +64,7 @@ function buildOutputLines(
   const lines: string[] = [];
 
   if (shaped.length === 0) {
-    lines.push(`Keine Ergebnisse für "${query}".`);
+    lines.push(`No results for "${query}".`);
   } else {
     for (const email of shaped) {
       lines.push(formatSearchResult(email));
@@ -73,15 +73,13 @@ function buildOutputLines(
 
   if (skip !== undefined && skip > 0) {
     lines.push("");
-    lines.push(
-      "Hinweis: $skip wird bei $search nicht unterstützt. Nutze @odata.nextLink für Pagination.",
-    );
+    lines.push("Note: $skip is not supported with $search. Use @odata.nextLink for pagination.");
   }
 
   if (nextLink) {
     lines.push("");
     lines.push(
-      "Weitere Ergebnisse verfügbar. Nutze list_emails mit Pagination für gezielteres Browsen.",
+      "More results available. Use list_emails with pagination for more targeted browsing.",
     );
   }
 

@@ -25,10 +25,10 @@ async function buildReplyPreview(
     .get()) as Record<string, unknown>;
 
   const previewDetails: Record<string, unknown> = {
-    Aktion: parsed.reply_all ? "Allen antworten" : "Antworten",
-    "Original-Betreff": String(original.subject ?? "(kein Betreff)"),
-    "Original-Absender": extractAddress(original.from),
-    "Kommentar-Auszug": parsed.comment.slice(0, 200) + (parsed.comment.length > 200 ? "…" : ""),
+    Action: parsed.reply_all ? "Reply all" : "Reply",
+    "Original subject": String(original.subject ?? "(no subject)"),
+    "Original sender": extractAddress(original.from),
+    "Comment excerpt": parsed.comment.slice(0, 200) + (parsed.comment.length > 200 ? "…" : ""),
   };
 
   if (parsed.reply_all) {
@@ -41,7 +41,7 @@ async function buildReplyPreview(
   const preview = checkConfirmation(
     "destructive",
     false,
-    formatPreview("E-Mail beantworten", previewDetails),
+    formatPreview("Reply to email", previewDetails),
   );
 
   return { content: [{ type: "text", text: preview?.message ?? "" }] };
@@ -73,7 +73,7 @@ async function executeReply(
     content: [
       {
         type: "text",
-        text: `${parsed.reply_all ? "Reply-All" : "Antwort"} erfolgreich gesendet.\n\nZeitstempel: ${new Date(endTime).toISOString()}`,
+        text: `${parsed.reply_all ? "Reply-all" : "Reply"} sent successfully.\n\nTimestamp: ${new Date(endTime).toISOString()}`,
       },
     ],
   };

@@ -190,10 +190,10 @@ export function shapeListResponse<T extends Record<string, unknown>>(
 
   if (displayedCount < total) {
     paginationHint =
-      `Zeige ${displayedCount} von ${total} Ergebnissen. ` +
-      `Nutze skip: ${displayedCount} für die nächste Seite.`;
+      `Showing ${displayedCount} of ${total} results. ` +
+      `Use skip: ${displayedCount} for the next page.`;
   } else {
-    paginationHint = `Zeige ${displayedCount} von ${total} Ergebnissen.`;
+    paginationHint = `Showing ${displayedCount} of ${total} results.`;
   }
 
   log.debug({ displayedCount, total, maxItems, maxBodyLength }, "Shaped list response");

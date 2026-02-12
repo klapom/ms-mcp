@@ -382,11 +382,11 @@ describe("send_email", () => {
       const result = checkConfirmation(
         "destructive",
         false,
-        formatPreview("E-Mail senden", { An: "test@example.com", Betreff: "Test" }),
+        formatPreview("Send email", { To: "test@example.com", Subject: "Test" }),
       );
       expect(result).not.toBeNull();
       expect(result?.isPreview).toBe(true);
-      expect(result?.message).toContain("E-Mail senden");
+      expect(result?.message).toContain("Send email");
       expect(result?.message).toContain("test@example.com");
     });
 

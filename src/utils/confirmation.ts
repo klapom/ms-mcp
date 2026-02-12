@@ -40,11 +40,11 @@ export function formatPreview(action: string, details: Record<string, unknown>):
     .map(([key, value]) => `  - ${key}: ${String(value)}`);
 
   const lines = [
-    `Vorschau: ${action}`,
+    `Preview: ${action}`,
     "",
     ...detailLines,
     "",
-    "Bestätige mit confirm: true, um die Aktion auszuführen.",
+    "Confirm with confirm: true to execute this action.",
   ];
 
   return lines.join("\n");
