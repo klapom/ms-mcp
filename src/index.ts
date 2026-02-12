@@ -1,6 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import type { GraphClientDeps } from "./auth/graph-client.js";
 import { getGraphClient } from "./auth/graph-client.js";
 import { MsalClient } from "./auth/msal-client.js";
 import { createCachePlugin } from "./auth/token-cache.js";
@@ -24,7 +23,7 @@ const server = new McpServer({
  * Creates the default GraphClientDeps using MSAL Device Code Flow
  * with persistent token cache for cross-restart auth persistence.
  */
-async function createDefaultAuthDeps(config: Config): Promise<GraphClientDeps> {
+async function createDefaultAuthDeps(config: Config): Promise<MsalClient> {
   const cachePath = resolveTildePath(config.cache.tokenCachePath);
   const cachePlugin = await createCachePlugin(cachePath);
   const msalClient = new MsalClient(
@@ -56,6 +55,18 @@ async function main() {
   }
 
   const authDeps = await createDefaultAuthDeps(config);
+
+  // Fail-fast: check for cached token before starting MCP server.
+  // In MCP mode (subprocess), Device Code Flow cannot work because
+  // stderr is not visible to the user. Exit with clear instructions.
+  const silentToken = await authDeps.getAccessTokenSilentOnly();
+  if (!silentToken) {
+    process.stderr.write(
+      "\n[ms-mcp] Not authenticated. Run first:\n\n  npx pommer-m365-mcp auth login\n\n",
+    );
+    process.exit(1);
+  }
+
   const graphClient = getGraphClient(authDeps);
 
   for (const register of registrations) {

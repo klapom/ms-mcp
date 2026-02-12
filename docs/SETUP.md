@@ -70,29 +70,34 @@ LOG_LEVEL=info
 
 > **Hinweis:** Die Datei `.env` ist in `.gitignore` und wird nicht committed.
 
-## Schritt 4: Erster Test
+## Schritt 4: Authentifizierung (einmalig)
 
-Starte den Server manuell um die Authentifizierung zu testen:
+Authentifiziere dich **einmalig** im Terminal via CLI. Dies ist notwendig, weil der MCP-Server als Subprocess von Claude Code/Desktop läuft und dort keine interaktive Anmeldung möglich ist.
 
 ```bash
-pnpm dev
+pnpm auth login
 ```
 
-Der Server wird folgende Nachricht auf stderr ausgeben:
+Der Befehl startet den Device Code Flow:
 
+1. Im Terminal erscheint ein Link und ein Code
+2. Öffne den Link im Browser
+3. Gib den Code ein
+4. Melde dich mit deinem Microsoft 365 Konto an
+5. Bestätige die Berechtigungen
+
+Nach erfolgreicher Anmeldung zeigt das CLI den angemeldeten Benutzer an. Der Token wird persistent gespeichert (Standard: `~/.ms-mcp/token-cache.json`).
+
+### Weitere Auth-Befehle
+
+```bash
+pnpm auth status   # Auth-Status prüfen (wer ist eingeloggt?)
+pnpm auth logout   # Token löschen und abmelden
 ```
-To sign in, use a web browser to open the page https://microsoft.com/devicelogin
-and enter the code XXXXXXXX to authenticate.
-```
 
-1. Öffne den Link im Browser
-2. Gib den Code ein
-3. Melde dich mit deinem Microsoft 365 Konto an
-4. Bestätige die Berechtigungen
+> **Wichtig:** Die Authentifizierung ist einmalig. Der Refresh-Token wird automatisch erneuert. Nur bei explizitem Logout oder Token-Ablauf (90 Tage Inaktivität) ist eine erneute Anmeldung nötig.
 
-Nach erfolgreicher Anmeldung zeigt der Server `pommer-m365-mcp server started`.
-
-> **Tipp:** Der Token wird automatisch persistent gespeichert (Standard: `~/.ms-mcp/token-cache.json`). Bei erneutem Start ist **keine erneute Anmeldung** nötig — der Server nutzt den gespeicherten Refresh-Token. Das funktioniert auch wenn Claude Code/Desktop den Server als Subprocess startet.
+> **Fail-Fast:** Der MCP-Server prüft beim Start, ob ein gültiger Token vorhanden ist. Falls nicht, beendet er sich sofort mit einer klaren Fehlermeldung und Anleitung zum `auth login`.
 
 > **Cache-Pfad ändern:** Setze die Umgebungsvariable `TOKEN_CACHE_PATH` auf einen alternativen Pfad (absolut oder mit `~/` Prefix).
 
@@ -165,7 +170,7 @@ Claude wird:
 
 ### "Access token has expired"
 
-Token abgelaufen. In der Regel reicht ein Server-Neustart -- der persistente Cache enthält den Refresh-Token, der automatisch ein neues Access-Token holt. Falls das nicht hilft, lösche die Cache-Datei (`~/.ms-mcp/token-cache.json`) und authentifiziere dich erneut im Terminal via `pnpm dev`.
+Token abgelaufen. In der Regel reicht ein Server-Neustart -- der persistente Cache enthält den Refresh-Token, der automatisch ein neues Access-Token holt. Falls das nicht hilft: `pnpm auth logout` und dann `pnpm auth login`.
 
 ### "ErrorAccessDenied" / "Insufficient privileges"
 

@@ -6,13 +6,15 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "pommer-m365-mcp": "dist/cli/setup.js"
+    "pommer-m365-mcp": "dist/cli/setup.js",
+    "pommer-m365-mcp-auth": "dist/cli/auth.js"
   },
   "scripts": {
     "dev": "tsx watch --env-file=.env src/index.ts",
     "build": "tsup",
     "start": "node --env-file=.env dist/index.js",
     "setup": "tsx src/cli/setup.ts",
+    "auth": "tsx --env-file=.env src/cli/auth.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

@@ -247,6 +247,62 @@ describe("MsalClient", () => {
     });
   });
 
+  describe("getAccessTokenSilentOnly", () => {
+    it("should return token when account is cached in-memory", async () => {
+      const client = new MsalClient(TENANT_ID, CLIENT_ID);
+
+      // Establish in-memory account via device code first
+      mockPca.acquireTokenByDeviceCode.mockResolvedValueOnce(mockAuthResult);
+      await client.getAccessToken();
+
+      // Now silent-only should work
+      mockPca.acquireTokenSilent.mockResolvedValueOnce(mockAuthResult);
+      const token = await client.getAccessTokenSilentOnly();
+
+      expect(token).toBe("mock-access-token-123");
+      expect(mockPca.acquireTokenSilent).toHaveBeenCalledWith({
+        account: mockAccount,
+        scopes: expect.arrayContaining(["User.Read"]),
+      });
+    });
+
+    it("should return token when account is in persistent cache", async () => {
+      const client = new MsalClient(TENANT_ID, CLIENT_ID);
+
+      // No in-memory account, but cache has accounts
+      mockGetAllAccounts.mockResolvedValueOnce([mockAccount]);
+      mockPca.acquireTokenSilent.mockResolvedValueOnce(mockAuthResult);
+
+      const token = await client.getAccessTokenSilentOnly();
+
+      expect(token).toBe("mock-access-token-123");
+      expect(mockGetAllAccounts).toHaveBeenCalled();
+    });
+
+    it("should return null when no accounts available", async () => {
+      const client = new MsalClient(TENANT_ID, CLIENT_ID);
+
+      mockGetAllAccounts.mockResolvedValueOnce([]);
+
+      const token = await client.getAccessTokenSilentOnly();
+
+      expect(token).toBeNull();
+      expect(mockPca.acquireTokenByDeviceCode).not.toHaveBeenCalled();
+    });
+
+    it("should return null when silent acquisition throws", async () => {
+      const client = new MsalClient(TENANT_ID, CLIENT_ID);
+
+      mockGetAllAccounts.mockResolvedValueOnce([mockAccount]);
+      mockPca.acquireTokenSilent.mockRejectedValueOnce(new Error("token expired"));
+
+      const token = await client.getAccessTokenSilentOnly();
+
+      expect(token).toBeNull();
+      expect(mockPca.acquireTokenByDeviceCode).not.toHaveBeenCalled();
+    });
+  });
+
   describe("isAuthenticated", () => {
     it("should return false when no account", async () => {
       const client = new MsalClient(TENANT_ID, CLIENT_ID);

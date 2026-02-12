@@ -122,6 +122,51 @@ export class MsalClient {
   }
 
   /**
+   * Try to get an access token silently (from cache/refresh token only).
+   * Returns null if no cached token is available, instead of falling
+   * back to Device Code Flow. Useful for startup checks in MCP mode
+   * where interactive auth is not possible.
+   */
+  async getAccessTokenSilentOnly(): Promise<string | null> {
+    // 1. Try silent acquisition with in-memory account
+    if (this.account) {
+      try {
+        const result = await this.pca.acquireTokenSilent({
+          account: this.account,
+          scopes: this.scopes,
+        });
+        if (result?.accessToken) {
+          logger.debug("Token acquired silently (silent-only)");
+          return result.accessToken;
+        }
+      } catch {
+        logger.debug("Silent token acquisition failed (silent-only)");
+      }
+    }
+
+    // 2. Try to get cached accounts from persistent cache
+    const accounts = await this.pca.getTokenCache().getAllAccounts();
+    if (accounts.length > 0) {
+      this.account = accounts[0];
+      try {
+        const result = await this.pca.acquireTokenSilent({
+          account: this.account,
+          scopes: this.scopes,
+        });
+        if (result?.accessToken) {
+          logger.debug("Token acquired from cache (silent-only)");
+          return result.accessToken;
+        }
+      } catch {
+        logger.debug("Cache token acquisition failed (silent-only)");
+      }
+    }
+
+    // No fallback to Device Code Flow — return null
+    return null;
+  }
+
+  /**
    * Check if the client has a cached account (is "logged in").
    */
   async isAuthenticated(): Promise<boolean> {
