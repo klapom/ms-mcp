@@ -96,4 +96,13 @@ describe("createCachePlugin", () => {
 
     expect(result).toBe(mockPlugin);
   });
+
+  it("should propagate error when FilePersistence.create fails", async () => {
+    const cachePath = join(testDir, "token-cache.json");
+    const persistenceError = new Error("EACCES: permission denied");
+
+    (FilePersistence.create as ReturnType<typeof vi.fn>).mockRejectedValueOnce(persistenceError);
+
+    await expect(createCachePlugin(cachePath)).rejects.toThrow("EACCES: permission denied");
+  });
 });

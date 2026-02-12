@@ -1,5 +1,3 @@
-import { homedir } from "node:os";
-import { resolve } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { GraphClientDeps } from "./auth/graph-client.js";
@@ -13,6 +11,7 @@ import { registerMailSearchTools } from "./tools/mail-search.js";
 import { registerMailTools } from "./tools/mail.js";
 import type { ToolRegistrationFn } from "./types/tools.js";
 import { createLogger } from "./utils/logger.js";
+import { resolveTildePath } from "./utils/path.js";
 
 const logger = createLogger("server");
 
@@ -20,16 +19,6 @@ const server = new McpServer({
   name: "pommer-m365-mcp",
   version: "0.0.1",
 });
-
-/**
- * Resolves a path that may start with `~` to an absolute path using os.homedir().
- */
-function resolveTildePath(p: string): string {
-  if (p.startsWith("~/") || p === "~") {
-    return resolve(homedir(), p.slice(2));
-  }
-  return resolve(p);
-}
 
 /**
  * Creates the default GraphClientDeps using MSAL Device Code Flow

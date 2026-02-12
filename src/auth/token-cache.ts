@@ -23,6 +23,6 @@ export async function createCachePlugin(cachePath: string): Promise<ICachePlugin
   const persistence = await FilePersistence.create(cachePath);
   const plugin = new PersistenceCachePlugin(persistence);
 
-  logger.info({ cachePath: cacheDir }, "Token cache plugin created");
+  logger.info({ cacheDir }, "Token cache plugin created");
   return plugin;
 }
