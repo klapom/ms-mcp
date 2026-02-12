@@ -56,6 +56,13 @@ Dieses Dokument sammelt Beobachtungen aus der laufenden Implementierung:
 - **Vorschlag:** Shared `toAttendees()` Utility in `src/utils/recipients.ts` (analog zu `toRecipients()`).
 - **Risiko:** Keins aktuell, nur Duplizierung bei Erweiterung.
 
+### Kalenderzeiten in lokaler Zeitzone anzeigen
+- **Quelle:** E2E-Nutzung Sprint 3.2
+- **Status:** Calendar-Tools geben Zeiten in UTC zurück (Graph-Default). Das führt zu Missverständnissen (z.B. 07:30 UTC statt 08:30 CET).
+- **Lösung:** `GET /me/mailboxSettings` einmalig beim ersten Calendar-Tool-Call aufrufen → `timeZone` cachen (Lazy Singleton, Server-Laufzeit). Dann `Prefer: outlook.timezone="<tz>"` Header auf allen Calendar-Requests setzen, damit Graph direkt in der User-Zeitzone antwortet.
+- **Architektur:** Neues Modul `src/utils/user-settings.ts` mit `getUserTimezone(graphClient): Promise<string>`, intern gecacht. Kein Coupling mit Auth/Token-Refresh.
+- **Risiko:** Mittel — betrifft alle Calendar-Tools, aber rein additiv (Header hinzufügen).
+
 ### Multi-Tenant Test-Assertions in calendar-availability
 - **Quelle:** Sprint 3.2 Review
 - **Status:** `calendar-availability.test.ts` Multi-Tenant-Test assertet `toHaveLength(2)` — gibt immer die gleiche Mock-Response zurück, testet nicht wirklich Routing-Unterschiede.
