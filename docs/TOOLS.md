@@ -15,6 +15,11 @@
 | `respond_to_event` | Respond to a calendar event invitation (accept, decline, or tentativelyAccept). Requires confirm=true to actually respond — without it, fetches the event and returns a preview. Errors if you are the organizer. Use idempotency_key to prevent duplicate responses. | calendar-respond | 🟢 safe |
 | `update_event` | Update an existing calendar event. Requires confirm=true to actually update — without it, fetches the current event and returns a preview with current vs new values. At least one updatable field must be provided. Use idempotency_key to prevent duplicate updates. | calendar-update | 🟡 moderate |
 | `get_calendar_view` | Get a calendar view for a specific time range. Unlike list_events, this expands recurring events into individual occurrences. Requires startDateTime and endDateTime in ISO 8601 format. Use calendar_id for a specific calendar. | calendar-view | 🟢 safe |
+| `download_file` | Download a file from OneDrive by ID. Text files are returned as UTF-8, binary files as base64. Files >4MB show a warning, >10MB are rejected. Use get_file_metadata first to check size. | drive-download | 🟢 safe |
+| `list_files` | List files and folders in OneDrive. Use folder_id OR path (not both) to target a specific folder, or omit both for root. Returns name, size, type, and modification date. | drive-list | 🟢 safe |
+| `get_recent_files` | Get recently accessed files from OneDrive. Returns the same format as list_files. | drive-list | 🟢 safe |
+| `get_file_metadata` | Get detailed metadata for a file or folder in OneDrive. Returns name, size, type, dates, parent path, creator, modifier, sharing info, and MIME type. | drive-metadata | 🟢 safe |
+| `search_files` | Search for files and folders in OneDrive by name or content. Uses full-text search. Returns matching items with name, size, type, and URL. | drive-search | 🟢 safe |
 | `list_attachments` | List all attachments of an email with name, type, size, and inline status. Use download_attachment to retrieve file content. | mail-attachments | 🟢 safe |
 | `download_attachment` | Download a single attachment by ID. Only file attachments are supported. Text files are returned as UTF-8, binary files as base64. Files >4MB show a warning, >10MB are rejected. | mail-attachments | 🟢 safe |
 | `list_mail_folders` | List all mail folders in the mailbox. Returns folder name, item counts, and unread counts. Well-known folder names (inbox, sentitems, drafts, deleteditems, junkemail, outbox, archive) can be used as folder IDs in other mail tools. Use include_children=true to also list subfolders (1 level deep). | mail-folders | 🟢 safe |
@@ -26,4 +31,4 @@
 | `send_email` | Send a new email. Requires confirm=true to actually send — without it, returns a preview. Supports To, CC, BCC, subject, body (text or HTML), importance, and save_to_sent_items. Use idempotency_key to prevent duplicate sends. | mail-send | 🔴 destructive |
 | `list_emails` | List emails from a mailbox folder with optional filtering, search and pagination. Returns email metadata (subject, from, date, preview) optimized for LLM context. Use folder parameter for specific folders (inbox, sentitems, drafts). Supports OData $filter for structured queries and KQL search for full-text search. | mail | 🟢 safe |
 
-_19 Tools registriert._
+_24 Tools registriert._

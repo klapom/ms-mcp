@@ -1,6 +1,7 @@
 import type { HttpHandler } from "msw";
 import { calendarWriteHandlers } from "./calendar-write.js";
 import { calendarHandlers } from "./calendar.js";
+import { driveHandlers } from "./drive.js";
 import { mailAttachmentHandlers } from "./mail-attachments.js";
 import { mailForwardHandlers } from "./mail-forward.js";
 import { mailMoveHandlers } from "./mail-move.js";
@@ -19,6 +20,7 @@ import { mailHandlers } from "./mail.js";
 export const handlers: HttpHandler[] = [
   ...calendarWriteHandlers,
   ...calendarHandlers,
+  ...driveHandlers,
   ...mailAttachmentHandlers,
   ...mailMoveHandlers,
   ...mailHandlers,
