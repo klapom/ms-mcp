@@ -13,6 +13,8 @@ export interface GraphClientDeps {
   readonly tenantId: string;
   readonly clientId: string;
   getAccessToken(): Promise<string>;
+  /** Silent-only token check; returns null when no cached token is available. */
+  getAccessTokenSilentOnly?(): Promise<string | null>;
 }
 
 /**

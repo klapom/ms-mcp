@@ -57,41 +57,12 @@ export class MsalClient {
    * Falls back to Device Code Flow if no cached token.
    */
   async getAccessToken(): Promise<string> {
-    // 1. Try silent acquisition first (cached token / refresh token)
-    if (this.account) {
-      try {
-        const result = await this.pca.acquireTokenSilent({
-          account: this.account,
-          scopes: this.scopes,
-        });
-        if (result?.accessToken) {
-          logger.debug("Token acquired silently");
-          return result.accessToken;
-        }
-      } catch {
-        logger.debug("Silent token acquisition failed, falling back to device code");
-      }
+    const silent = await this.tryAcquireSilent();
+    if (silent) {
+      return silent;
     }
 
-    // 2. Try to get cached accounts
-    const accounts = await this.pca.getTokenCache().getAllAccounts();
-    if (accounts.length > 0) {
-      this.account = accounts[0];
-      try {
-        const result = await this.pca.acquireTokenSilent({
-          account: this.account,
-          scopes: this.scopes,
-        });
-        if (result?.accessToken) {
-          logger.debug("Token acquired from cache");
-          return result.accessToken;
-        }
-      } catch {
-        logger.debug("Cache token acquisition failed");
-      }
-    }
-
-    // 3. Device Code Flow (interactive)
+    // Device Code Flow (interactive)
     const result = await this.acquireTokenByDeviceCode();
     return result.accessToken;
   }
@@ -128,6 +99,15 @@ export class MsalClient {
    * where interactive auth is not possible.
    */
   async getAccessTokenSilentOnly(): Promise<string | null> {
+    return this.tryAcquireSilent();
+  }
+
+  /**
+   * Attempts silent token acquisition from in-memory account or persistent cache.
+   * Shared by getAccessToken() (with device code fallback) and
+   * getAccessTokenSilentOnly() (returns null on failure).
+   */
+  private async tryAcquireSilent(): Promise<string | null> {
     // 1. Try silent acquisition with in-memory account
     if (this.account) {
       try {
@@ -136,11 +116,11 @@ export class MsalClient {
           scopes: this.scopes,
         });
         if (result?.accessToken) {
-          logger.debug("Token acquired silently (silent-only)");
+          logger.debug("Token acquired silently");
           return result.accessToken;
         }
       } catch {
-        logger.debug("Silent token acquisition failed (silent-only)");
+        logger.debug("Silent token acquisition failed");
       }
     }
 
@@ -154,15 +134,14 @@ export class MsalClient {
           scopes: this.scopes,
         });
         if (result?.accessToken) {
-          logger.debug("Token acquired from cache (silent-only)");
+          logger.debug("Token acquired from cache");
           return result.accessToken;
         }
       } catch {
-        logger.debug("Cache token acquisition failed (silent-only)");
+        logger.debug("Cache token acquisition failed");
       }
     }
 
-    // No fallback to Device Code Flow — return null
     return null;
   }
 
