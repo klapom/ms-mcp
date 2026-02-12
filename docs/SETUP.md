@@ -64,8 +64,8 @@ AZURE_CLIENT_ID=deine-client-id-hier
 LOG_LEVEL=info
 
 # Optional: Limits anpassen
-# MAX_ITEMS=25         # Max Ergebnisse pro Abfrage
-# MAX_BODY_LENGTH=500  # Max Body-Länge in Zeichen (für read_email: max_body_length=5000 empfohlen)
+# MAX_ITEMS=25         # Max Ergebnisse pro Abfrage (list_emails, search_emails)
+# MAX_BODY_LENGTH=500  # Max Body-Länge für list_emails (read_email nutzt eigenen Default: 5000)
 ```
 
 > **Hinweis:** Die Datei `.env` ist in `.gitignore` und wird nicht committed.
@@ -195,7 +195,7 @@ Der öffentliche Client-Flow ist nicht aktiviert. Prüfe Schritt 1 unter "Öffen
 | `LOG_LEVEL` | Nein | `info` | trace, debug, info, warn, error, fatal |
 | `TOOL_PRESET` | Nein | `mvp` | readonly, mvp, full |
 | `MAX_ITEMS` | Nein | `25` | Max Ergebnisse pro Abfrage |
-| `MAX_BODY_LENGTH` | Nein | `500` | Max Body-Länge (Zeichen) |
+| `MAX_BODY_LENGTH` | Nein | `500` | Max Body-Länge in list_emails (read_email: 5000) |
 
 ## Verfügbare Tools
 

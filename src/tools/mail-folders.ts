@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Config } from "../config.js";
 import { resolveUserPath } from "../schemas/common.js";
 import { ListMailFoldersParams } from "../schemas/mail.js";
+import { batchFetchSettled } from "../utils/batch.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
 import { createLogger } from "../utils/logger.js";
 import { fetchPage } from "../utils/pagination.js";
@@ -83,8 +84,8 @@ async function expandChildFolders(
       typeof f.childFolderCount === "number" && f.childFolderCount > 0 && typeof f.id === "string",
   );
 
-  // Fetch all child folders in parallel
-  const childResults = await Promise.allSettled(
+  // Fetch all child folders in parallel with graceful error handling
+  const { results, failedCount } = await batchFetchSettled(
     foldersWithChildren.map((folder) =>
       fetchPage<Record<string, unknown>>(
         client,
@@ -96,25 +97,21 @@ async function expandChildFolders(
         children: page.items,
       })),
     ),
+    logger,
+    "expandChildFolders",
   );
 
   // Build a map of parentId -> children
   const childMap = new Map<string, Record<string, unknown>[]>();
-  let failedCount = 0;
-  for (const result of childResults) {
-    if (result.status === "fulfilled") {
-      childMap.set(
-        result.value.parentId,
-        result.value.children.map((child) => ({
-          ...child,
-          _isChild: true,
-          _parentName: result.value.parentName,
-        })),
-      );
-    } else {
-      failedCount++;
-      logger.warn("Failed to fetch child folders for a folder");
-    }
+  for (const result of results) {
+    childMap.set(
+      result.parentId,
+      result.children.map((child) => ({
+        ...child,
+        _isChild: true,
+        _parentName: result.parentName,
+      })),
+    );
   }
 
   // Build expanded list maintaining order

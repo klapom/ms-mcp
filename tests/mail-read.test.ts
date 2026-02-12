@@ -257,6 +257,22 @@ describe("read_email", () => {
       expect(text).not.toContain("evil.com");
     });
 
+    it("should strip javascript: protocol from links", () => {
+      const html =
+        '<p>Click <a href="javascript:alert(\'xss\')">here</a> or <a href="javascript:document.cookie">steal</a></p>';
+      let text = convert(html, {
+        wordwrap: 120,
+        selectors: [{ selector: "a", options: { hideLinkHrefIfSameAsText: true } }],
+      });
+      // Apply same sanitization as extractBody()
+      text = text.replace(/\[javascript:[^\]]*\]/gi, "");
+      expect(text).not.toContain("javascript:");
+      expect(text).not.toContain("alert");
+      expect(text).not.toContain("document.cookie");
+      // Link text itself is preserved
+      expect(text).toContain("here");
+    });
+
     it("should handle form-based content safely", () => {
       const html =
         '<form action="https://evil.com"><input type="text" value="phishing"></form><p>Real content</p>';

@@ -11,6 +11,9 @@ import { isRecordObject } from "../utils/type-guards.js";
 
 const logger = createLogger("tools:mail-read");
 
+/** Default body length for read_email (higher than list_emails, optimized for full content). */
+const READ_EMAIL_DEFAULT_BODY_LENGTH = 5000;
+
 /**
  * Extracts and processes the email body from a Graph API response.
  * Converts HTML to plain text when format is "text", and truncates to maxLen.
@@ -37,6 +40,8 @@ function extractBody(
         { selector: "img", format: "skip" },
       ],
     });
+    // Strip dangerous protocol URLs that html-to-text renders as text in link brackets
+    bodyContent = bodyContent.replace(/\[javascript:[^\]]*\]/gi, "");
   } else {
     bodyContent = rawContent;
   }
@@ -64,7 +69,7 @@ function formatInternetHeaders(headers: unknown[]): string[] {
 export function registerMailReadTools(
   server: McpServer,
   graphClient: Client,
-  config: Config,
+  _config: Config,
 ): void {
   server.tool(
     "read_email",
@@ -84,7 +89,7 @@ export function registerMailReadTools(
           };
         }
 
-        const maxLen = parsed.max_body_length ?? config.limits.maxBodyLength;
+        const maxLen = parsed.max_body_length ?? READ_EMAIL_DEFAULT_BODY_LENGTH;
         const bodyContent = extractBody(response, parsed.format, maxLen);
         const text = formatEmailDetail(response, bodyContent, parsed.include_internet_headers);
 

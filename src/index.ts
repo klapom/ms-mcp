@@ -1,4 +1,3 @@
-import type { Client } from "@microsoft/microsoft-graph-client";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { GraphClientDeps } from "./auth/graph-client.js";
@@ -9,6 +8,7 @@ import { registerMailFolderTools } from "./tools/mail-folders.js";
 import { registerMailReadTools } from "./tools/mail-read.js";
 import { registerMailSearchTools } from "./tools/mail-search.js";
 import { registerMailTools } from "./tools/mail.js";
+import type { ToolRegistrationFn } from "./types/tools.js";
 import { createLogger } from "./utils/logger.js";
 
 const logger = createLogger("server");
@@ -26,9 +26,6 @@ function createDefaultAuthDeps(config: Config): GraphClientDeps {
   const msalClient = new MsalClient(config.azure.tenantId, config.azure.clientId);
   return msalClient;
 }
-
-/** Signature for tool registration functions. */
-type ToolRegistrationFn = (server: McpServer, graphClient: Client, config: Config) => void;
 
 const registrations: ToolRegistrationFn[] = [
   registerMailTools,

@@ -47,8 +47,8 @@ function logUnsupportedParams(parsed: SearchEmailsParamsType): void {
 
   if (parsed.filter) {
     logger.info(
-      { tool: "search_emails" },
-      "$filter combined with $search: only certain fields (from, subject, receivedDateTime) are supported by Graph API",
+      { tool: "search_emails", filter: parsed.filter },
+      "$filter combined with $search: only receivedDateTime, from, and subject filters are supported by Graph API. Other filter fields may be silently ignored.",
     );
   }
 }

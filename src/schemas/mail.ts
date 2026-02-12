@@ -40,7 +40,7 @@ export const ReadEmailParams = BaseParams.extend({
     .max(50000)
     .optional()
     .describe(
-      "Maximale Body-Länge in Zeichen (1–50000). Wenn nicht gesetzt, wird config.limits.maxBodyLength verwendet (Standard: 500). Für vollständigen Body explizit 50000 angeben.",
+      "Maximale Body-Länge in Zeichen (1–50000). Standard für read_email: 5000. Für vollständigen Body explizit 50000 angeben.",
     ),
   include_internet_headers: z
     .boolean()

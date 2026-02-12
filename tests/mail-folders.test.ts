@@ -145,6 +145,87 @@ describe("list_mail_folders", () => {
       expect(page.items[0]).toHaveProperty("displayName", "Inbox");
     });
 
+    it("should handle partial child folder failures (1 OK, 1 403)", async () => {
+      const { http, HttpResponse } = await import("msw");
+      const { server: mswServer } = await import("./mocks/server.js");
+
+      // Override: Archive child folders return 403, Inbox child folders still work
+      mswServer.use(
+        http.get(
+          "https://graph.microsoft.com/v1.0/me/mailFolders/:folderId/childFolders",
+          ({ params }) => {
+            const { folderId } = params;
+            if (folderId === "AAMkArchive") {
+              return HttpResponse.json(
+                {
+                  error: {
+                    code: "ErrorAccessDenied",
+                    message: "Access denied to archive child folders",
+                  },
+                },
+                { status: 403 },
+              );
+            }
+            if (folderId === "AAMkInbox") {
+              return HttpResponse.json({
+                "@odata.context": "...",
+                "@odata.count": 2,
+                value: [
+                  {
+                    id: "AAMkInboxChild1",
+                    displayName: "Important",
+                    parentFolderId: "AAMkInbox",
+                    childFolderCount: 0,
+                    totalItemCount: 10,
+                    unreadItemCount: 2,
+                  },
+                  {
+                    id: "AAMkInboxChild2",
+                    displayName: "Newsletters",
+                    parentFolderId: "AAMkInbox",
+                    childFolderCount: 0,
+                    totalItemCount: 45,
+                    unreadItemCount: 15,
+                  },
+                ],
+              });
+            }
+            return HttpResponse.json({ "@odata.context": "...", "@odata.count": 0, value: [] });
+          },
+        ),
+      );
+
+      // Fetch folders and manually expand (simulating expandChildFolders behavior)
+      const page = await fetchPage<Record<string, unknown>>(client, "/me/mailFolders", {
+        select: buildSelectParam(DEFAULT_SELECT.mailFolder),
+      });
+
+      // Inbox has 2 children, Archive has 1 — Archive will fail
+      const foldersWithChildren = page.items.filter(
+        (f) =>
+          typeof f.childFolderCount === "number" &&
+          f.childFolderCount > 0 &&
+          typeof f.id === "string",
+      );
+      expect(foldersWithChildren).toHaveLength(2); // Inbox + Archive
+
+      // Fetch children in parallel — Archive should fail
+      const results = await Promise.allSettled(
+        foldersWithChildren.map((folder) =>
+          fetchPage<Record<string, unknown>>(
+            client,
+            `/me/mailFolders/${folder.id as string}/childFolders`,
+            { select: buildSelectParam(DEFAULT_SELECT.mailFolder) },
+          ),
+        ),
+      );
+
+      const fulfilled = results.filter((r) => r.status === "fulfilled");
+      const rejected = results.filter((r) => r.status === "rejected");
+      expect(fulfilled).toHaveLength(1); // Inbox children OK
+      expect(rejected).toHaveLength(1); // Archive children failed
+    });
+
     it("should shape folder response with pagination hint", () => {
       const folders = [
         {
