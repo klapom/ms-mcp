@@ -1,0 +1,17 @@
+#!/bin/sh
+# Pre-push hook: Run Phase 8 E2E tests before pushing to remote
+
+echo "🧪 Pre-push: Running Phase 8 E2E tests..."
+bash ./scripts/preview-hook.sh
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ E2E tests failed. Push cancelled."
+    echo "   Run tests manually: ./scripts/preview-hook.sh"
+    echo "   or skip with: git push --no-verify"
+    exit 1
+fi
+
+echo ""
+echo "✅ Pre-push checks passed. Proceeding with push..."
+exit 0
