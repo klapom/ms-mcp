@@ -131,7 +131,8 @@ export const DEFAULT_SELECT: Record<string, string[]> = {
     "categories",
   ],
   contactFolder: ["id", "displayName", "parentFolderId"],
-  task: ["id", "title", "status", "dueDateTime", "importance"],
+  // Note: 'title' field causes invalidRequest error with $select, so we omit $select for tasks
+  task: ["id", "status", "dueDateTime", "importance"],
   taskDetail: [
     "id",
     "title",

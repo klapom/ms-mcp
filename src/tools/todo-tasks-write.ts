@@ -11,7 +11,6 @@ import { CreateTaskParams, DeleteTaskParams, UpdateTaskParams } from "../schemas
 import type { ToolResult } from "../types/tools.js";
 import { checkConfirmation, formatPreview } from "../utils/confirmation.js";
 import { McpToolError, ValidationError, formatErrorForUser } from "../utils/errors.js";
-import { encodeGraphId } from "../utils/graph-id.js";
 import { idempotencyCache } from "../utils/idempotency.js";
 import { createLogger } from "../utils/logger.js";
 import { DEFAULT_SELECT, buildSelectParam } from "../utils/response-shaper.js";
@@ -75,7 +74,7 @@ async function executeCreate(
   startTime: number,
 ): Promise<ToolResult> {
   const userPath = resolveUserPath(parsed.user_id);
-  const url = `${userPath}/todo/lists/${encodeGraphId(parsed.list_id)}/tasks`;
+  const url = `${userPath}/todo/lists/${parsed.list_id}/tasks`;
   const requestBody = buildTaskBody(parsed);
 
   const result = (await graphClient.api(url).post(requestBody)) as Record<string, unknown>;
@@ -100,7 +99,7 @@ async function buildUpdatePreview(
   parsed: UpdateTaskParamsType,
   userPath: string,
 ): Promise<ToolResult> {
-  const url = `${userPath}/todo/lists/${encodeGraphId(parsed.list_id)}/tasks/${encodeGraphId(parsed.task_id)}`;
+  const url = `${userPath}/todo/lists/${parsed.list_id}/tasks/${parsed.task_id}`;
   const current = (await graphClient
     .api(url)
     .select(buildSelectParam(DEFAULT_SELECT.task))
@@ -125,7 +124,7 @@ async function executeUpdate(
   userPath: string,
   startTime: number,
 ): Promise<ToolResult> {
-  const url = `${userPath}/todo/lists/${encodeGraphId(parsed.list_id)}/tasks/${encodeGraphId(parsed.task_id)}`;
+  const url = `${userPath}/todo/lists/${parsed.list_id}/tasks/${parsed.task_id}`;
   const patchBody = buildTaskBody(parsed);
 
   const result = (await graphClient.api(url).patch(patchBody)) as Record<string, unknown>;
@@ -155,7 +154,7 @@ async function buildDeletePreview(
   parsed: DeleteTaskParamsType,
   userPath: string,
 ): Promise<ToolResult> {
-  const url = `${userPath}/todo/lists/${encodeGraphId(parsed.list_id)}/tasks/${encodeGraphId(parsed.task_id)}`;
+  const url = `${userPath}/todo/lists/${parsed.list_id}/tasks/${parsed.task_id}`;
   const current = (await graphClient
     .api(url)
     .select(buildSelectParam(DEFAULT_SELECT.task))
@@ -180,7 +179,7 @@ async function executeDelete(
   userPath: string,
   startTime: number,
 ): Promise<ToolResult> {
-  const url = `${userPath}/todo/lists/${encodeGraphId(parsed.list_id)}/tasks/${encodeGraphId(parsed.task_id)}`;
+  const url = `${userPath}/todo/lists/${parsed.list_id}/tasks/${parsed.task_id}`;
   await graphClient.api(url).delete();
 
   logger.info(

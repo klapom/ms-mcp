@@ -4,11 +4,10 @@ import type { Config } from "../config.js";
 import { resolveUserPath } from "../schemas/common.js";
 import { GetTaskParams, ListTasksParams } from "../schemas/todo.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
-import { encodeGraphId } from "../utils/graph-id.js";
 import { convertHtmlToText } from "../utils/html-convert.js";
 import { createLogger } from "../utils/logger.js";
 import { fetchPage } from "../utils/pagination.js";
-import { DEFAULT_SELECT, buildSelectParam, shapeListResponse } from "../utils/response-shaper.js";
+import { shapeListResponse } from "../utils/response-shaper.js";
 import { isRecordObject } from "../utils/type-guards.js";
 
 const logger = createLogger("tools:todo-tasks");
@@ -86,12 +85,13 @@ export function registerTodoTaskTools(
       try {
         const parsed = ListTasksParams.parse(params);
         const userPath = resolveUserPath(parsed.user_id);
-        const url = `${userPath}/todo/lists/${encodeGraphId(parsed.list_id)}/tasks`;
+        // Note: To Do list IDs don't need URL encoding (only contain Base64-safe chars + '=')
+        const url = `${userPath}/todo/lists/${parsed.list_id}/tasks`;
 
+        // Note: /tasks endpoint does NOT support $select with 'title' field
         const page = await fetchPage<Record<string, unknown>>(graphClient, url, {
           top: parsed.top ?? config.limits.maxItems,
           skip: parsed.skip,
-          select: buildSelectParam(DEFAULT_SELECT.task),
           filter: parsed.filter,
           orderby: parsed.orderby,
         });
@@ -128,12 +128,10 @@ export function registerTodoTaskTools(
       try {
         const parsed = GetTaskParams.parse(params);
         const userPath = resolveUserPath(parsed.user_id);
-        const url = `${userPath}/todo/lists/${encodeGraphId(parsed.list_id)}/tasks/${encodeGraphId(parsed.task_id)}`;
+        const url = `${userPath}/todo/lists/${parsed.list_id}/tasks/${parsed.task_id}`;
 
-        const task = (await graphClient
-          .api(url)
-          .select(buildSelectParam(DEFAULT_SELECT.taskDetail))
-          .get()) as Record<string, unknown>;
+        // Note: /tasks endpoint does NOT support $select with 'title' field
+        const task = (await graphClient.api(url).get()) as Record<string, unknown>;
 
         const text = formatTaskDetail(task, config.limits.maxBodyLength);
         logger.info({ tool: "get_task" }, "get_task completed");

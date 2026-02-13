@@ -4,10 +4,9 @@ import type { Config } from "../config.js";
 import { resolveUserPath } from "../schemas/common.js";
 import { GetTodoListParams, ListTodoListsParams } from "../schemas/todo.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
-import { encodeGraphId } from "../utils/graph-id.js";
 import { createLogger } from "../utils/logger.js";
 import { fetchPage } from "../utils/pagination.js";
-import { DEFAULT_SELECT, buildSelectParam, shapeListResponse } from "../utils/response-shaper.js";
+import { shapeListResponse } from "../utils/response-shaper.js";
 
 const logger = createLogger("tools:todo-lists");
 
@@ -49,10 +48,10 @@ export function registerTodoListTools(
         const userPath = resolveUserPath(parsed.user_id);
         const url = `${userPath}/todo/lists`;
 
+        // Note: /me/todo/lists does NOT support $select query parameter
         const page = await fetchPage<Record<string, unknown>>(graphClient, url, {
           top: parsed.top ?? config.limits.maxItems,
           skip: parsed.skip,
-          select: buildSelectParam(DEFAULT_SELECT.todoList),
         });
 
         const { items, paginationHint } = shapeListResponse(page.items, page.totalCount, {
@@ -87,12 +86,10 @@ export function registerTodoListTools(
       try {
         const parsed = GetTodoListParams.parse(params);
         const userPath = resolveUserPath(parsed.user_id);
-        const url = `${userPath}/todo/lists/${encodeGraphId(parsed.list_id)}`;
+        const url = `${userPath}/todo/lists/${parsed.list_id}`;
 
-        const list = (await graphClient
-          .api(url)
-          .select(buildSelectParam(DEFAULT_SELECT.todoList))
-          .get()) as Record<string, unknown>;
+        // Note: /me/todo/lists/{id} endpoint does support $select, but we omit it for consistency
+        const list = (await graphClient.api(url).get()) as Record<string, unknown>;
 
         const text = formatListDetail(list);
         logger.info({ tool: "get_todo_list" }, "get_todo_list completed");
