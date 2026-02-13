@@ -20,12 +20,13 @@ export class AuthTokenError extends Error {
   }
 }
 
-// Default scopes for MVP
+// Default scopes for MVP + Phase 8
 const DEFAULT_SCOPES = [
   "User.Read",
   "Mail.ReadWrite",
   "Mail.Send",
   "Calendars.ReadWrite",
+  "Calendars.ReadWrite.Shared", // Phase 8.3: share_calendar
   "Files.ReadWrite",
   "Contacts.ReadWrite",
   "Tasks.ReadWrite",
@@ -37,6 +38,8 @@ const DEFAULT_SCOPES = [
   "Chat.ReadWrite",
   "Sites.Read.All",
   "Sites.ReadWrite.All",
+  "TeamsActivity.Read", // Phase 8.4: list_activity_feed, list_mentions
+  "OnlineMeetings.Read", // Phase 8.4: get_meeting_transcript
 ];
 
 /**
