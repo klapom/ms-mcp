@@ -26,6 +26,11 @@ describe("encodeGraphId", () => {
     expect(encodeGraphId("id with spaces")).toBe("id%20with%20spaces");
   });
 
+  it("should preserve commas in SharePoint composite site IDs", () => {
+    const siteId = "contoso.sharepoint.com,guid1-abc,guid2-def";
+    expect(encodeGraphId(siteId)).toBe("contoso.sharepoint.com,guid1-abc,guid2-def");
+  });
+
   it("should encode typical Graph API Base64 ID", () => {
     const base64Id = "AAMkAGI2TGuLAAA=";
     const encoded = encodeGraphId(base64Id);

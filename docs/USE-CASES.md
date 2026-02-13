@@ -417,11 +417,11 @@ Notes: Q1 service review and proposal for expanded services.
 
 **Calendar (9 tools):** list_calendars, list_events, get_event, get_calendar_view, create_event, update_event, delete_event, respond_to_event, check_availability
 
-**OneDrive (8 tools):** list_files, search_files, get_file_metadata, download_file, get_recent_files, upload_file, create_folder, move_file, copy_file, share_file
+**OneDrive (10 tools):** list_files, search_files, get_file_metadata, download_file, get_recent_files, upload_file, create_folder, move_file, copy_file, share_file
 
-**Teams (6 tools):** list_teams, list_channels, list_channel_messages, send_channel_message, list_chats, list_chat_messages, send_chat_message
+**Teams (8 tools):** list_teams, list_channels, list_channel_messages, send_channel_message, reply_to_channel_message, list_chats, list_chat_messages, send_chat_message
 
-**SharePoint (7 tools):** search_sites, get_site, list_site_drives, list_sites, list_site_lists, list_list_items, create_list_item, update_list_item, delete_list_item
+**SharePoint (8 tools):** search_sites, get_site, list_site_drives, list_site_lists, list_list_items, create_list_item, update_list_item, delete_list_item
 
 ---
 

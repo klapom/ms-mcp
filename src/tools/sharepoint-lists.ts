@@ -44,25 +44,26 @@ export function registerSharePointListTools(
         const siteId = encodeGraphId(parsed.site_id);
         const url = `/sites/${siteId}/lists`;
 
-        const filter = parsed.include_hidden ? undefined : "list/hidden eq false";
-
         const page = await fetchPage<Record<string, unknown>>(graphClient, url, {
           top: parsed.top ?? config.limits.maxItems,
           skip: parsed.skip,
           select: "id,displayName,description,webUrl,list",
-          filter,
         });
 
-        if (page.items.length === 0) {
+        // Client-side filter: $filter on list/hidden is not supported on all tenants
+        const items = parsed.include_hidden
+          ? page.items
+          : page.items.filter((item) => {
+              const list = item.list as Record<string, unknown> | undefined;
+              return list?.hidden !== true;
+            });
+
+        if (items.length === 0) {
           return { content: [{ type: "text", text: "No lists found." }] };
         }
 
-        const lines = page.items.map((item) => formatList(item));
-        const total = page.totalCount ?? page.items.length;
-        const hint =
-          page.items.length < total
-            ? `\nShowing ${page.items.length} of ${total} lists. Use skip: ${page.items.length} for the next page.`
-            : `\nShowing ${page.items.length} of ${total} lists.`;
+        const lines = items.map((item) => formatList(item));
+        const hint = `\nShowing ${items.length} lists.`;
 
         logger.info(
           { tool: "list_site_lists", count: page.items.length },

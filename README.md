@@ -27,9 +27,6 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 #### SharePoint (8 tools)
 `search_sites` · `get_site` · `list_site_drives` · `list_site_lists` · `list_list_items` · `create_list_item` · `update_list_item` · `delete_list_item`
 
-#### Availability (1 tool)
-`check_availability`
-
 ## Example Prompts
 
 ### Inbox Triage
@@ -97,7 +94,7 @@ pnpm test
 | Linting & Format | Biome (no ESLint/Prettier) |
 | Build Tool | tsup |
 | Logging | pino (structured JSON, GDPR-compliant) |
-| Test Coverage | ~685 unit tests, E2E suite against M365 tenant |
+| Test Coverage | ~690 unit tests, E2E suite against M365 tenant |
 
 ## Key Design Principles
 

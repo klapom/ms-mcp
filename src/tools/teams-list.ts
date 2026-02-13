@@ -32,7 +32,7 @@ function formatChannel(item: Record<string, unknown>): string {
 export function registerTeamsListTools(
   server: McpServer,
   graphClient: Client,
-  config: Config,
+  _config: Config,
 ): void {
   server.tool(
     "list_teams",
@@ -88,9 +88,8 @@ export function registerTeamsListTools(
         const parsed = ListChannelsParams.parse(params);
         const url = `/teams/${encodeGraphId(parsed.team_id)}/channels`;
 
+        // Note: /teams/{id}/channels does NOT support $top or $skip
         const page = await fetchPage<Record<string, unknown>>(graphClient, url, {
-          top: parsed.top ?? config.limits.maxItems,
-          skip: parsed.skip,
           select: buildSelectParam(DEFAULT_SELECT.channel),
         });
 

@@ -50,21 +50,11 @@ describe("list_site_lists", () => {
   });
 
   describe("Graph API integration", () => {
-    it("should list non-hidden lists", async () => {
-      const client = createTestGraphClient();
-      const response = (await client
-        .api("/sites/site-001/lists")
-        .filter("list/hidden eq false")
-        .get()) as Record<string, unknown>;
-      const items = response.value as Array<Record<string, unknown>>;
-      expect(items.length).toBe(1);
-      expect(items[0]).toHaveProperty("displayName", "Tasks");
-    });
-
-    it("should list all lists including hidden", async () => {
+    it("should fetch all lists (client-side hidden filtering)", async () => {
       const client = createTestGraphClient();
       const response = (await client.api("/sites/site-001/lists").get()) as Record<string, unknown>;
       const items = response.value as Array<Record<string, unknown>>;
+      // All lists returned; tool filters hidden ones client-side
       expect(items.length).toBe(2);
     });
 

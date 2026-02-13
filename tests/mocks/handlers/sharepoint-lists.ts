@@ -83,10 +83,7 @@ export const sharepointListHandlers = [
         { status: 404 },
       );
     }
-    const filter = url.searchParams.get("$filter");
-    if (filter?.includes("hidden eq false")) {
-      return HttpResponse.json({ value: [list1] });
-    }
+    // Always return all lists; tool filters hidden ones client-side
     return HttpResponse.json({ value: [list1, list2] });
   }),
 

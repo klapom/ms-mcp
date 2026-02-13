@@ -19,17 +19,17 @@ The server is organized into six distinct layers, each responsible for a specifi
   - Loads configuration via `loadConfig()` (env: `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`)
   - Initializes authentication via `createDefaultAuthDeps()` (creates MSAL client with persistent token cache)
   - Implements fail-fast: checks for cached token before starting MCP server (exits with instructions if not authenticated)
-  - Registers 40+ tools from all domain modules
+  - Registers 45+ tools from all domain modules (Mail, Calendar, OneDrive/SharePoint, Teams, SharePoint Lists)
   - Establishes stdio transport for MCP JSON-RPC communication
 
 ### 2. Tool Layer (`src/tools/`)
 
 - **Responsibility:** Domain-specific request handlers organized by domain module
-- **Module Organization (40 tools across 12 modules):**
-  - **Mail** (9 tools): `mail.ts`, `mail-read.ts`, `mail-search.ts`, `mail-folders.ts`, `mail-send.ts`, `mail-reply.ts`, `mail-forward.ts`, `mail-move.ts`, `mail-attachments.ts`
+- **Module Organization (45 tools across 13 modules):**
+  - **Mail** (10 tools): `mail.ts`, `mail-read.ts`, `mail-search.ts`, `mail-folders.ts`, `mail-send.ts`, `mail-reply.ts`, `mail-forward.ts`, `mail-move.ts`, `mail-attachments.ts`
   - **Calendar** (9 tools): `calendar-list.ts`, `calendar-events.ts`, `calendar-view.ts`, `calendar-create.ts`, `calendar-update.ts`, `calendar-delete.ts`, `calendar-respond.ts`, `calendar-availability.ts`
   - **OneDrive/SharePoint** (10 tools): `drive-list.ts`, `drive-search.ts`, `drive-metadata.ts`, `drive-download.ts`, `drive-upload.ts`, `drive-folder.ts`, `drive-move.ts`, `drive-copy.ts`, `drive-share.ts` (supports SharePoint via `site_id`/`drive_id`)
-  - **Teams** (5 tools): `teams-list.ts`, `teams-messages.ts`, `teams-send.ts`, `teams-chats.ts`, `teams-chat-messages.ts`
+  - **Teams** (8 tools): `teams-list.ts`, `teams-messages.ts`, `teams-send.ts`, `teams-chats.ts`, `teams-chat-messages.ts`
   - **SharePoint** (8 tools): `sharepoint-sites.ts`, `sharepoint-lists.ts`, `sharepoint-list-write.ts`
 
 - **Pattern:** Each module exports a `register*Tools()` function that calls `server.tool()` for each tool in that domain
@@ -68,6 +68,7 @@ The server is organized into six distinct layers, each responsible for a specifi
     - Implements silent token acquisition (cache-first, then refresh)
     - Method `getAccessToken()`: Falls back to Device Code Flow if no cached token
     - Method `getAccessTokenSilentOnly()`: Returns null on failure (used for fail-fast check)
+    - Throws `AuthTokenError` for invalid_grant/AADSTS65001/AADSTS50076 with clear user instructions
     - Supports optional `ICachePlugin` for persistent token storage across restarts
   - **Token Cache Plugin** (`token-cache.ts`):
     - Implements `ICachePlugin` interface from @azure/msal-node
@@ -95,7 +96,7 @@ The server is organized into six distinct layers, each responsible for a specifi
     - `shapeListResponse()`: Limits items, truncates body fields, adds pagination hint
     - `buildSelectParam()`: Constructs OData $select query parameter
   - **Graph ID Encoding** (`graph-id.ts`): Safe URL encoding for Graph IDs
-    - `encodeGraphId()`: Base64-encodes special characters in IDs
+    - `encodeGraphId()`: Percent-encodes special characters in IDs while preserving commas (SharePoint composite site IDs)
     - Used on all tools that pass IDs to Graph API
   - **Drive Path Resolution** (`drive-path.ts`): Multi-tenant OneDrive/SharePoint support
     - `resolveDrivePath()`: Returns `/me/drive`, `/users/{userId}/drive`, or `/sites/{siteId}/drives/{driveId}`
@@ -265,10 +266,10 @@ Every tool follows this structure:
 
 | Module | Tools | Responsibility | Key Resources |
 |--------|-------|-----------------|----------------|
-| **Mail** | 9 | Email CRUD, search, attachments | list_emails, read_email, send_email, move_email, download_attachment |
+| **Mail** | 10 | Email CRUD, search, attachments | list_emails, read_email, send_email, move_email, download_attachment |
 | **Calendar** | 9 | Events, availability, RSVP | list_events, create_event, respond_to_event, check_availability |
 | **OneDrive/SharePoint** | 10 | File storage, sharing | list_files, upload_file, share_file, move_file, copy_file |
-| **Teams** | 5 | Team collaboration, channels | list_teams, send_channel_message, list_chats |
+| **Teams** | 8 | Team collaboration, channels, chats | list_teams, send_channel_message, list_chats, send_chat_message |
 | **SharePoint** | 8 | Site structure, lists, list items | search_sites, list_list_items, create_list_item |
 | **Auth** | — | Token acquisition, caching | MSAL Device Code Flow, persistent file cache |
 | **Utils** | — | Shared concerns | Response shaping, error mapping, logging, pagination |
@@ -397,8 +398,10 @@ Add to `claude_desktop_config.json`:
 - **Context Budget:** DEFAULT_SELECT limits fields per entity type, responses truncated to 500-1000 chars per body field
 - **Pagination:** All list operations paginate with `$top=25` by default, provide `skip` for subsequent pages
 - **Token Cache:** Persistent file cache reduces Device Code Flow prompts on restarts
+- **Auth Error Handling:** Clear error messages for scope changes, revoked consent, and invalid tokens (AuthTokenError)
 - **Error Mapping:** Single middleware layer catches all errors, no per-tool error handling duplication
 - **Logging:** Structured JSON allows efficient parsing and filtering by observability tools
+- **Graph API Quirks:** Some endpoints don't support pagination parameters; fallback to client-side filtering where needed
 
 ## Future Enhancements
 

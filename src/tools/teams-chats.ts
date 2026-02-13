@@ -41,7 +41,6 @@ export function registerTeamsChatsTools(
           skip: parsed.skip,
           select: buildSelectParam(DEFAULT_SELECT.chat),
           filter,
-          orderby: "lastUpdatedDateTime desc",
         });
 
         if (page.items.length === 0) {

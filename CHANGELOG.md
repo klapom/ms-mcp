@@ -8,6 +8,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 - Documentation update — all docs translated to English, retroactive changelog added
 
+### Fixed
+- **encodeGraphId** now preserves commas in SharePoint composite site IDs (e.g., "hostname,guid,guid") while safely encoding other special characters
+- **list_chats** removed unsupported `$orderby` on `lastUpdatedDateTime` — Graph API doesn't support ordering this field
+- **list_site_lists** replaced unsupported `$filter` on list/hidden with client-side filtering for tenant compatibility
+- **list_teams** and **list_channels** removed unsupported pagination parameters (`$top`/`$skip`) — Graph API doesn't support these on `/me/joinedTeams` and `/teams/{id}/channels`
+- **Auth error handling** improved: `AuthTokenError` thrown for invalid_grant/AADSTS65001/AADSTS50076 with clear user instructions to re-authenticate
+
 ---
 
 ## [0.13.0] -- 2026-02-13

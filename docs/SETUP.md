@@ -206,6 +206,22 @@ The client ID does not match the app registration. Check `AZURE_CLIENT_ID` again
 
 Public client flow is not enabled. Check Step 1 under "Enable Public Client Flow".
 
+### "Authentication token is invalid" (AuthTokenError)
+
+This typically happens when:
+- Azure App Registration permissions have changed
+- Admin consent was revoked
+- Refresh token expired
+
+**To fix:**
+1. Ensure all required API permissions are granted in Azure Portal
+2. Grant admin consent (green button in "API permissions" section)
+3. Log out and re-authenticate:
+   ```bash
+   pnpm auth logout
+   pnpm auth login
+   ```
+
 ## Configuration Reference
 
 | Variable | Required | Default | Description |
@@ -253,3 +269,23 @@ OneDrive tools:
 - `move_file` — Move file
 - `copy_file` — Copy file
 - `share_file` — Share file
+
+Teams tools:
+- `list_teams` — List teams you're a member of
+- `list_channels` — List channels in a team
+- `list_channel_messages` — List messages in a channel
+- `send_channel_message` — Send message to channel
+- `reply_to_channel_message` — Reply to a channel message
+- `list_chats` — List your chats
+- `list_chat_messages` — List messages in a chat
+- `send_chat_message` — Send message to a chat
+
+SharePoint tools:
+- `search_sites` — Search for SharePoint sites
+- `get_site` — Get site details
+- `list_site_drives` — List document libraries in a site
+- `list_site_lists` — List lists in a site
+- `list_list_items` — List items in a SharePoint list
+- `create_list_item` — Create list item
+- `update_list_item` — Update list item
+- `delete_list_item` — Delete list item
