@@ -15,6 +15,7 @@ import { sharepointListHandlers } from "./sharepoint-lists.js";
 import { sharepointHandlers } from "./sharepoint.js";
 import { teamsHandlers } from "./teams.js";
 import { todoHandlers } from "./todo.js";
+import { userHandlers } from "./user.js";
 
 /**
  * MSW handler order matters: more specific routes must come before generic ones.
@@ -41,4 +42,5 @@ export const handlers: HttpHandler[] = [
   ...sharepointHandlers,
   ...contactHandlers,
   ...todoHandlers,
+  ...userHandlers,
 ];

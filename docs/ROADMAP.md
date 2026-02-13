@@ -22,38 +22,14 @@ Destructive safety pattern (confirm/idempotency), auth CLI (login/status/logout)
 
 **Status after Phase 5: 45 tools, 688 tests.**
 
+### Phase 6 — Contacts + To Do
+14 tools: 7 Contacts (list_contacts, get_contact, search_contacts, create_contact, update_contact, delete_contact, list_contact_folders) + 7 To Do (list_todo_lists, get_todo_list, list_tasks, get_task, create_task, update_task, delete_task).
+
+**Status after Phase 6: 59 tools, 752 tests.**
+
 ---
 
 ## Upcoming Phases
-
-### Phase 6 — Contacts + To Do
-**Scopes already requested**, zero tools implemented.
-
-#### Sprint 6.1 — Contacts (~7 tools)
-Scope: `Contacts.ReadWrite` (already granted)
-
-| Tool | Type | Graph API |
-|---|---|---|
-| `list_contacts` | safe | GET /me/contacts |
-| `get_contact` | safe | GET /me/contacts/{id} |
-| `search_contacts` | safe | GET /me/contacts?$search |
-| `create_contact` | destructive | POST /me/contacts |
-| `update_contact` | destructive | PATCH /me/contacts/{id} |
-| `delete_contact` | destructive | DELETE /me/contacts/{id} |
-| `list_contact_folders` | safe | GET /me/contactFolders |
-
-#### Sprint 6.2 — To Do (~7 tools)
-Scope: `Tasks.ReadWrite` (already granted)
-
-| Tool | Type | Graph API |
-|---|---|---|
-| `list_todo_lists` | safe | GET /me/todo/lists |
-| `get_todo_list` | safe | GET /me/todo/lists/{id} |
-| `list_tasks` | safe | GET /me/todo/lists/{id}/tasks |
-| `get_task` | safe | GET .../tasks/{id} |
-| `create_task` | destructive | POST .../tasks |
-| `update_task` | destructive | PATCH .../tasks/{id} |
-| `delete_task` | destructive | DELETE .../tasks/{id} |
 
 ---
 
@@ -129,6 +105,7 @@ Scope: `Presence.Read.All` (NEW)
 | `set_status_message` | destructive | POST /me/presence/setStatusMessage |
 
 #### Sprint 9.2 — Polish & Advanced
+- Review all sprint documents for "Known Limitations & Future Work" and "Post-Sprint Notes" sections to identify open items and validate their relevance for Sprint 9. Joint decision on which features to implement.
 - Batch API support ($batch) for multi-call operations
 - itemAttachment support (embedded Outlook items)
 - referenceAttachment support (OneDrive/SharePoint links)

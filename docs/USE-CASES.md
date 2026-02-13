@@ -411,6 +411,68 @@ Notes: Q1 service review and proposal for expanded services.
 
 ---
 
+## User & Directory Use Cases
+
+### UC-18: Find Colleague Contact Info (Available)
+
+**Scenario:** A new employee needs to find contact information for colleagues or team members.
+
+**Example Prompt:**
+> Find the contact information for Alice Schmidt. What's her email, phone number, and reporting manager?
+
+**Tools Used:**
+1. `search_users` — Find user by name
+2. `get_user` — Get full user profile including email and phone
+3. `get_manager` — Find the user's manager
+4. Claude presents contact details and organizational relationship
+
+**Common Scenarios:**
+- `"What's the phone number for john@company.de?"` → `get_user`
+- `"Who's Alice's manager?"` → `get_manager`
+- `"Find all users in the Finance department"` → `search_users` with department filter
+
+---
+
+### UC-19: Organizational Chart and Reporting Structure (Available)
+
+**Scenario:** A manager wants to understand their team structure and who reports to them.
+
+**Example Prompt:**
+> Show me my direct reports and their managers. Create an organizational chart.
+
+**Tools Used:**
+1. `get_my_profile` — Get current user's identity
+2. `list_direct_reports` — List all direct reports
+3. `get_user` — Get details for each report
+4. `get_manager` — Get manager for context
+5. Claude formats as org chart or hierarchy
+
+**Advanced Scenarios:**
+- `"Who are all the people in my reporting chain?"` → `get_manager` (recursive)
+- `"Show me my director and their other direct reports"` → `get_manager` + `list_direct_reports`
+
+---
+
+### UC-20: User Profile and Group Membership (Available)
+
+**Scenario:** An administrator or team lead needs to check a user's group memberships or view their profile photo.
+
+**Example Prompt:**
+> Show me all the groups that Alice Schmidt belongs to. Include her profile photo.
+
+**Tools Used:**
+1. `search_users` — Find user by name
+2. `list_user_groups` — Get user's group memberships
+3. `get_user_photo` — Download user's profile picture
+4. Claude displays groups and provides photo URL
+
+**Common Scenarios:**
+- `"What groups am I a member of?"` → `list_user_groups` (for self)
+- `"Who is in the Engineering group?"` — Not directly supported (would need list_group_members)
+- `"Get my profile photo for a presentation"` → `get_user_photo`
+
+---
+
 ## Contacts Use Cases
 
 ### UC-16: Contact Management (Available)
@@ -462,7 +524,7 @@ Notes: Q1 service review and proposal for expanded services.
 
 ---
 
-## Current Tool Inventory (59 Tools)
+## Current Tool Inventory (66 Tools)
 
 **Mail (10 tools):** list_emails, search_emails, read_email, list_mail_folders, send_email, reply_email, forward_email, move_email, list_attachments, download_attachment
 
@@ -477,6 +539,8 @@ Notes: Q1 service review and proposal for expanded services.
 **Contacts (7 tools):** list_contacts, get_contact, search_contacts, create_contact, update_contact, delete_contact, list_contact_folders
 
 **To Do (7 tools):** list_todo_lists, get_todo_list, list_tasks, get_task, create_task, update_task, delete_task
+
+**User & Directory (7 tools):** get_my_profile, search_users, get_user, get_manager, list_direct_reports, list_user_groups, get_user_photo
 
 ---
 

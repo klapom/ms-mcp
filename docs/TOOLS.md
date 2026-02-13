@@ -65,5 +65,12 @@
 | `delete_task` | Delete a task from a Microsoft To Do list. Requires confirm=true to actually delete — without it, fetches the task and returns a preview. Use idempotency_key to prevent duplicate deletes. | todo-tasks-write | 🔴 destructive |
 | `list_tasks` | List tasks in a Microsoft To Do list. Returns title, status, due date, and importance. Supports $filter and $orderby. | todo-tasks | 🟢 safe |
 | `get_task` | Get full details of a single task including body, dates, reminder, and categories. Body HTML is converted to plain text. | todo-tasks | 🟢 safe |
+| `list_direct_reports` | List the direct reports (team members) of a user. Shows name, email, job title, and department for each person. | user-org | 🟢 safe |
+| `list_user_groups` | List the groups and directory roles that a user is a member of. Shows group name, description, and type (mail-enabled, security). | user-org | 🟢 safe |
+| `get_user_photo` | Get a user | user-photo | 🟢 safe |
+| `get_my_profile` | Get the current user | user-profile | 🟢 safe |
+| `get_user` | Get detailed profile information for a specific user by ID or email (UPN). Returns job title, department, contact info, and location. | user-profile | 🟢 safe |
+| `get_manager` | Get the manager of a user. Returns manager | user-profile | 🟢 safe |
+| `search_users` | Search for users in the directory by name, email, or job title. Supports partial matches and fuzzy search. | user-search | 🟢 safe |
 
-_59 Tools registriert._
+_66 Tools registriert._

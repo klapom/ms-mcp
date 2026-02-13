@@ -8,9 +8,9 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 
 ## Features
 
-### Available (Phase 6 Complete)
+### Available (Phase 6 Complete, Sprint 7.1 In Progress)
 
-**59 tools across 7 modules:**
+**66 tools across 8 modules:**
 
 #### Mail (10 tools)
 `list_emails` · `read_email` · `search_emails` · `list_mail_folders` · `send_email` · `reply_email` · `forward_email` · `move_email` · `list_attachments` · `download_attachment`
@@ -32,6 +32,9 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 
 #### To Do (7 tools)
 `list_todo_lists` · `get_todo_list` · `list_tasks` · `get_task` · `create_task` · `update_task` · `delete_task`
+
+#### User & Directory (7 tools)
+`get_my_profile` · `search_users` · `get_user` · `get_manager` · `list_direct_reports` · `list_user_groups` · `get_user_photo`
 
 ## Example Prompts
 
@@ -100,7 +103,7 @@ pnpm test
 | Linting & Format | Biome (no ESLint/Prettier) |
 | Build Tool | tsup |
 | Logging | pino (structured JSON, GDPR-compliant) |
-| Test Coverage | 752 unit tests across 52 test files, E2E suite against M365 tenant |
+| Test Coverage | 790+ unit tests across 54 test files, E2E suite against M365 tenant |
 
 ## Key Design Principles
 
@@ -135,7 +138,8 @@ For detailed architecture, design decisions, and technical debt tracking:
 
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — System design, data flow, error handling
 - **[docs/TECHNICAL_DEBT.md](docs/TECHNICAL_DEBT.md)** — Known limitations, refactoring backlog, future improvements
-- **[docs/USE-CASES.md](docs/USE-CASES.md)** — Real-world scenarios and workflows
+- **[docs/USE-CASES.md](docs/USE-CASES.md)** — Real-world scenarios and workflows (updated for Sprint 7.1)
+- **[docs/PERMISSIONS.md](docs/PERMISSIONS.md)** — API scopes and tool permissions (updated for Sprint 7.1)
 
 ## Authentication
 

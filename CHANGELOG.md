@@ -8,6 +8,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **User & Directory tools (7 new tools):** `get_my_profile`, `search_users`, `get_user`, `get_manager`, `list_direct_reports`, `list_user_groups`, `get_user_photo`
+- New scopes required: User.Read.All, Directory.Read.All (Sprint 7.1)
 - Phase 6 documentation and specification
 
 ### Fixed
@@ -36,7 +38,6 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **create_task** Tool -- Create new task (destructive, requires confirm + idempotency_key)
 - **update_task** Tool -- Update task details (destructive, requires confirm)
 - **delete_task** Tool -- Delete task (destructive, requires confirm)
-- Phase 6 documentation (docs/sprints/SPRINT_6_1.md)
 - 752 tests (59 tools total, 52 test files)
 - Contacts and To Do modules (contacts-read.ts, contacts-search.ts, contacts-write.ts, todo-lists.ts, todo-tasks.ts, todo-tasks-write.ts)
 
@@ -64,7 +65,6 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **create_list_item** Tool -- Create new list item (destructive, requires confirm)
 - **update_list_item** Tool -- Update existing list item (destructive, requires confirm)
 - **delete_list_item** Tool -- Delete list item (destructive, requires confirm)
-- Sprint 5 documentation (docs/sprints/SPRINT_5_1.md, SPRINT_5_2.md, SPRINT_5_3.md)
 - 688 tests (45 tools total)
 
 ---

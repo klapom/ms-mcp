@@ -23,6 +23,8 @@
 2. Select **Microsoft Graph** → **Delegated permissions**
 3. Add the following permissions based on which tools you need. See `docs/PERMISSIONS.md` for a complete reference of which permissions are required for each tool:
    - `User.Read` — Read own profile
+   - `User.Read.All` — Read user profiles and directory (Sprint 7.1)
+   - `Directory.Read.All` — Read directory structure (Sprint 7.1)
    - `Mail.ReadWrite` — Read and manage emails
    - `Mail.Send` — Send emails
    - `Calendars.ReadWrite` — Read and manage calendar events

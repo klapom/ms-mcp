@@ -44,6 +44,10 @@ import { registerTeamsSendTools } from "./tools/teams-send.js";
 import { registerTodoListTools } from "./tools/todo-lists.js";
 import { registerTodoTaskWriteTools } from "./tools/todo-tasks-write.js";
 import { registerTodoTaskTools } from "./tools/todo-tasks.js";
+import { registerUserOrgTools } from "./tools/user-org.js";
+import { registerUserPhotoTools } from "./tools/user-photo.js";
+import { registerUserProfileTools } from "./tools/user-profile.js";
+import { registerUserSearchTools } from "./tools/user-search.js";
 import type { ToolRegistrationFn } from "./types/tools.js";
 import { createLogger } from "./utils/logger.js";
 import { resolveTildePath } from "./utils/path.js";
@@ -112,6 +116,10 @@ const registrations: ToolRegistrationFn[] = [
   registerTodoListTools,
   registerTodoTaskTools,
   registerTodoTaskWriteTools,
+  registerUserProfileTools,
+  registerUserSearchTools,
+  registerUserOrgTools,
+  registerUserPhotoTools,
 ];
 
 async function main() {
