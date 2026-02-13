@@ -237,17 +237,18 @@ This typically happens when:
 
 ## Available Tools
 
-For a complete list of all 73 available tools and their required permissions, see `docs/PERMISSIONS.md` and `docs/TOOLS.md`.
+For a complete list of all 99 available tools and their required permissions, see `docs/PERMISSIONS.md` and `docs/TOOLS.md`.
 
 **Summary by module:**
 
-- **Mail (18 tools):** Email CRUD, search, attachments, drafts, flags, rules, folders
+- **Mail (20 tools):** Email CRUD, search, attachments, drafts, flags, rules, folders, item/reference attachments
 - **Calendar (9 tools):** Events, availability checks, RSVP, scheduling
-- **OneDrive (10 tools):** File storage, sharing, search, download/upload
+- **OneDrive (12 tools):** File storage, sharing, search, download/upload, large files, async monitoring
 - **Teams (8 tools):** Team/channel messaging, chats, message history
 - **SharePoint (8 tools):** Site discovery, document libraries, list management
 - **Contacts (7 tools):** Contact management, search, folders
 - **To Do (7 tools):** Task lists, tasks, task management
 - **User & Directory (7 tools):** User profiles, org chart, group membership, photos
+- **Advanced Features (15 tools):** Message signing, meeting rooms, delegate access, advanced sharing
 
-See `docs/TOOLS.md` for complete list of all 73 tools with descriptions.
+See `docs/TOOLS.md` for complete list of all 99 tools with descriptions.

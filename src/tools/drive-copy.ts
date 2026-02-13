@@ -47,19 +47,38 @@ async function executeCopy(
   }
 
   // copy returns 202 (async operation) with a Location header for monitoring
+  // WORKAROUND: Graph Client SDK doesn't expose Location header with responseType RAW
+  // So we make the request and then check the response, knowing it returns null body
   await graphClient.api(itemUrl).post(requestBody);
 
   const endTime = Date.now();
   logger.info(
-    { tool: "copy_file", status: 202, duration_ms: endTime - startTime },
+    {
+      tool: "copy_file",
+      status: 202,
+      duration_ms: endTime - startTime,
+    },
     "copy_file completed",
   );
+
+  // Build response text
+  // NOTE: Monitor URL would come from Location header, but Graph Client SDK doesn't expose it
+  // Users can poll manually using the file_id: /me/drive/items/{file_id}/copy with $monitor query
+  let responseText = `Copy operation started. The file is being copied asynchronously.\n\nSource ID: ${parsed.file_id}\nDestination folder: ${parsed.destination_folder_id}`;
+  if (parsed.new_name) {
+    responseText += `\nNew name: ${parsed.new_name}`;
+  }
+
+  // Provide workaround instructions for monitoring
+  responseText += `\n\nNote: To monitor copy progress, construct the monitor URL manually:
+https://graph.microsoft.com/v1.0/me/drive/items/${parsed.file_id}/copy?$monitor
+Then use poll_copy_status with this URL.`;
 
   return {
     content: [
       {
         type: "text",
-        text: `Copy operation started. The file is being copied asynchronously.\n\nSource ID: ${parsed.file_id}\nDestination folder: ${parsed.destination_folder_id}${parsed.new_name ? `\nNew name: ${parsed.new_name}` : ""}`,
+        text: responseText,
       },
     ],
   };

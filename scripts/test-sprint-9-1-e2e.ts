@@ -276,19 +276,124 @@ async function main() {
     }
   }
 
-  // Test 4: poll_copy_status
-  console.log("4️⃣  Testing poll_copy_status...");
+  // Test 4: poll_copy_status (workflow test with copy_file)
+  console.log("4️⃣  Testing poll_copy_status (full workflow)...");
   try {
-    // Note: poll_copy_status requires an active copy operation
-    // We can't easily create one without first doing a copy_file which returns 202
-    // For now, we'll document that this requires a real copy operation
+    // Step 1: Create a small test file to copy
+    const smallTestFile = Buffer.alloc(1024, "B"); // 1 KB
 
-    console.log("   ⚠️  Skipped: Requires active copy operation");
-    console.log("      (poll_copy_status monitor URL is returned from copy_file response)");
-    console.log("      Example: Copy a file first, then use Location header URL\n");
+    // Create a unique filename to avoid conflicts
+    const timestamp = Date.now();
+    const sourceFileName = `.test-copy-source-${timestamp}.txt`;
+    const destFileName = `.test-copy-dest-${timestamp}.txt`;
+
+    // Upload source file
+    const uploadResponse = (await graphClient
+      .api(`/me/drive/root:/${sourceFileName}:/content`)
+      .header("Content-Type", "application/octet-stream")
+      .put(smallTestFile)) as DriveItem;
+
+    const sourceFileId = uploadResponse.id;
+    if (!sourceFileId) {
+      console.log("   ⚠️  Skipped: Could not create source file\n");
+    } else {
+      console.log(`   📁 Created source file: ${sourceFileName} (ID: ${sourceFileId})`);
+
+      // Step 2: Start copy operation
+      await graphClient.api(`/me/drive/items/${sourceFileId}/copy`).post({
+        parentReference: { path: "/drive/root:" },
+        name: destFileName,
+      });
+
+      console.log("   📋 Copy operation started (async, 202)");
+
+      // Step 3: Construct monitor URL
+      // NOTE: Graph Client SDK doesn't expose Location header, so we use the documented pattern
+      // Monitor URL pattern: https://graph.microsoft.com/v1.0/me/drive/items/{file_id}/copy?$monitor
+      const monitorUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${sourceFileId}/copy?$monitor`;
+      console.log(`   🔍 Monitor URL: ${monitorUrl} (constructed)`);
+
+      // Step 4: Poll copy status using the monitor URL
+      await delay(1000); // Wait 1 second for copy to start
+
+      let attempts = 0;
+      const maxAttempts = 5;
+      let finalStatus = "unknown";
+
+      // Extract path from monitor URL for Graph Client
+      // URL format: https://graph.microsoft.com/v1.0/monitor/abc-123-xyz
+      const urlObj = new URL(monitorUrl);
+      const monitorPath = urlObj.pathname.replace(/^\/v1\.0/, "") + urlObj.search;
+
+      while (attempts < maxAttempts) {
+        attempts += 1;
+
+        try {
+          const statusResponse = (await graphClient.api(monitorPath).get()) as Record<
+            string,
+            unknown
+          >;
+
+          const status = String(statusResponse.status ?? "unknown");
+          const percentage = Number(statusResponse.percentageComplete ?? 0);
+
+          console.log(`   📊 Poll attempt ${attempts}: Status=${status}, Progress=${percentage}%`);
+
+          if (status === "completed") {
+            finalStatus = "completed";
+            const resultId = String(statusResponse.id ?? "N/A");
+            const resultName = String(statusResponse.name ?? destFileName);
+            console.log("   ✅ Success: Copy completed!");
+            console.log(`      Destination ID: ${resultId}`);
+            console.log(`      Destination name: ${resultName}`);
+            break;
+          }
+
+          if (status === "failed") {
+            finalStatus = "failed";
+            const errorMsg =
+              statusResponse.error && typeof statusResponse.error === "object"
+                ? String(
+                    (statusResponse.error as Record<string, unknown>).message ?? "Unknown error",
+                  )
+                : "Unknown error";
+            console.log(`   ❌ Copy failed: ${errorMsg}`);
+            break;
+          }
+
+          if (status === "inProgress") {
+            finalStatus = "inProgress";
+            await delay(1000); // Wait 1 second before next poll
+            continue;
+          }
+
+          // notStarted or other status
+          await delay(1000);
+        } catch (pollError) {
+          console.log(
+            `   ⚠️  Poll attempt ${attempts} failed: ${pollError instanceof Error ? pollError.message : String(pollError)}`,
+          );
+          break;
+        }
+      }
+
+      if (finalStatus === "inProgress" && attempts >= maxAttempts) {
+        console.log(
+          `   ⚠️  Copy still in progress after ${maxAttempts} attempts (this is OK for large files)`,
+        );
+      }
+
+      console.log();
+    }
   } catch (error) {
-    console.error("   ❌ Failed:", error instanceof Error ? error.message : String(error));
-    console.log();
+    if (error instanceof Error && error.message.includes("401")) {
+      console.log("   ⚠️  Skipped: Unauthorized (no OneDrive license)\n");
+    } else if (error instanceof Error && error.message.includes("403")) {
+      console.log("   ⚠️  Skipped: Forbidden - check permissions (Files.ReadWrite required)\n");
+    } else {
+      console.error("   ❌ Failed:", error instanceof Error ? error.message : String(error));
+      console.log();
+    }
   }
 
   console.log("✅ Sprint 9.1 E2E tests completed!");

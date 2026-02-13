@@ -1,6 +1,6 @@
 # Use Cases — MS-MCP Office 365 Tools
 
-This document describes practical, real-world scenarios showing how Claude can help you with Microsoft 365 using the MCP tools available in this project. All use cases are **available** as of Phase 7 (73 tools across 8 modules).
+This document describes practical, real-world scenarios showing how Claude can help you with Microsoft 365 using the MCP tools available in this project. All use cases are **available** as of Phase 9.1 (99 tools across 9 modules).
 
 ---
 
@@ -231,6 +231,53 @@ This document describes practical, real-world scenarios showing how Claude can h
 
 ---
 
+### UC-05G: Email Attachments — Outlook Items (Available, Sprint 9.1)
+
+**Scenario:** A user wants to attach an existing Outlook email item to a new email message for reference or forwarding.
+
+**Example Prompt:**
+> Attach the original "Q1 Budget Proposal" email from John to my reply.
+
+**Tools Used:**
+1. `search_emails` — Find the email to attach
+2. `attach_item` — Attach the email as an Outlook item to a new message
+3. `send_email` — Send the message with the attachment
+
+**Safety Notes:**
+- `attach_item` requires `itemId` (from `read_email` or `search_emails`)
+- Item attachments add context without duplicating large message bodies
+- Destructive operation requires `confirm=true`
+
+**Common Scenarios:**
+- `"Create a new email and attach the proposal for the client review"` → `attach_item`
+- `"Forward multiple past emails as items in a single message"` → Multiple `attach_item` calls
+
+---
+
+### UC-05H: Email Attachments — OneDrive/SharePoint References (Available, Sprint 9.1)
+
+**Scenario:** A user wants to attach a reference link to a OneDrive or SharePoint file in an email instead of uploading the file as an attachment.
+
+**Example Prompt:**
+> Create an email and attach a reference to the Q1 budget spreadsheet in OneDrive instead of uploading it.
+
+**Tools Used:**
+1. `search_files` — Find the file in OneDrive/SharePoint
+2. `attach_reference` — Attach the file as a reference link
+3. `send_email` — Send the message with the reference
+
+**Benefits:**
+- Reduces email size for large files
+- Recipients always access the latest version
+- Sharing permissions follow OneDrive/SharePoint rules
+- Destructive operation requires `confirm=true`
+
+**Common Scenarios:**
+- `"Attach the latest report from the Finance site to my email"` → `attach_reference`
+- `"Share the project files without uploading them as attachments"` → `attach_reference` + `send_email`
+
+---
+
 ## Calendar Use Cases
 
 ### UC-06: Meeting Preparation (Available)
@@ -334,7 +381,7 @@ Notes: Q1 service review and proposal for expanded services.
 > Upload the Q1 budget document to OneDrive, create a "Budget" subfolder in the PHOENIX project, and share it with the finance team.
 
 **Tools Used:**
-1. `upload_file` — Add new file to OneDrive
+1. `upload_file` — Add new file to OneDrive (up to ~4 MB)
 2. `create_folder` — Organize files into directories
 3. `move_file` — Reorganize existing files
 4. `copy_file` — Duplicate files (note: async, returns 202)
@@ -344,6 +391,32 @@ Notes: Q1 service review and proposal for expanded services.
 - `"Move all January invoices to the Archive folder"` → `list_files` + `move_file` (bulk operation)
 - `"Copy the project template to a new project folder"` → `create_folder` + `copy_file`
 - `"Share the final report with read-only access to the client"` → `share_file` (view role)
+
+---
+
+### UC-10B: Large File Upload (Available, Sprint 9.1)
+
+**Scenario:** A video producer needs to upload a large video file (>4 MB) to OneDrive for team review without timing out.
+
+**Example Prompt:**
+> Upload the 500 MB project video to the client folder in OneDrive. Monitor the upload progress.
+
+**Tools Used:**
+1. `upload_large_file` — Upload file >4 MB using resumable session upload
+2. `poll_copy_status` — Monitor async upload progress (if needed)
+3. `share_file` — Share with team for review
+
+**Key Features:**
+- Supports files >4 MB up to 4 GB
+- Resumable sessions for network reliability
+- Progress monitoring via polling endpoint
+- Useful for media files, backups, large datasets
+- Destructive operation requires `confirm=true` and `idempotency_key`
+
+**Common Workflows:**
+- `"Upload the recording from today's meeting"` → `upload_large_file` (100+ MB video)
+- `"Back up the database export file"` → `upload_large_file` + `share_file`
+- `"Monitor the upload status of a large file"` → `poll_copy_status`
 
 ---
 
@@ -621,13 +694,13 @@ Notes: Q1 service review and proposal for expanded services.
 
 ---
 
-## Current Tool Inventory (73 Tools, Phase 7 Complete)
+## Current Tool Inventory (99 Tools, Phase 9.1 Complete)
 
-**Mail (18 tools):** list_emails, search_emails, read_email, list_mail_folders, send_email, reply_email, forward_email, move_email, list_attachments, download_attachment, delete_email, create_draft, send_draft, add_attachment, flag_email, create_mail_folder, list_mail_rules
+**Mail (20 tools):** list_emails, search_emails, read_email, list_mail_folders, send_email, reply_email, forward_email, move_email, list_attachments, download_attachment, delete_email, create_draft, send_draft, add_attachment, flag_email, create_mail_folder, list_mail_rules, attach_item, attach_reference
 
 **Calendar (9 tools):** list_calendars, list_events, get_event, get_calendar_view, create_event, update_event, delete_event, respond_to_event, check_availability
 
-**OneDrive (10 tools):** list_files, search_files, get_file_metadata, download_file, get_recent_files, upload_file, create_folder, move_file, copy_file, share_file
+**OneDrive (12 tools):** list_files, search_files, get_file_metadata, download_file, get_recent_files, upload_file, upload_large_file, create_folder, move_file, copy_file, poll_copy_status, share_file
 
 **Teams (8 tools):** list_teams, list_channels, list_channel_messages, send_channel_message, reply_to_channel_message, list_chats, list_chat_messages, send_chat_message
 
@@ -638,6 +711,8 @@ Notes: Q1 service review and proposal for expanded services.
 **To Do (7 tools):** list_todo_lists, get_todo_list, list_tasks, get_task, create_task, update_task, delete_task
 
 **User & Directory (7 tools):** get_my_profile, search_users, get_user, get_manager, list_direct_reports, list_user_groups, get_user_photo
+
+**Advanced Features (15 tools):** Message signing, meeting room finder, delegate access, advanced sharing, and more (Phase 8)
 
 ---
 

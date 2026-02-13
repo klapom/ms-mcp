@@ -8,18 +8,18 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 
 ## Features
 
-### Available (Phase 7 Complete)
+### Available (Phase 9.1 Complete)
 
-**73 tools across 8 modules:**
+**99 tools across 9 modules:**
 
-#### Mail (18 tools)
-`list_emails` · `read_email` · `search_emails` · `list_mail_folders` · `send_email` · `reply_email` · `forward_email` · `move_email` · `list_attachments` · `download_attachment` · `delete_email` · `create_draft` · `send_draft` · `add_attachment` · `flag_email` · `create_mail_folder` · `list_mail_rules`
+#### Mail (20 tools)
+`list_emails` · `read_email` · `search_emails` · `list_mail_folders` · `send_email` · `reply_email` · `forward_email` · `move_email` · `list_attachments` · `download_attachment` · `delete_email` · `create_draft` · `send_draft` · `add_attachment` · `flag_email` · `create_mail_folder` · `list_mail_rules` · `attach_item` · `attach_reference`
 
 #### Calendar (9 tools)
 `list_calendars` · `list_events` · `get_event` · `get_calendar_view` · `create_event` · `update_event` · `delete_event` · `respond_to_event` · `check_availability`
 
-#### OneDrive (10 tools)
-`list_files` · `search_files` · `get_file_metadata` · `download_file` · `get_recent_files` · `upload_file` · `create_folder` · `move_file` · `copy_file` · `share_file`
+#### OneDrive (12 tools)
+`list_files` · `search_files` · `get_file_metadata` · `download_file` · `get_recent_files` · `upload_file` · `upload_large_file` · `create_folder` · `move_file` · `copy_file` · `poll_copy_status` · `share_file`
 
 #### Teams (8 tools)
 `list_teams` · `list_channels` · `list_channel_messages` · `send_channel_message` · `reply_to_channel_message` · `list_chats` · `list_chat_messages` · `send_chat_message`
@@ -38,19 +38,23 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 
 ## Roadmap Status
 
-**Phase 0–7: Complete** (All 73 tools implemented)
-- Mail: 18 tools (list, read, send, move, attachments, drafts, flags, rules)
+**Phase 0–9.1: Complete** (All 99 tools implemented)
+- Mail: 20 tools (list, read, send, move, attachments, drafts, flags, rules, Outlook items, references)
 - Calendar: 9 tools (list, create, update, delete, respond, availability)
-- OneDrive: 10 tools (list, search, upload, download, share, move, copy)
+- OneDrive: 12 tools (list, search, upload, download, share, move, copy, large files, async monitoring)
 - Teams: 8 tools (channels, chats, messaging)
 - SharePoint: 8 tools (sites, lists, list items)
 - Contacts: 7 tools (list, create, update, delete, search, folders)
 - To Do: 7 tools (lists, tasks, task management)
 - User & Directory: 7 tools (profiles, search, org chart, photos)
+- Advanced Features: 15 tools (message signing, meeting rooms, delegate access, advanced sharing)
 
-**Phase 8: Advanced Features** (Planned)
-- Mail: Advanced rules, message signing, attachment streaming
-- Calendar: Recurring events, event series management
+**Phase 9 (Complete):** File attachments, large file uploads, async operations
+- Sprint 9.1: `attach_item`, `attach_reference`, `upload_large_file`, `poll_copy_status`
+
+**Phase 10+: Future Enhancements** (Planned)
+- Mail: Message signing, advanced attachment streaming
+- Calendar: Recurring events, meeting room finder
 - Drive: Delta sync, versioning, advanced permissions
 - Teams: Threaded replies, reactions, file sharing
 - SharePoint: Document versioning, advanced list queries
@@ -79,6 +83,11 @@ Claude uses `get_calendar_view` and `check_availability` to identify free slots 
 > "Upload my proposal.pdf to OneDrive and share it with the Marketing team"
 
 Claude uses `upload_file`, then `share_file` to grant access.
+
+### Large File Upload
+> "Upload a 500 MB video file to the project folder in OneDrive"
+
+Claude uses `upload_large_file` for files >4 MB, `poll_copy_status` to monitor progress.
 
 ### Team Collaboration
 > "Send a message to the #general channel in my Sales team with a summary of today's results"
@@ -125,7 +134,7 @@ pnpm test
 | Linting & Format | Biome (no ESLint/Prettier) |
 | Build Tool | tsup |
 | Logging | pino (structured JSON, GDPR-compliant) |
-| Test Coverage | 800+ unit tests across 60 test files, E2E suite against M365 tenant |
+| Test Coverage | 1162+ unit tests across 74 test files, E2E suite against M365 tenant |
 
 ## Key Design Principles
 
@@ -150,7 +159,7 @@ pnpm test
 
 ### Developer Experience
 - **Zod as SSoT:** Single source of truth for schemas → TypeScript types → JSON Schema → Runtime validation
-- **MCP Tool Pattern:** Consistent pattern across all 59 tools (schema → handler → registration → tests)
+- **MCP Tool Pattern:** Consistent pattern across all 99 tools (schema → handler → registration → tests)
 - **Test Coverage:** Happy path, error cases, pagination, validation for each tool
 - **Dev Server:** Hot-reload with `pnpm dev`
 
@@ -160,8 +169,8 @@ For detailed architecture, design decisions, and technical debt tracking:
 
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — System design, data flow, error handling
 - **[docs/TECHNICAL_DEBT.md](docs/TECHNICAL_DEBT.md)** — Known limitations, refactoring backlog, future improvements
-- **[docs/USE-CASES.md](docs/USE-CASES.md)** — Real-world scenarios and workflows (updated for Sprint 7.1)
-- **[docs/PERMISSIONS.md](docs/PERMISSIONS.md)** — API scopes and tool permissions (updated for Sprint 7.1)
+- **[docs/USE-CASES.md](docs/USE-CASES.md)** — Real-world scenarios and workflows (updated for Sprint 9.1)
+- **[docs/PERMISSIONS.md](docs/PERMISSIONS.md)** — API scopes and tool permissions (updated for Sprint 9.1)
 
 ## Authentication
 
@@ -254,7 +263,7 @@ Claude uses: search_emails → read_email → list_attachments → download_atta
 
 The project includes comprehensive test coverage:
 
-- **Unit Tests:** 800+ tests covering all tools, error cases, pagination, and validation
+- **Unit Tests:** 1162+ tests covering all tools, error cases, pagination, and validation
 - **E2E Tests:** Integration tests against a real M365 developer tenant (nightly runs)
 - **MSW Mocks:** All Graph API endpoints mocked for fast, deterministic unit tests
 - **Snapshot Tests:** Verify formatted output consistency

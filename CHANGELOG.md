@@ -7,8 +7,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Planned (Phase 8 - Advanced Features)
-- Mail: Advanced rules management, message signing, attachment streaming
+### Planned (Phase 10+ - Future Enhancements)
+- Mail: Message signing, advanced attachment streaming
 - Calendar: Recurring event series management, meeting room finder
 - Drive: Delta sync, versioning, advanced share permissions
 - Teams: Message threads, reactions, file sharing integration
@@ -16,6 +16,29 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Contacts: Group management, distribution lists
 - To Do: Task dependencies, recurring tasks
 - Notifications: Webhook subscriptions, real-time updates
+
+---
+
+## [0.17.0] -- 2026-02-13
+
+### Added
+- **Sprint 9.1: File Attachments & Large Upload (4 new tools)**
+  - `attach_item` — Attach Outlook items to emails
+  - `attach_reference` — Attach OneDrive/SharePoint links to emails
+  - `upload_large_file` — Upload files >4 MB with resumable sessions
+  - `poll_copy_status` — Monitor asynchronous file copy operations
+- **Phase 9 complete:** 99 tools across 9 modules (up from 73 tools)
+- Enhanced Mail module: 20 tools (added item + reference attachment support)
+- Enhanced OneDrive module: 12 tools (added large file upload + async monitoring)
+- File attachment streaming for email composition workflows
+- Async operation monitoring for long-running copy tasks
+- 1162+ tests across 74 test files
+
+### Changed
+- `copy_file` now returns monitor URL in response for polling status
+- Mail module expanded from 18 to 20 tools (item/reference attachments)
+- OneDrive module expanded from 10 to 12 tools (large upload + status polling)
+- Documentation: README, ARCHITECTURE, USE-CASES, SETUP updated for Phase 9.1
 
 ---
 

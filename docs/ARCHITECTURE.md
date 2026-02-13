@@ -19,21 +19,22 @@ The server is organized into six distinct layers, each responsible for a specifi
   - Loads configuration via `loadConfig()` (env: `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`)
   - Initializes authentication via `createDefaultAuthDeps()` (creates MSAL client with persistent token cache)
   - Implements fail-fast: checks for cached token before starting MCP server (exits with instructions if not authenticated)
-  - Registers 73 tools from all domain modules (Mail, Calendar, OneDrive/SharePoint, Teams, SharePoint Lists, Contacts, To Do, User & Directory)
+  - Registers 99 tools from all domain modules (Mail, Calendar, OneDrive/SharePoint, Teams, SharePoint Lists, Contacts, To Do, User & Directory, Advanced Features)
   - Establishes stdio transport for MCP JSON-RPC communication
 
 ### 2. Tool Layer (`src/tools/`)
 
 - **Responsibility:** Domain-specific request handlers organized by domain module
-- **Module Organization (73 tools across 53 modules):**
-  - **Mail** (18 tools): `mail.ts`, `mail-read.ts`, `mail-search.ts`, `mail-folders.ts`, `mail-send.ts`, `mail-reply.ts`, `mail-forward.ts`, `mail-move.ts`, `mail-attachments.ts`, `mail-delete.ts`, `mail-drafts.ts`, `mail-folder-create.ts`, `mail-flag.ts`, `mail-rules-list.ts`
+- **Module Organization (99 tools across 74 modules):**
+  - **Mail** (20 tools): `mail.ts`, `mail-read.ts`, `mail-search.ts`, `mail-folders.ts`, `mail-send.ts`, `mail-reply.ts`, `mail-forward.ts`, `mail-move.ts`, `mail-attachments.ts`, `mail-delete.ts`, `mail-drafts.ts`, `mail-folder-create.ts`, `mail-flag.ts`, `mail-rules-list.ts`, `mail-attach-item.ts`, `mail-attach-reference.ts`
   - **Calendar** (9 tools): `calendar-list.ts`, `calendar-events.ts`, `calendar-view.ts`, `calendar-create.ts`, `calendar-update.ts`, `calendar-delete.ts`, `calendar-respond.ts`, `calendar-availability.ts`
-  - **OneDrive/SharePoint** (10 tools): `drive-list.ts`, `drive-search.ts`, `drive-metadata.ts`, `drive-download.ts`, `drive-upload.ts`, `drive-folder.ts`, `drive-move.ts`, `drive-copy.ts`, `drive-share.ts` (supports SharePoint via `site_id`/`drive_id`)
+  - **OneDrive/SharePoint** (12 tools): `drive-list.ts`, `drive-search.ts`, `drive-metadata.ts`, `drive-download.ts`, `drive-upload.ts`, `drive-upload-large.ts`, `drive-folder.ts`, `drive-move.ts`, `drive-copy.ts`, `drive-copy-status.ts`, `drive-share.ts` (supports SharePoint via `site_id`/`drive_id`)
   - **Teams** (8 tools): `teams-list.ts`, `teams-messages.ts`, `teams-send.ts`, `teams-chats.ts`, `teams-chat-messages.ts`
   - **SharePoint** (8 tools): `sharepoint-sites.ts`, `sharepoint-lists.ts`, `sharepoint-list-write.ts`
   - **Contacts** (7 tools): `contacts-read.ts`, `contacts-search.ts`, `contacts-write.ts`
   - **To Do** (7 tools): `todo-lists.ts`, `todo-tasks.ts`, `todo-tasks-write.ts`
   - **User & Directory** (7 tools): `user-profile.ts`, `user-search.ts`, `user-org.ts`, `user-photo.ts`
+  - **Advanced Features** (15 tools): Message signing, meeting room finder, delegate access, advanced sharing (Phase 8)
 
 - **Pattern:** Each module exports a `register*Tools()` function that calls `server.tool()` for each tool in that domain
 
@@ -271,7 +272,7 @@ Every tool follows this structure:
 |--------|-------|-----------------|----------------|
 | **Mail** | 10 | Email CRUD, search, attachments | list_emails, read_email, send_email, move_email, download_attachment |
 | **Calendar** | 9 | Events, availability, RSVP | list_events, create_event, respond_to_event, check_availability |
-| **OneDrive/SharePoint** | 10 | File storage, sharing | list_files, upload_file, share_file, move_file, copy_file |
+| **OneDrive/SharePoint** | 12 | File storage, sharing, large uploads | list_files, upload_file, upload_large_file, share_file, move_file, copy_file, poll_copy_status |
 | **Teams** | 8 | Team collaboration, channels, chats | list_teams, send_channel_message, list_chats, send_chat_message |
 | **SharePoint** | 8 | Site structure, lists, list items | search_sites, list_list_items, create_list_item |
 | **Contacts** | 7 | Contact CRUD, search, folders | list_contacts, get_contact, create_contact, delete_contact |
@@ -325,7 +326,7 @@ Every tool follows this structure:
 ### Testing Strategy
 
 - **Unit Tests:** Vitest + MSW (Mock Service Worker)
-  - 800+ tests across 60 test files
+  - 1162+ tests across 74 test files
   - MSW intercepts HTTP requests, returns mock Graph responses
   - Tests validation, happy path, error cases, pagination, confirmation
 - **E2E Tests:** Real M365 Developer Tenant
