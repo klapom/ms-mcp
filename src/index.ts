@@ -4,12 +4,19 @@ import { type GraphClientDeps, getGraphClient } from "./auth/graph-client.js";
 import { MsalClient } from "./auth/msal-client.js";
 import { createCachePlugin } from "./auth/token-cache.js";
 import { type Config, loadConfig } from "./config.js";
+import { registerBatchCalendarTools } from "./tools/batch-calendar.js";
+import { registerBatchFilesTools } from "./tools/batch-files.js";
+import { registerBatchMailTools } from "./tools/batch-mail.js";
 import { registerCalendarAvailabilityTools } from "./tools/calendar-availability.js";
 import { registerCalendarCreateTools } from "./tools/calendar-create.js";
 import { registerCalendarDeleteTools } from "./tools/calendar-delete.js";
 import { registerCalendarEventTools } from "./tools/calendar-events.js";
+import { registerCalendarInstancesTools } from "./tools/calendar-instances.js";
 import { registerCalendarListTools } from "./tools/calendar-list.js";
+import { registerCalendarRecurringTools } from "./tools/calendar-recurring.js";
 import { registerCalendarRespondTools } from "./tools/calendar-respond.js";
+import { registerCalendarRoomTools } from "./tools/calendar-rooms.js";
+import { registerCalendarSharingTools } from "./tools/calendar-sharing.js";
 import { registerCalendarUpdateTools } from "./tools/calendar-update.js";
 import { registerCalendarViewTools } from "./tools/calendar-view.js";
 import { registerContactsReadTools } from "./tools/contacts-read.js";
@@ -24,6 +31,7 @@ import { registerDriveMoveTools } from "./tools/drive-move.js";
 import { registerDriveSearchTools } from "./tools/drive-search.js";
 import { registerDriveShareTools } from "./tools/drive-share.js";
 import { registerDriveUploadTools } from "./tools/drive-upload.js";
+import { registerFilesDeltaTools } from "./tools/files-delta.js";
 import { registerMailAttachmentTools } from "./tools/mail-attachments.js";
 import { registerMailDeleteTools } from "./tools/mail-delete.js";
 import { registerMailDraftTools } from "./tools/mail-drafts.js";
@@ -38,12 +46,21 @@ import { registerMailRulesListTools } from "./tools/mail-rules-list.js";
 import { registerMailSearchTools } from "./tools/mail-search.js";
 import { registerMailSendTools } from "./tools/mail-send.js";
 import { registerMailTools } from "./tools/mail.js";
+import { registerSearchAllTools } from "./tools/search-all.js";
+import { registerAdvancedSearchContactsTools } from "./tools/search-contacts-advanced.js";
+import { registerAdvancedSearchEmailsTools } from "./tools/search-emails-advanced.js";
+import { registerSearchEventsTools } from "./tools/search-events.js";
+import { registerSearchTeamsMessagesTools } from "./tools/search-teams-messages.js";
 import { registerSharePointListWriteTools } from "./tools/sharepoint-list-write.js";
 import { registerSharePointListTools } from "./tools/sharepoint-lists.js";
 import { registerSharePointSiteTools } from "./tools/sharepoint-sites.js";
+import { registerTeamsActivityTools } from "./tools/teams-activity.js";
+import { registerTeamsChannelsWriteTools } from "./tools/teams-channels-write.js";
 import { registerTeamsChatMessageTools } from "./tools/teams-chat-messages.js";
 import { registerTeamsChatsTools } from "./tools/teams-chats.js";
 import { registerTeamsListTools } from "./tools/teams-list.js";
+import { registerTeamsMeetingsTools } from "./tools/teams-meetings.js";
+import { registerTeamsMembersTools } from "./tools/teams-members.js";
 import { registerTeamsMessageTools } from "./tools/teams-messages.js";
 import { registerTeamsSendTools } from "./tools/teams-send.js";
 import { registerTodoListTools } from "./tools/todo-lists.js";
@@ -103,6 +120,10 @@ const registrations: ToolRegistrationFn[] = [
   registerCalendarDeleteTools,
   registerCalendarRespondTools,
   registerCalendarAvailabilityTools,
+  registerCalendarRecurringTools,
+  registerCalendarInstancesTools,
+  registerCalendarRoomTools,
+  registerCalendarSharingTools,
   registerDriveListTools,
   registerDriveSearchTools,
   registerDriveMetadataTools,
@@ -117,6 +138,10 @@ const registrations: ToolRegistrationFn[] = [
   registerTeamsSendTools,
   registerTeamsChatsTools,
   registerTeamsChatMessageTools,
+  registerTeamsActivityTools,
+  registerTeamsChannelsWriteTools,
+  registerTeamsMembersTools,
+  registerTeamsMeetingsTools,
   registerSharePointSiteTools,
   registerSharePointListTools,
   registerSharePointListWriteTools,
@@ -130,6 +155,15 @@ const registrations: ToolRegistrationFn[] = [
   registerUserSearchTools,
   registerUserOrgTools,
   registerUserPhotoTools,
+  registerFilesDeltaTools,
+  registerAdvancedSearchEmailsTools,
+  registerSearchEventsTools,
+  registerAdvancedSearchContactsTools,
+  registerSearchTeamsMessagesTools,
+  registerSearchAllTools,
+  registerBatchMailTools,
+  registerBatchCalendarTools,
+  registerBatchFilesTools,
 ];
 
 async function main() {

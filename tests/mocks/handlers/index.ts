@@ -1,4 +1,7 @@
 import type { HttpHandler } from "msw";
+import { batchHandlers } from "./batch.js";
+import { calendarRecurrenceHandlers } from "./calendar-recurrence.js";
+import { calendarRoomHandlers } from "./calendar-rooms.js";
 import { calendarWriteHandlers } from "./calendar-write.js";
 import { calendarHandlers } from "./calendar.js";
 import { chatHandlers } from "./chats.js";
@@ -12,8 +15,11 @@ import { mailMoveHandlers } from "./mail-move.js";
 import { mailReplyHandlers } from "./mail-reply.js";
 import { mailSendHandlers } from "./mail-send.js";
 import { mailHandlers } from "./mail.js";
+import { searchHandlers } from "./search.js";
 import { sharepointListHandlers } from "./sharepoint-lists.js";
 import { sharepointHandlers } from "./sharepoint.js";
+import { teamsActivityHandlers } from "./teams-activity.js";
+import { teamsMeetingsHandlers } from "./teams-meetings.js";
 import { teamsHandlers } from "./teams.js";
 import { todoHandlers } from "./todo.js";
 import { userHandlers } from "./user.js";
@@ -27,6 +33,9 @@ import { userHandlers } from "./user.js";
  * - mail*Handlers: write POST handlers (send, reply, forward)
  */
 export const handlers: HttpHandler[] = [
+  ...batchHandlers,
+  ...calendarRecurrenceHandlers,
+  ...calendarRoomHandlers,
   ...calendarWriteHandlers,
   ...calendarHandlers,
   ...driveWriteHandlers,
@@ -38,6 +47,8 @@ export const handlers: HttpHandler[] = [
   ...mailSendHandlers,
   ...mailReplyHandlers,
   ...mailForwardHandlers,
+  ...teamsActivityHandlers,
+  ...teamsMeetingsHandlers,
   ...teamsHandlers,
   ...chatHandlers,
   ...sharepointListHandlers,
@@ -45,4 +56,5 @@ export const handlers: HttpHandler[] = [
   ...contactHandlers,
   ...todoHandlers,
   ...userHandlers,
+  ...searchHandlers,
 ];

@@ -74,3 +74,24 @@ Dieses Dokument sammelt Beobachtungen aus der laufenden Implementierung:
 - **Status:** `calendar-availability.test.ts` Multi-Tenant-Test assertet `toHaveLength(2)` — gibt immer die gleiche Mock-Response zurück, testet nicht wirklich Routing-Unterschiede.
 - **Vorschlag:** MSW-Handler für Multi-Tenant eigene Response liefern lassen oder Request-URL asserten.
 - **Risiko:** Gering — Routing wird durch andere Tools implizit getestet.
+
+### parseSearchHits() Duplikation in Search Tools
+- **Quelle:** Phase 8 Final Review (Senior Developer)
+- **Status:** `parseSearchHits()` ist in 5 Search-Tools leicht unterschiedlich implementiert (search-emails-advanced, search-events, search-contacts-advanced, search-teams-messages, search-all). ~40 LOC Duplikation.
+- **Vorschlag:** Shared `parseSearchResponse()` utility in `src/utils/search.ts`
+- **Decision:** NICHT fixen — entity-spezifische Formatierung legitim, Abstraktion würde Flexibilität reduzieren
+- **Risiko:** Keins — legitime Design-Entscheidung
+
+### E2E Test Coverage für Phase 8 Tools
+- **Quelle:** Phase 8 Final Review (Senior Tester)
+- **Status:** Alle 22 Phase-8-Tools haben nur Unit-Tests, keine E2E-Tests gegen echte Graph API
+- **Vorschlag:** E2E-Tests für repräsentative Tools (advanced_search_emails, batch_move_emails, create_recurring_event, get_meeting_transcript)
+- **Decision:** NICHT blockierend — existierendes Pattern, E2E separat via scripts/test-*-e2e.ts
+- **Risiko:** Gering — Integration-Bugs könnten übersehen werden, aber Unit-Tests + MSW decken API-Verträge ab
+
+### Batch Utility Cross-Module Helper Extraction
+- **Quelle:** Phase 8 Final Review (Senior Architect)
+- **Status:** `handleBatchTool()` helper in `batch-mail.ts` (3 tools). Ähnlicher Boilerplate in `batch-calendar.ts` und `batch-files.ts` (jeweils nur 1 tool). ~30 LOC Duplikation.
+- **Vorschlag:** Extract shared `createBatchToolHandler()` in `src/utils/batch.ts`
+- **Decision:** NICHT fixen — nur 2 weitere tools, Abstraktion komplexer als Duplikation
+- **Risiko:** Keins — bei mehr Batch-Tools würde Refactoring sinnvoll
