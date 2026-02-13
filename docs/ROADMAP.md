@@ -27,103 +27,91 @@ Destructive safety pattern (confirm/idempotency), auth CLI (login/status/logout)
 
 **Status after Phase 6: 59 tools, 752 tests.**
 
+### Phase 7 — User Directory + Mail Extensions
+14 tools: 7 User/Directory (get_my_profile, search_users, get_user, get_manager, list_direct_reports, list_user_groups, get_user_photo) + 7 Mail Extensions (delete_email, create_draft, send_draft, add_attachment, create_mail_folder, flag_email, list_mail_rules). Scopes: User.Read.All, Directory.Read.All.
+
+**Status after Phase 7: 73 tools, 841 tests.**
+
+### Phase 8 — Advanced Features & Extensions
+22 tools across 4 sprints. Sprint 8.1: Advanced search with KQL, delta queries (6 tools). Sprint 8.2: Batch operations via $batch API (5 tools). Sprint 8.3: Recurring events, meeting rooms, calendar sharing (6 tools). Sprint 8.4: Activity feed, mentions, meeting transcripts (5 tools). Scopes: Calendars.ReadWrite.Shared, TeamsActivity.Read, OnlineMeetings.Read, Place.Read.All.
+
+**Status after Phase 8: 95 tools, 1,127 tests.**
+
 ---
 
 ## Upcoming Phases
 
 ---
 
-### Phase 7 — User Directory + Mail Extensions
-New scopes needed for User/Directory. Mail extensions use existing scopes.
+### Phase 9 — File Attachments, OneNote, Performance & Presence
 
-#### Sprint 7.1 — User & Directory (~7 tools)
-Scope: `User.Read.All`, `Directory.Read.All` (NEW — requires Azure Portal)
+#### Sprint 9.1 — File Attachments & Large Upload (~4 tools)
+Scopes: None (uses existing Mail.ReadWrite, Files.ReadWrite)
 
-| Tool | Type | Graph API |
-|---|---|---|
-| `get_my_profile` | safe | GET /me |
-| `search_users` | safe | GET /users?$search |
-| `get_user` | safe | GET /users/{id} |
-| `get_manager` | safe | GET /me/manager |
-| `list_direct_reports` | safe | GET /me/directReports |
-| `list_user_groups` | safe | GET /me/memberOf |
-| `get_user_photo` | safe | GET /users/{id}/photo/$value |
+**Goals:** Resolve 4MB upload limitation, complete attachment support.
 
-#### Sprint 7.2 — Mail Extensions (~7 tools)
-Scope: `Mail.ReadWrite` (already granted)
+| Tool | Type | Graph API | Notes |
+|---|---|---|---|
+| `upload_large_file` | destructive | POST /me/drive/items/{id}/createUploadSession | Resumable upload >4MB |
+| `attach_item` | destructive | POST /me/messages/{id}/attachments | itemAttachment (embedded emails/events) |
+| `attach_reference` | destructive | POST /me/messages/{id}/attachments | referenceAttachment (OneDrive links) |
+| `poll_copy_status` | safe | GET /me/drive/items/{id}/copy (monitor URL) | Check async copy completion |
 
-| Tool | Type | Graph API |
-|---|---|---|
-| `delete_email` | destructive | DELETE /me/messages/{id} |
-| `create_draft` | destructive | POST /me/messages |
-| `send_draft` | destructive | POST /me/messages/{id}/send |
-| `add_attachment` | destructive | POST .../messages/{id}/attachments |
-| `create_mail_folder` | destructive | POST /me/mailFolders |
-| `flag_email` | destructive | PATCH /me/messages/{id} (flag) |
-| `list_mail_rules` | safe | GET /me/mailFolders/inbox/messageRules |
+#### Sprint 9.2 — OneNote (~6 tools)
+Scope: `Notes.ReadWrite` (NEW — requires Azure Portal)
 
----
-
-### Phase 8 — Teams Extensions + OneNote
-New scopes needed for both modules.
-
-#### Sprint 8.1 — Teams Extensions (~6 tools)
-Scope: `Channel.Create`, `ChannelMember.ReadWrite.All`, `TeamMember.Read.All`, `OnlineMeetings.ReadWrite` (NEW)
-
-| Tool | Type | Graph API |
-|---|---|---|
-| `create_channel` | destructive | POST /teams/{id}/channels |
-| `add_channel_member` | destructive | POST .../channels/{id}/members |
-| `remove_channel_member` | destructive | DELETE .../channels/{id}/members/{id} |
-| `list_team_members` | safe | GET /teams/{id}/members |
-| `create_chat` | destructive | POST /chats |
-| `create_online_meeting` | destructive | POST /me/onlineMeetings |
-
-#### Sprint 8.2 — OneNote (~6 tools)
-Scope: `Notes.ReadWrite` (NEW)
+**Goals:** Complete Microsoft 365 content coverage.
 
 | Tool | Type | Graph API |
 |---|---|---|
 | `list_notebooks` | safe | GET /me/onenote/notebooks |
-| `list_sections` | safe | GET .../notebooks/{id}/sections |
-| `list_pages` | safe | GET .../sections/{id}/pages |
-| `get_page_content` | safe | GET .../pages/{id}/content |
-| `create_page` | destructive | POST .../sections/{id}/pages |
+| `list_sections` | safe | GET /onenote/notebooks/{id}/sections |
+| `list_pages` | safe | GET /onenote/sections/{id}/pages |
+| `get_page_content` | safe | GET /onenote/pages/{id}/content |
+| `create_page` | destructive | POST /onenote/sections/{id}/pages |
 | `search_notes` | safe | GET /me/onenote/pages?$search |
 
----
+#### Sprint 9.3 — Performance & Real-time (~2 features + infra)
+Scopes: None (infrastructure only)
 
-### Phase 9 — Presence + Polish & Advanced (originally Phase 7)
-Scope: `Presence.Read.All` (NEW)
+**Goals:** Optimize performance, enable real-time updates.
 
-#### Sprint 9.1 — Presence (~3 tools)
+| Feature | Type | Implementation |
+|---|---|---|
+| Response Caching | infrastructure | In-memory LRU cache for GET requests |
+| Webhooks/Subscriptions | infrastructure | POST /subscriptions, webhook endpoint |
+
+**Tools affected by caching:**
+- `get_my_profile`, `list_calendars`, `get_user`, `list_todo_lists` (low-change data)
+
+**Webhook support for:**
+- Mail (`created`, `updated`, `deleted`)
+- Calendar (`created`, `updated`, `deleted`)
+- OneDrive (`created`, `updated`, `deleted`)
+
+#### Sprint 9.4 — Presence (~3 tools)
+Scope: `Presence.Read.All` (NEW — requires Azure Portal)
+
+**Goals:** Real-time presence and status management.
 
 | Tool | Type | Graph API |
 |---|---|---|
-| `get_presence` | safe | GET /users/{id}/presence |
 | `get_my_presence` | safe | GET /me/presence |
+| `get_presence` | safe | GET /users/{id}/presence |
 | `set_status_message` | destructive | POST /me/presence/setStatusMessage |
-
-#### Sprint 9.2 — Polish & Advanced
-- Review all sprint documents for "Known Limitations & Future Work" and "Post-Sprint Notes" sections to identify open items and validate their relevance for Sprint 9. Joint decision on which features to implement.
-- Batch API support ($batch) for multi-call operations
-- itemAttachment support (embedded Outlook items)
-- referenceAttachment support (OneDrive/SharePoint links)
-- Large file upload (resumable upload session >4MB)
-- Webhook subscriptions (change notifications)
-- Performance: response caching, request deduplication
-- Technical debt cleanup (see TECHNICAL_DEBT.md)
 
 ---
 
 ## Summary
 
-| Phase | Module | New Tools | New Scopes Required |
-|---|---|---|---|
-| 6 | Contacts + To Do | ~14 | None (already granted) |
-| 7 | User/Directory + Mail Extensions | ~14 | User.Read.All, Directory.Read.All |
-| 8 | Teams Extensions + OneNote | ~12 | Channel.Create, ChannelMember.RW, TeamMember.Read, OnlineMeetings.RW, Notes.RW |
-| 9 | Presence + Polish | ~3 + enhancements | Presence.Read.All |
-| **Total** | | **~43 new tools** | |
+| Phase | Module | Tools | Tests | New Scopes |
+|---|---|---|---|---|
+| **0-6** | Foundation + Core | **59** | **752** | — |
+| **7** | User + Mail Extensions | **+14** | **+89** | User.Read.All, Directory.Read.All |
+| **8** | Advanced Features | **+22** | **+286** | Calendars.RW.Shared, TeamsActivity.Read, OnlineMeetings.Read, Place.Read.All |
+| **9** | Attachments + OneNote + Performance + Presence | **+13** | **~+120** | Notes.ReadWrite, Presence.Read.All |
+| **Total** | | **~108 tools** | **~1,247 tests** | |
 
-**Projected total after Phase 9: ~88 tools.**
+**Current Status (after Phase 8): 95 tools, 1,127 tests, 8 completed phases.**
+
+**Projected after Phase 9: ~108 tools, ~1,247 tests, full Microsoft 365 coverage.**
