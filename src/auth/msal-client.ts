@@ -9,6 +9,17 @@ import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger("auth");
 
+/**
+ * Thrown when a cached token is invalid (e.g. scopes changed, consent revoked).
+ * Provides a clear, actionable error message for the user.
+ */
+export class AuthTokenError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AuthTokenError";
+  }
+}
+
 // Default scopes for MVP
 const DEFAULT_SCOPES = [
   "User.Read",
@@ -18,6 +29,14 @@ const DEFAULT_SCOPES = [
   "Files.ReadWrite",
   "Contacts.ReadWrite",
   "Tasks.ReadWrite",
+  "Team.ReadBasic.All",
+  "Channel.ReadBasic.All",
+  "ChannelMessage.Read.All",
+  "ChannelMessage.Send",
+  "Chat.Read",
+  "Chat.ReadWrite",
+  "Sites.Read.All",
+  "Sites.ReadWrite.All",
 ];
 
 /**
@@ -119,8 +138,8 @@ export class MsalClient {
           logger.debug("Token acquired silently");
           return result.accessToken;
         }
-      } catch {
-        logger.debug("Silent token acquisition failed");
+      } catch (error: unknown) {
+        this.handleSilentError(error);
       }
     }
 
@@ -137,12 +156,36 @@ export class MsalClient {
           logger.debug("Token acquired from cache");
           return result.accessToken;
         }
-      } catch {
-        logger.debug("Cache token acquisition failed");
+      } catch (error: unknown) {
+        this.handleSilentError(error);
       }
     }
 
     return null;
+  }
+
+  /**
+   * Checks if a silent acquisition error is an invalid_grant (scope change,
+   * revoked consent, expired refresh token). Throws a clear error instead of
+   * silently falling through to Device Code Flow (which hangs in MCP mode).
+   */
+  private handleSilentError(error: unknown): void {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (
+      msg.includes("invalid_grant") ||
+      msg.includes("AADSTS65001") ||
+      msg.includes("AADSTS50076")
+    ) {
+      logger.warn("Token invalid — scopes may have changed or consent was revoked");
+      throw new AuthTokenError(
+        "Authentication token is invalid. This typically happens when required permissions (scopes) " +
+          "have changed or admin consent was revoked. To fix this:\n\n" +
+          "  1. Ensure the Azure App Registration has all required API permissions\n" +
+          "  2. Grant admin consent in the Azure Portal (if required)\n" +
+          "  3. Re-authenticate: pnpm auth logout && pnpm auth login\n",
+      );
+    }
+    logger.debug("Silent token acquisition failed");
   }
 
   /**

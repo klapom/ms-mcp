@@ -232,6 +232,18 @@ describe("MsalClient", () => {
       await expect(client.getAccessToken()).rejects.toThrow("Device code flow returned no result");
     });
 
+    it("should throw AuthTokenError on invalid_grant instead of falling to device code", async () => {
+      const client = new MsalClient(TENANT_ID, CLIENT_ID);
+
+      mockGetAllAccounts.mockResolvedValueOnce([mockAccount]);
+      mockPca.acquireTokenSilent.mockRejectedValueOnce(
+        new Error("post_request_failed: invalid_grant"),
+      );
+
+      await expect(client.getAccessToken()).rejects.toThrow("Authentication token is invalid");
+      expect(mockPca.acquireTokenByDeviceCode).not.toHaveBeenCalled();
+    });
+
     it("should use custom scopes in token requests", async () => {
       const customScopes = ["Mail.Read", "Calendars.Read"];
       const client = new MsalClient(TENANT_ID, CLIENT_ID, customScopes);
@@ -290,7 +302,7 @@ describe("MsalClient", () => {
       expect(mockPca.acquireTokenByDeviceCode).not.toHaveBeenCalled();
     });
 
-    it("should return null when silent acquisition throws", async () => {
+    it("should return null when silent acquisition throws generic error", async () => {
       const client = new MsalClient(TENANT_ID, CLIENT_ID);
 
       mockGetAllAccounts.mockResolvedValueOnce([mockAccount]);
@@ -300,6 +312,33 @@ describe("MsalClient", () => {
 
       expect(token).toBeNull();
       expect(mockPca.acquireTokenByDeviceCode).not.toHaveBeenCalled();
+    });
+
+    it("should throw AuthTokenError on invalid_grant (scope change)", async () => {
+      const client = new MsalClient(TENANT_ID, CLIENT_ID);
+
+      mockGetAllAccounts.mockResolvedValueOnce([mockAccount]);
+      mockPca.acquireTokenSilent.mockRejectedValueOnce(
+        new Error("post_request_failed: invalid_grant"),
+      );
+
+      const error = await client.getAccessTokenSilentOnly().catch((e: Error) => e);
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error).name).toBe("AuthTokenError");
+      expect((error as Error).message).toContain("Authentication token is invalid");
+    });
+
+    it("should throw AuthTokenError on AADSTS65001 (consent required)", async () => {
+      const client = new MsalClient(TENANT_ID, CLIENT_ID);
+
+      mockGetAllAccounts.mockResolvedValueOnce([mockAccount]);
+      mockPca.acquireTokenSilent.mockRejectedValueOnce(
+        new Error("AADSTS65001: The user or administrator has not consented"),
+      );
+
+      await expect(client.getAccessTokenSilentOnly()).rejects.toThrow(
+        "Authentication token is invalid",
+      );
     });
   });
 

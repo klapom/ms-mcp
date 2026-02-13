@@ -119,9 +119,15 @@ async function main() {
   // Fail-fast: check for cached token before starting MCP server.
   // In MCP mode (subprocess), Device Code Flow cannot work because
   // stderr is not visible to the user. Exit with clear instructions.
-  const silentToken = await authDeps.getAccessTokenSilentOnly?.();
-  if (!silentToken) {
-    process.stderr.write("\n[ms-mcp] Not authenticated. Run first:\n\n  pnpm auth login\n\n");
+  try {
+    const silentToken = await authDeps.getAccessTokenSilentOnly?.();
+    if (!silentToken) {
+      process.stderr.write("\n[ms-mcp] Not authenticated. Run first:\n\n  pnpm auth login\n\n");
+      process.exit(1);
+    }
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`\n[ms-mcp] Authentication failed:\n\n${msg}\n`);
     process.exit(1);
   }
 

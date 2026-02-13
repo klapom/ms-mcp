@@ -44,9 +44,8 @@ export function registerTeamsListTools(
         const userPath = resolveUserPath(parsed.user_id);
         const url = `${userPath}/joinedTeams`;
 
+        // Note: /me/joinedTeams does NOT support $top, $skip, or $orderby
         const page = await fetchPage<Record<string, unknown>>(graphClient, url, {
-          top: parsed.top ?? config.limits.maxItems,
-          skip: parsed.skip,
           select: buildSelectParam(DEFAULT_SELECT.team),
         });
 
