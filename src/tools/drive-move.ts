@@ -1,11 +1,11 @@
 import type { Client } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Config } from "../config.js";
-import { resolveUserPath } from "../schemas/common.js";
 import type { MoveFileParamsType } from "../schemas/drive-write.js";
 import { MoveFileParams } from "../schemas/drive-write.js";
 import type { ToolResult } from "../types/tools.js";
 import { formatPreview } from "../utils/confirmation.js";
+import { resolveDrivePath } from "../utils/drive-path.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
 import { encodeGraphId } from "../utils/graph-id.js";
 import { idempotencyCache } from "../utils/idempotency.js";
@@ -16,9 +16,9 @@ const logger = createLogger("tools:drive-move");
 async function buildMovePreview(
   graphClient: Client,
   parsed: MoveFileParamsType,
-  userPath: string,
+  drivePath: string,
 ): Promise<ToolResult> {
-  const itemUrl = `${userPath}/drive/items/${encodeGraphId(parsed.file_id)}`;
+  const itemUrl = `${drivePath}/items/${encodeGraphId(parsed.file_id)}`;
   const item = (await graphClient.api(itemUrl).select("id,name").get()) as Record<string, unknown>;
 
   const details: Record<string, unknown> = {
@@ -34,10 +34,10 @@ async function buildMovePreview(
 async function executeMove(
   graphClient: Client,
   parsed: MoveFileParamsType,
-  userPath: string,
+  drivePath: string,
   startTime: number,
 ): Promise<ToolResult> {
-  const itemUrl = `${userPath}/drive/items/${encodeGraphId(parsed.file_id)}`;
+  const itemUrl = `${drivePath}/items/${encodeGraphId(parsed.file_id)}`;
 
   const patchBody: Record<string, unknown> = {
     parentReference: { id: parsed.destination_folder_id },
@@ -80,10 +80,10 @@ export function registerDriveMoveTools(
       const startTime = Date.now();
       try {
         const parsed = MoveFileParams.parse(params);
-        const userPath = resolveUserPath(parsed.user_id);
+        const drivePath = resolveDrivePath(parsed.user_id, parsed.site_id, parsed.drive_id);
 
         if (!parsed.confirm) {
-          return await buildMovePreview(graphClient, parsed, userPath);
+          return await buildMovePreview(graphClient, parsed, drivePath);
         }
 
         if (parsed.idempotency_key) {
@@ -91,7 +91,7 @@ export function registerDriveMoveTools(
           if (cached !== undefined) return cached as ToolResult;
         }
 
-        const result = await executeMove(graphClient, parsed, userPath, startTime);
+        const result = await executeMove(graphClient, parsed, drivePath, startTime);
 
         if (parsed.idempotency_key) {
           idempotencyCache.set("move_file", parsed.idempotency_key, result, parsed.user_id);

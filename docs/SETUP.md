@@ -1,42 +1,45 @@
 # Setup Guide
 
-## Voraussetzungen
+## Prerequisites
 
-- **Node.js 22+** -- `node --version` prüfen
-- **pnpm** -- `npm install -g pnpm` falls nicht vorhanden
-- **Microsoft 365 Account** -- Business oder [Developer Program](https://developer.microsoft.com/en-us/microsoft-365/dev-program) (kostenlos, 90 Tage)
-- **Claude Desktop** oder **Claude Code**
-- **Azure-Berechtigung** -- App Registration erstellen können (Global Admin oder Application Administrator Rolle)
+- **Node.js 22+** — Check with `node --version`
+- **pnpm** — Install with `npm install -g pnpm` if not present
+- **Microsoft 365 Account** — Business edition or [Developer Program](https://developer.microsoft.com/en-us/microsoft-365/dev-program) (free, 90 days)
+- **Claude Desktop** or **Claude Code**
+- **Azure Permissions** — Ability to create an App Registration (Global Admin or Application Administrator role)
 
-## Schritt 1: Azure App Registration
+## Step 1: Azure App Registration
 
-1. Öffne das [Azure Portal](https://portal.azure.com) --> **Microsoft Entra ID** --> **App-Registrierungen** --> **Neue Registrierung**
-2. Name: `pommer-m365-mcp` (oder beliebig)
-3. Unterstützte Kontotypen: **Nur Konten in diesem Organisationsverzeichnis** (Single Tenant)
-4. Umleitungs-URI: **Leer lassen** (Device Code Flow braucht keine Redirect URI)
-5. Klick auf **Registrieren**
-6. Notiere die **Anwendungs-ID (Client-ID)** und die **Verzeichnis-ID (Tenant-ID)** von der Übersichtsseite
+1. Open [Azure Portal](https://portal.azure.com) → **Microsoft Entra ID** → **App registrations** → **New registration**
+2. Name: `pommer-m365-mcp` (or any name you prefer)
+3. Supported account types: **Accounts in this organizational directory only** (Single Tenant)
+4. Redirect URI: **Leave empty** (Device Code Flow does not require a redirect URI)
+5. Click **Register**
+6. Note the **Application (client) ID** and **Directory (tenant) ID** from the Overview page
 
-### API-Berechtigungen konfigurieren
+### Configure API Permissions
 
-1. Im App-Menü: **API-Berechtigungen** --> **Berechtigung hinzufügen**
-2. **Microsoft Graph** --> **Delegierte Berechtigungen**
-3. Folgende Berechtigungen hinzufügen:
-   - `User.Read` -- Eigenes Profil lesen
-   - `Mail.ReadWrite` -- E-Mails lesen und verwalten
-   - `Mail.Send` -- E-Mails senden (für Phase 2.2)
-4. Klick auf **Administratorzustimmung für [Tenant] erteilen** (grüner Button)
-5. Bestätigen -- alle Berechtigungen sollten grüne Häkchen zeigen
+1. In the app menu: **API permissions** → **Add a permission**
+2. Select **Microsoft Graph** → **Delegated permissions**
+3. Add the following permissions based on which tools you need. See `docs/PERMISSIONS.md` for a complete reference of which permissions are required for each tool:
+   - `User.Read` — Read own profile
+   - `Mail.ReadWrite` — Read and manage emails
+   - `Mail.Send` — Send emails
+   - `Calendars.ReadWrite` — Read and manage calendar events
+   - `Files.ReadWrite` — Read and manage files on OneDrive
+   - And others depending on your tool needs
+4. Click **Grant admin consent for [Tenant]** (green button)
+5. Confirm — all permissions should show green checkmarks
 
-### Öffentlichen Client-Flow aktivieren
+### Enable Public Client Flow
 
-1. Im App-Menü: **Authentifizierung**
-2. Ganz unten: **Erweiterte Einstellungen** --> **Öffentliche Clientflows zulassen** --> **Ja**
-3. **Speichern**
+1. In the app menu: **Authentication**
+2. Scroll to the bottom: **Advanced settings** → **Allow public client flows** → **Yes**
+3. Click **Save**
 
-> **Warum Device Code Flow?** Der MCP-Server läuft als lokaler Prozess ohne Browser. Device Code Flow ermöglicht die Authentifizierung über einen separaten Browser-Tab, während der Server im Hintergrund wartet.
+**Why Device Code Flow?** The MCP server runs as a local process without a browser. Device Code Flow enables authentication via a separate browser tab while the server waits in the background.
 
-## Schritt 2: Repository klonen und bauen
+## Step 2: Clone and Build Repository
 
 ```bash
 git clone https://github.com/klapom/ms-mcp.git
@@ -45,171 +48,208 @@ pnpm install
 pnpm build
 ```
 
-Prüfe, dass der Build erfolgreich ist:
+Verify the build succeeded:
 
 ```bash
 ls dist/index.js
 ```
 
-## Schritt 3: Umgebungsvariablen konfigurieren
+## Step 3: Configure Environment Variables
 
-Erstelle eine `.env` Datei im Projektroot:
+Create a `.env` file in the project root:
 
 ```bash
-# Azure App Registration
-AZURE_TENANT_ID=deine-tenant-id-hier
-AZURE_CLIENT_ID=deine-client-id-hier
+# Azure App Registration (required)
+AZURE_TENANT_ID=your-tenant-id-here
+AZURE_CLIENT_ID=your-client-id-here
 
-# Optional: Logging (default: info)
+# Token cache path (optional, default: ~/.ms-mcp/token-cache.json)
+TOKEN_CACHE_PATH=~/.ms-mcp/token-cache.json
+
+# Logging level (optional, default: info)
 LOG_LEVEL=info
-
-# Optional: Limits anpassen
-# MAX_ITEMS=25         # Max Ergebnisse pro Abfrage (list_emails, search_emails)
-# MAX_BODY_LENGTH=500  # Max Body-Länge für list_emails (read_email nutzt eigenen Default: 5000)
 ```
 
-> **Hinweis:** Die Datei `.env` ist in `.gitignore` und wird nicht committed.
+The `.env` file is in `.gitignore` and will not be committed.
 
-## Schritt 4: Authentifizierung (einmalig)
+## Step 4: Authenticate (One-Time)
 
-Authentifiziere dich **einmalig** im Terminal via CLI. Dies ist notwendig, weil der MCP-Server als Subprocess von Claude Code/Desktop läuft und dort keine interaktive Anmeldung möglich ist.
+Authenticate once in the terminal via the CLI. This is necessary because the MCP server runs as a subprocess of Claude Code/Desktop where interactive authentication is not available.
 
 ```bash
 pnpm auth login
 ```
 
-Der Befehl startet den Device Code Flow:
+The command starts the Device Code Flow:
 
-1. Im Terminal erscheint ein Link und ein Code
-2. Öffne den Link im Browser
-3. Gib den Code ein
-4. Melde dich mit deinem Microsoft 365 Konto an
-5. Bestätige die Berechtigungen
+1. A link and code appear in the terminal
+2. Open the link in your browser
+3. Enter the code
+4. Sign in with your Microsoft 365 account
+5. Approve the permissions
 
-Nach erfolgreicher Anmeldung zeigt das CLI den angemeldeten Benutzer an. Der Token wird persistent gespeichert (Standard: `~/.ms-mcp/token-cache.json`).
+After successful authentication, the CLI shows the logged-in user. The token is stored persistently (default: `~/.ms-mcp/token-cache.json`).
 
-### Weitere Auth-Befehle
+### Additional Auth Commands
 
 ```bash
-pnpm auth status   # Auth-Status prüfen (wer ist eingeloggt?)
-pnpm auth logout   # Token löschen und abmelden
+pnpm auth status   # Check authentication status (who is logged in?)
+pnpm auth logout   # Delete token and log out
 ```
 
-> **Wichtig:** Die Authentifizierung ist einmalig. Der Refresh-Token wird automatisch erneuert. Nur bei explizitem Logout oder Token-Ablauf (90 Tage Inaktivität) ist eine erneute Anmeldung nötig.
+**Note:** Authentication is one-time. The refresh token is automatically renewed. Re-authentication is only needed on explicit logout or token expiration (90 days of inactivity).
 
-> **Fail-Fast:** Der MCP-Server prüft beim Start, ob ein gültiger Token vorhanden ist. Falls nicht, beendet er sich sofort mit einer klaren Fehlermeldung und Anleitung zum `auth login`.
+**Fail-Fast:** The MCP server checks on startup for a valid token. If none exists, it exits immediately with a clear error message and instructions to run `auth login`.
 
-> **Cache-Pfad ändern:** Setze die Umgebungsvariable `TOKEN_CACHE_PATH` auf einen alternativen Pfad (absolut oder mit `~/` Prefix).
+**Change Cache Path:** Set the `TOKEN_CACHE_PATH` environment variable to an alternative path (absolute or with `~/` prefix).
 
-## Schritt 5: Claude Desktop konfigurieren
+## Step 5: Configure Claude Desktop or Claude Code
 
-### Variante A: Claude Desktop
+### Option A: Claude Desktop
 
-Öffne die Claude Desktop Konfiguration:
+Open the Claude Desktop configuration:
 - **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 
-Füge den MCP-Server hinzu:
+Add the MCP server:
 
 ```json
 {
   "mcpServers": {
     "m365": {
       "command": "node",
-      "args": ["/absoluter/pfad/zu/ms-mcp/dist/index.js"],
+      "args": ["/absolute/path/to/ms-mcp/dist/index.js"],
       "env": {
-        "AZURE_TENANT_ID": "deine-tenant-id",
-        "AZURE_CLIENT_ID": "deine-client-id"
+        "AZURE_TENANT_ID": "your-tenant-id",
+        "AZURE_CLIENT_ID": "your-client-id"
       }
     }
   }
 }
 ```
 
-> **Wichtig:** Verwende den **absoluten Pfad** zu `dist/index.js`. Relative Pfade funktionieren nicht zuverlässig.
+**Important:** Use the **absolute path** to `dist/index.js`. Relative paths do not work reliably.
 
-Starte Claude Desktop neu. Der Server sollte in der Tool-Liste erscheinen (Hammer-Symbol unten links).
+Restart Claude Desktop. The server should appear in the Tools list (hammer icon in the bottom left).
 
-### Variante B: Claude Code
+### Option B: Claude Code
 
-In Claude Code kannst du den Server über die MCP-Konfiguration einbinden. Alternativ starte den Server direkt:
+In Claude Code, you can add the server via MCP configuration or start it directly:
 
 ```bash
-cd /pfad/zu/ms-mcp
+cd /path/to/ms-mcp
 AZURE_TENANT_ID=xxx AZURE_CLIENT_ID=yyy pnpm dev
 ```
 
-## Schritt 6: UC-01 ausprobieren -- Inbox Triage
+Or use the CLI to add the server:
 
-Nachdem der Server verbunden ist, probiere diesen Prompt in Claude:
-
-> Fasse meine ungelesenen E-Mails zusammen. Kategorisiere nach: dringend, informativ, delegierbar.
-
-Claude wird:
-1. `list_emails` aufrufen mit Filter `isRead eq false`
-2. Für jede relevante Mail `read_email` aufrufen
-3. Eine strukturierte Zusammenfassung erstellen
-
-### Weitere Beispiel-Prompts
-
-```
-"Zeige mir alle E-Mails von max.mustermann@example.com der letzten Woche"
-
-"Suche nach E-Mails zum Thema 'Angebot' mit Anhang"
-
-"Welche Mail-Ordner habe ich und wie viele ungelesene Mails sind darin?"
-
-"Lies die neueste E-Mail von der IT-Abteilung und fasse sie zusammen"
+```bash
+claude mcp add m365 node /absolute/path/to/ms-mcp/dist/index.js \
+  --env AZURE_TENANT_ID=your-tenant-id \
+  --env AZURE_CLIENT_ID=your-client-id
 ```
 
-## Fehlerbehebung
+Then reconnect the MCP server via `/mcp` in Claude Code.
+
+## Step 6: Try a Quick Example
+
+Once the server is connected, try this prompt in Claude:
+
+> Summarize my unread emails. Categorize them as: urgent, informational, delegatable.
+
+Claude will:
+1. Call `list_emails` with the filter for unread emails
+2. Call `read_email` for each relevant message
+3. Create a structured summary
+
+### More Example Prompts
+
+```
+Show me all emails from max.mustermann@example.com from the last week.
+
+Search for emails with the subject "Proposal" that have attachments.
+
+What mail folders do I have and how many unread emails are in each?
+
+Read my most recent email and summarize it.
+
+List my upcoming calendar events for next week.
+```
+
+## Troubleshooting
 
 ### "AZURE_TENANT_ID is required"
 
-`.env` Datei nicht gefunden oder Variablen nicht gesetzt. Prüfe den Pfad und die Variablennamen. Falls du die env-Variablen in der `claude_desktop_config.json` konfigurierst, stelle sicher, dass sie im `env`-Block stehen.
+The `.env` file is not found or variables are not set. Check the file path and variable names. If you configure env variables in `claude_desktop_config.json`, make sure they are in the `env` block.
 
 ### "Access token has expired"
 
-Token abgelaufen. In der Regel reicht ein Server-Neustart -- der persistente Cache enthält den Refresh-Token, der automatisch ein neues Access-Token holt. Falls das nicht hilft: `pnpm auth logout` und dann `pnpm auth login`.
+Token expired. Usually a server restart is sufficient — the persistent cache contains the refresh token, which automatically gets a new access token. If that doesn't help: `pnpm auth logout` then `pnpm auth login`.
 
 ### "ErrorAccessDenied" / "Insufficient privileges"
 
-API-Berechtigungen in Azure nicht erteilt oder Admin-Consent fehlt. Prüfe Schritt 1 -- insbesondere den Punkt "Administratorzustimmung erteilen".
+API permissions not granted in Azure or admin consent is missing. Check Step 1 — particularly the "Grant admin consent" section.
 
 ### "ECONNREFUSED"
 
-Netzwerkproblem. Prüfe Internetverbindung und Firewall-Einstellungen. Der Server benötigt Zugang zu `graph.microsoft.com` und `login.microsoftonline.com`.
+Network issue. Check internet connection and firewall settings. The server needs access to `graph.microsoft.com` and `login.microsoftonline.com`.
 
-### Claude Desktop zeigt keine Tools
+### Claude Desktop shows no tools
 
-Pfad in `claude_desktop_config.json` prüfen. Muss absoluter Pfad zu `dist/index.js` sein. Nach Änderung Claude Desktop komplett neu starten (nicht nur das Fenster schließen).
+Check the path in `claude_desktop_config.json`. Must be absolute path to `dist/index.js`. After changes, fully restart Claude Desktop (not just close the window).
 
 ### "AADSTS700016: Application not found"
 
-Die Client-ID stimmt nicht mit der App Registration überein. Prüfe `AZURE_CLIENT_ID` und vergleiche mit der Übersichtsseite im Azure Portal.
+The client ID does not match the app registration. Check `AZURE_CLIENT_ID` against the Overview page in Azure Portal.
 
 ### "AADSTS7000218: Request body must contain client_assertion or client_secret"
 
-Der öffentliche Client-Flow ist nicht aktiviert. Prüfe Schritt 1 unter "Öffentlichen Client-Flow aktivieren".
+Public client flow is not enabled. Check Step 1 under "Enable Public Client Flow".
 
-## Konfigurationsreferenz
+## Configuration Reference
 
-| Variable | Pflicht | Default | Beschreibung |
+| Variable | Required | Default | Description |
 |---|---|---|---|
-| `AZURE_TENANT_ID` | Ja | -- | Azure AD Tenant-ID |
-| `AZURE_CLIENT_ID` | Ja | -- | App Registration Client-ID |
-| `AZURE_CLIENT_SECRET` | Nein | -- | Für Client Credentials Flow (CI/CD) |
-| `TOKEN_CACHE_PATH` | Nein | `~/.ms-mcp/token-cache.json` | Pfad zur persistenten Token-Cache-Datei |
-| `LOG_LEVEL` | Nein | `info` | trace, debug, info, warn, error, fatal |
-| `TOOL_PRESET` | Nein | `mvp` | readonly, mvp, full |
-| `MAX_ITEMS` | Nein | `25` | Max Ergebnisse pro Abfrage |
-| `MAX_BODY_LENGTH` | Nein | `500` | Max Body-Länge in list_emails (read_email: 5000) |
+| `AZURE_TENANT_ID` | Yes | — | Azure AD Tenant ID |
+| `AZURE_CLIENT_ID` | Yes | — | App Registration Client ID |
+| `TOKEN_CACHE_PATH` | No | `~/.ms-mcp/token-cache.json` | Path to persistent token cache file |
+| `LOG_LEVEL` | No | `info` | trace, debug, info, warn, error, fatal |
 
-## Verfügbare Tools
+## Available Tools
 
-| Tool | Beschreibung |
-|---|---|
-| `list_emails` | E-Mails auflisten mit Filter, Suche, Pagination |
-| `read_email` | Einzelne E-Mail lesen (HTML-zu-Text, Metadaten) |
-| `list_mail_folders` | Mail-Ordner auflisten (Counts, Subfolders) |
-| `search_emails` | Volltextsuche via KQL |
+For a complete list of available tools and their required permissions, see `docs/PERMISSIONS.md`.
+
+Email tools:
+- `list_emails` — List emails with filtering, searching, pagination
+- `read_email` — Read individual email (HTML-to-text, metadata)
+- `list_mail_folders` — List mail folders (counts, subfolders)
+- `search_emails` — Full-text search via KQL
+- `send_email` — Send email
+- `reply_email` — Reply to email
+- `forward_email` — Forward email
+- `move_email` — Move email to folder
+- `list_attachments` — List email attachments
+- `download_attachment` — Download attachment
+
+Calendar tools:
+- `list_calendars` — List calendars
+- `list_events` — List calendar events
+- `get_event` — Get event details
+- `get_calendar_view` — Get calendar view for time range
+- `create_event` — Create event
+- `update_event` — Update event
+- `delete_event` — Delete event
+- `respond_to_event` — Accept/decline event invitation
+- `check_availability` — Check availability of users
+
+OneDrive tools:
+- `list_files` — List files on OneDrive
+- `search_files` — Search files on OneDrive
+- `get_file_metadata` — Get file metadata
+- `download_file` — Download file
+- `get_recent_files` — Get recently used files
+- `upload_file` — Upload file
+- `create_folder` — Create folder
+- `move_file` — Move file
+- `copy_file` — Copy file
+- `share_file` — Share file

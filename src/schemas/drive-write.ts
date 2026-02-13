@@ -1,11 +1,25 @@
 import { z } from "zod";
 import { WriteParams } from "./common.js";
 
+const driveLocationFields = {
+  site_id: z
+    .string()
+    .min(1)
+    .optional()
+    .describe("SharePoint site ID. Use with drive_id to access a SharePoint document library."),
+  drive_id: z
+    .string()
+    .min(1)
+    .optional()
+    .describe("Drive ID within a SharePoint site. Use with site_id."),
+};
+
 // ---------------------------------------------------------------------------
 // upload_file
 // ---------------------------------------------------------------------------
 
 export const UploadFileParams = WriteParams.extend({
+  ...driveLocationFields,
   path: z.string().min(1).describe("Destination path in OneDrive (e.g. '/Documents/report.pdf')."),
   content: z.string().min(1).describe("Base64-encoded file content."),
 });
@@ -16,6 +30,7 @@ export type UploadFileParamsType = z.infer<typeof UploadFileParams>;
 // ---------------------------------------------------------------------------
 
 export const CreateFolderParams = WriteParams.extend({
+  ...driveLocationFields,
   name: z.string().min(1).describe("Name of the new folder."),
   parent_id: z
     .string()
@@ -33,6 +48,7 @@ export type CreateFolderParamsType = z.infer<typeof CreateFolderParams>;
 // ---------------------------------------------------------------------------
 
 export const MoveFileParams = WriteParams.extend({
+  ...driveLocationFields,
   file_id: z.string().min(1).describe("ID of the file or folder to move."),
   destination_folder_id: z.string().min(1).describe("ID of the destination folder."),
   new_name: z.string().optional().describe("Optional new name for the moved item."),
@@ -44,6 +60,7 @@ export type MoveFileParamsType = z.infer<typeof MoveFileParams>;
 // ---------------------------------------------------------------------------
 
 export const CopyFileParams = WriteParams.extend({
+  ...driveLocationFields,
   file_id: z.string().min(1).describe("ID of the file or folder to copy."),
   destination_folder_id: z.string().min(1).describe("ID of the destination folder."),
   new_name: z.string().optional().describe("Optional new name for the copy."),

@@ -1,11 +1,11 @@
 import type { Client } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Config } from "../config.js";
-import { resolveUserPath } from "../schemas/common.js";
 import type { CreateFolderParamsType } from "../schemas/drive-write.js";
 import { CreateFolderParams } from "../schemas/drive-write.js";
 import type { ToolResult } from "../types/tools.js";
 import { checkConfirmation, formatPreview } from "../utils/confirmation.js";
+import { resolveDrivePath } from "../utils/drive-path.js";
 import { McpToolError, ValidationError, formatErrorForUser } from "../utils/errors.js";
 import { encodeGraphId } from "../utils/graph-id.js";
 import { idempotencyCache } from "../utils/idempotency.js";
@@ -13,22 +13,22 @@ import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger("tools:drive-folder");
 
-function resolveParentUrl(userPath: string, parsed: CreateFolderParamsType): string {
+function resolveParentUrl(drivePath: string, parsed: CreateFolderParamsType): string {
   if (parsed.parent_id && parsed.parent_path) {
     throw new ValidationError(
       "parent_id and parent_path are mutually exclusive. Provide only one.",
     );
   }
   if (parsed.parent_id) {
-    return `${userPath}/drive/items/${encodeGraphId(parsed.parent_id)}/children`;
+    return `${drivePath}/items/${encodeGraphId(parsed.parent_id)}/children`;
   }
   if (parsed.parent_path) {
     const cleanPath = parsed.parent_path.startsWith("/")
       ? parsed.parent_path
       : `/${parsed.parent_path}`;
-    return `${userPath}/drive/root:${cleanPath}:/children`;
+    return `${drivePath}/root:${cleanPath}:/children`;
   }
-  return `${userPath}/drive/root/children`;
+  return `${drivePath}/root/children`;
 }
 
 function buildFolderPreview(parsed: CreateFolderParamsType): ToolResult | null {
@@ -51,8 +51,8 @@ async function executeCreateFolder(
   parsed: CreateFolderParamsType,
   startTime: number,
 ): Promise<ToolResult> {
-  const userPath = resolveUserPath(parsed.user_id);
-  const url = resolveParentUrl(userPath, parsed);
+  const drivePath = resolveDrivePath(parsed.user_id, parsed.site_id, parsed.drive_id);
+  const url = resolveParentUrl(drivePath, parsed);
 
   const requestBody = {
     name: parsed.name,

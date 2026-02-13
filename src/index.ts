@@ -30,6 +30,14 @@ import { registerMailReplyTools } from "./tools/mail-reply.js";
 import { registerMailSearchTools } from "./tools/mail-search.js";
 import { registerMailSendTools } from "./tools/mail-send.js";
 import { registerMailTools } from "./tools/mail.js";
+import { registerSharePointListWriteTools } from "./tools/sharepoint-list-write.js";
+import { registerSharePointListTools } from "./tools/sharepoint-lists.js";
+import { registerSharePointSiteTools } from "./tools/sharepoint-sites.js";
+import { registerTeamsChatMessageTools } from "./tools/teams-chat-messages.js";
+import { registerTeamsChatsTools } from "./tools/teams-chats.js";
+import { registerTeamsListTools } from "./tools/teams-list.js";
+import { registerTeamsMessageTools } from "./tools/teams-messages.js";
+import { registerTeamsSendTools } from "./tools/teams-send.js";
 import type { ToolRegistrationFn } from "./types/tools.js";
 import { createLogger } from "./utils/logger.js";
 import { resolveTildePath } from "./utils/path.js";
@@ -84,6 +92,14 @@ const registrations: ToolRegistrationFn[] = [
   registerDriveMoveTools,
   registerDriveCopyTools,
   registerDriveShareTools,
+  registerTeamsListTools,
+  registerTeamsMessageTools,
+  registerTeamsSendTools,
+  registerTeamsChatsTools,
+  registerTeamsChatMessageTools,
+  registerSharePointSiteTools,
+  registerSharePointListTools,
+  registerSharePointListWriteTools,
 ];
 
 async function main() {

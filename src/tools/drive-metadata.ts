@@ -1,8 +1,8 @@
 import type { Client } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Config } from "../config.js";
-import { resolveUserPath } from "../schemas/common.js";
 import { GetFileMetadataParams } from "../schemas/files.js";
+import { resolveDrivePath } from "../utils/drive-path.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
 import { formatFileSize } from "../utils/file-size.js";
 import { encodeGraphId } from "../utils/graph-id.js";
@@ -75,8 +75,8 @@ export function registerDriveMetadataTools(
     async (params) => {
       try {
         const parsed = GetFileMetadataParams.parse(params);
-        const userPath = resolveUserPath(parsed.user_id);
-        const url = `${userPath}/drive/items/${encodeGraphId(parsed.file_id)}`;
+        const drivePath = resolveDrivePath(parsed.user_id, parsed.site_id, parsed.drive_id);
+        const url = `${drivePath}/items/${encodeGraphId(parsed.file_id)}`;
 
         const item = (await graphClient
           .api(url)

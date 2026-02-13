@@ -1,11 +1,11 @@
 import type { Client } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Config } from "../config.js";
-import { resolveUserPath } from "../schemas/common.js";
 import type { UploadFileParamsType } from "../schemas/drive-write.js";
 import { UploadFileParams } from "../schemas/drive-write.js";
 import type { ToolResult } from "../types/tools.js";
 import { checkConfirmation, formatPreview } from "../utils/confirmation.js";
+import { resolveDrivePath } from "../utils/drive-path.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
 import { formatFileSize } from "../utils/file-size.js";
 import { idempotencyCache } from "../utils/idempotency.js";
@@ -49,9 +49,9 @@ async function executeUpload(
     };
   }
 
-  const userPath = resolveUserPath(parsed.user_id);
+  const drivePath = resolveDrivePath(parsed.user_id, parsed.site_id, parsed.drive_id);
   const cleanPath = parsed.path.startsWith("/") ? parsed.path : `/${parsed.path}`;
-  const url = `${userPath}/drive/root:${cleanPath}:/content`;
+  const url = `${drivePath}/root:${cleanPath}:/content`;
 
   const result = (await graphClient
     .api(url)

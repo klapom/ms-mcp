@@ -32,6 +32,29 @@ Dieses Script scannt `src/tools/` und `src/schemas/` und aktualisiert:
 
 Falls sich Docs geändert haben, stage sie mit `git add docs/`.
 
+### 2b. Documentation Update (HAIKU Agent)
+
+Starte einen HAIKU-Agenten (via Task tool, model: "haiku") der folgende Dokumentation auf den aktuellen Stand bringt.
+Der Agent soll die bestehenden Dateien lesen, den aktuellen Code-Stand analysieren (`src/index.ts` Registrations, `src/tools/`, `src/schemas/`, `docs/TOOLS.md`, `docs/PERMISSIONS.md`) und die Dokumente aktualisieren.
+
+**Sprache: Englisch.** Alle Dokumente müssen in Englisch verfasst sein.
+
+Zu aktualisierende Dateien:
+- `docs/PERMISSIONS.md` — Permission matrix: which Graph API scopes are needed per tool, grouped by module. Include presets (readonly, mvp, full).
+- `docs/ARCHITECTURE.md` — Architecture overview: layers, data flow, cross-cutting patterns, module structure. Keep it concise.
+- `docs/USE-CASES.md` — Use cases: real-world scenarios showing which tools Claude uses. Mark available vs planned. Cover all modules (Mail, Calendar, OneDrive, Teams, SharePoint).
+- `docs/SETUP.md` — Setup guide: prerequisites, Azure App Registration, permissions, Claude Desktop/Code config. Keep instructions current.
+- `README.md` — Project overview: features, quickstart, tech stack, example prompts, privacy. Keep it as the main entry point for the repository.
+- `CHANGELOG.md` — Keep a Changelog format. Add entries for new features/changes being committed. Translate existing German entries to English if needed.
+
+Der Agent soll:
+1. Die bestehende Datei lesen
+2. Den aktuellen Code-Stand prüfen (welche Tools existieren, welche Module)
+3. Die Datei in Englisch überarbeiten, basierend auf dem aktuellen Stand
+4. Keine Auto-Generated Marker entfernen (TOOLS.md/PERMISSIONS.md werden von `docs:generate` verwaltet)
+
+**Wichtig:** TOOLS.md wird bereits von `pnpm run docs:generate` gepflegt und sollte NICHT vom HAIKU-Agenten überschrieben werden.
+
 ### 3. Code Review — Runde 1 (VOR dem Commit)
 
 Analysiere ALLE uncommitteten Änderungen (`git diff` + `git diff --staged` + untracked files) aus drei Perspektiven.

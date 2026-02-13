@@ -1,10 +1,10 @@
 import type { Client } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Config } from "../config.js";
-import { resolveUserPath } from "../schemas/common.js";
 import type { DownloadFileParamsType } from "../schemas/files.js";
 import { DownloadFileParams } from "../schemas/files.js";
 import type { ToolResult } from "../types/tools.js";
+import { resolveDrivePath } from "../utils/drive-path.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
 import { formatFileSize, isTextContent } from "../utils/file-size.js";
 import { encodeGraphId } from "../utils/graph-id.js";
@@ -37,8 +37,8 @@ async function handleDownloadFile(
   parsed: DownloadFileParamsType,
 ): Promise<ToolResult> {
   const startTime = Date.now();
-  const userPath = resolveUserPath(parsed.user_id);
-  const itemUrl = `${userPath}/drive/items/${encodeGraphId(parsed.file_id)}`;
+  const drivePath = resolveDrivePath(parsed.user_id, parsed.site_id, parsed.drive_id);
+  const itemUrl = `${drivePath}/items/${encodeGraphId(parsed.file_id)}`;
 
   // Step 1: Metadata
   const meta = (await graphClient

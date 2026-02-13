@@ -1,9 +1,9 @@
 import type { Client } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Config } from "../config.js";
-import { resolveUserPath } from "../schemas/common.js";
 import type { SearchFilesParamsType } from "../schemas/files.js";
 import { SearchFilesParams } from "../schemas/files.js";
+import { resolveDrivePath } from "../utils/drive-path.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
 import { formatFileSize } from "../utils/file-size.js";
 import { createLogger } from "../utils/logger.js";
@@ -37,8 +37,8 @@ export function registerDriveSearchTools(
     async (params) => {
       try {
         const parsed = SearchFilesParams.parse(params) as SearchFilesParamsType;
-        const userPath = resolveUserPath(parsed.user_id);
-        const url = `${userPath}/drive/root/search(q='${parsed.query}')`;
+        const drivePath = resolveDrivePath(parsed.user_id, parsed.site_id, parsed.drive_id);
+        const url = `${drivePath}/root/search(q='${parsed.query}')`;
 
         let request = graphClient.api(url);
         request = request.select(buildSelectParam(DEFAULT_SELECT.file));

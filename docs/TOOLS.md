@@ -35,5 +35,21 @@
 | `search_emails` | Search emails using KQL (Keyword Query Language). Optimized for full-text search across subject, body, from, and attachments. Examples:  | mail-search | 🟢 safe |
 | `send_email` | Send a new email. Requires confirm=true to actually send — without it, returns a preview. Supports To, CC, BCC, subject, body (text or HTML), importance, and save_to_sent_items. Use idempotency_key to prevent duplicate sends. | mail-send | 🔴 destructive |
 | `list_emails` | List emails from a mailbox folder with optional filtering, search and pagination. Returns email metadata (subject, from, date, preview) optimized for LLM context. Use folder parameter for specific folders (inbox, sentitems, drafts). Supports OData $filter for structured queries and KQL search for full-text search. | mail | 🟢 safe |
+| `create_list_item` | Create a new item in a SharePoint list. Requires confirm=true to actually create — without it, returns a preview. Pass field values as a JSON object. Use idempotency_key to prevent duplicate creates. | sharepoint-list-write | 🟡 moderate |
+| `update_list_item` | Update an existing item in a SharePoint list. Requires confirm=true to actually update — without it, returns a preview. Only provided fields are updated (partial update). Use idempotency_key to prevent duplicate updates. | sharepoint-list-write | 🟡 moderate |
+| `delete_list_item` | Delete an item from a SharePoint list. Requires confirm=true to actually delete — without it, returns a preview. Use idempotency_key to prevent duplicate deletes. | sharepoint-list-write | 🔴 destructive |
+| `list_site_lists` | List SharePoint lists in a site. Use include_hidden=true to show hidden lists. Returns list name, description, and web URL. | sharepoint-lists | 🟢 safe |
+| `list_list_items` | List items in a SharePoint list. Requires $expand=fields (done automatically). Supports OData $filter and $orderby. Returns item ID and all field values. | sharepoint-lists | 🟢 safe |
+| `search_sites` | Search for SharePoint sites by name or content. Returns site name, description, and web URL. | sharepoint-sites | 🟢 safe |
+| `get_site` | Get details of a SharePoint site by ID or by hostname + site_path. Returns site name, description, ID, and web URL. | sharepoint-sites | 🟢 safe |
+| `list_site_drives` | List document libraries (drives) in a SharePoint site. Returns drive name, type, and web URL. | sharepoint-sites | 🟢 safe |
+| `list_chat_messages` | List messages in a Teams chat. Returns sender, timestamp, and body (truncated to 500 chars). Max 50 messages per page. | teams-chat-messages | 🟢 safe |
+| `send_chat_message` | Send a message to a Teams chat. Requires confirm=true to actually send — without it, returns a preview. Use idempotency_key to prevent duplicate sends. | teams-chat-messages | 🔴 destructive |
+| `list_chats` | List chats the current user is part of. Optionally filter by chat type (oneOnOne, group, meeting). Returns topic, type, last updated, and web URL. | teams-chats | 🟢 safe |
+| `list_teams` | List all teams the current user is a member of. Returns team name, description, archive status, and web URL. | teams-list | 🟢 safe |
+| `list_channels` | List channels in a team. Returns channel name, description, membership type, and web URL. | teams-list | 🟢 safe |
+| `list_channel_messages` | List messages in a Teams channel. Returns sender, timestamp, importance, and body (truncated to 500 chars). Max 50 messages per page. | teams-messages | 🟢 safe |
+| `send_channel_message` | Send a message to a Teams channel. Requires confirm=true to actually send — without it, returns a preview. Supports HTML or text content and importance levels. Use idempotency_key to prevent duplicate sends. | teams-send | 🔴 destructive |
+| `reply_to_channel_message` | Reply to a message in a Teams channel. Requires confirm=true to actually send — without it, returns a preview. Use idempotency_key to prevent duplicate replies. | teams-send | 🔴 destructive |
 
-_29 Tools registriert._
+_45 Tools registriert._

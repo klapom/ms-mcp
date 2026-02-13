@@ -1,71 +1,230 @@
 # Changelog
 
-Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
-Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
+All notable changes to this project are documented in this file.
+Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Hinzugefügt
-- UC-01 Hardening: Review Findings behoben, Dokumentation erstellt
-- Integration-Test für UC-01 Workflow
+### Added
+- Documentation update — all docs translated to English, retroactive changelog added
+
+---
+
+## [0.13.0] -- 2026-02-13
+
+### Added
+- **list_site_lists** Tool -- List SharePoint lists in a site
+- **list_list_items** Tool -- List items in a SharePoint list
+- **create_list_item** Tool -- Create new list item (destructive, requires confirm)
+- **update_list_item** Tool -- Update existing list item (destructive, requires confirm)
+- **delete_list_item** Tool -- Delete list item (destructive, requires confirm)
+- **resolveDrivePath** utility extension for SharePoint drives
+- Sprint 5.3 documentation (docs/sprints/SPRINT_5_3.md)
+- 49 new tests (685 total)
+
+### Changed
+- SharePoint drive resolution now supports multi-segment paths
+- Drive utilities extended to handle both OneDrive and SharePoint drives
+
+---
+
+## [0.12.0] -- 2026-02-13
+
+### Added
+- **list_chats** Tool -- List Teams chats with pagination
+- **list_chat_messages** Tool -- List messages in a Teams chat
+- **send_chat_message** Tool -- Send message to Teams chat (destructive, requires confirm)
+- **search_sites** Tool -- Search SharePoint sites by keyword
+- **get_site** Tool -- Get SharePoint site details
+- **list_site_drives** Tool -- List drives in a SharePoint site
+- Sprint 5.2 documentation (docs/sprints/SPRINT_5_2.md)
+- 6 new tools (35 total)
+
+---
+
+## [0.11.0] -- 2026-02-13
+
+### Added
+- **list_teams** Tool -- List Teams user is member of
+- **list_channels** Tool -- List channels in a Teams team
+- **list_channel_messages** Tool -- List messages in a Teams channel with pagination
+- **send_channel_message** Tool -- Send message to Teams channel (destructive, requires confirm)
+- **reply_to_channel_message** Tool -- Reply to message in Teams channel (destructive, requires confirm)
+- Sprint 5.1 documentation (docs/sprints/SPRINT_5_1.md)
+- Teams-specific error handling and response formatting
+
+---
+
+## [0.10.0] -- 2026-02-12
+
+### Added
+- **upload_file** Tool -- Upload file to OneDrive (destructive, requires confirm + idempotency_key)
+- **create_folder** Tool -- Create new folder (destructive, requires confirm + idempotency_key)
+- **move_file** Tool -- Move file to different location (destructive, dry_run support)
+- **copy_file** Tool -- Copy file (async operation, returns 202)
+- **share_file** Tool -- Create sharing link (destructive, requires confirm)
+- Sprint 4.3 documentation (docs/sprints/SPRINT_4_3.md)
+- 591 tests (29 tools)
+
+### Changed
+- OneDrive utilities expanded for write operations
+- MSW handlers updated for drive item operations
+
+---
+
+## [0.9.0] -- 2026-02-12
+
+### Added
+- **list_files** Tool -- List files and folders in OneDrive
+- **search_files** Tool -- Search files by name and properties
+- **get_file_metadata** Tool -- Get detailed file metadata
+- **download_file** Tool -- Download file with size validation (>10MB rejected)
+- **get_recent_files** Tool -- Get user's recently accessed files
+- Sprint 4.2 documentation (docs/sprints/SPRINT_4_2.md)
+- 556 tests (24 tools)
+- MSW RegExp handlers for OneDrive drive item routes
+
+### Changed
+- File size utilities (formatFileSize, isTextContent) shared across mail and OneDrive
+
+---
+
+## [0.8.0] -- 2026-02-12
+
+### Added
+- Sprint 4.1 technical debt cleanup documentation
+
+### Changed
+- Timezone localization for all calendar tools (getUserTimezone, Prefer header)
+- proposedNewTime support added to respond_to_event
+- Attendees mapping refactored to shared toAttendees utility (DRY principle)
+- All German strings translated to English
+- 521 tests
+
+---
+
+## [0.7.0] -- 2026-02-12
+
+### Added
+- **create_event** Tool -- Create calendar event (destructive, requires confirm + idempotency_key)
+- **update_event** Tool -- Update event details (destructive, requires confirm + idempotency_key)
+- **delete_event** Tool -- Delete calendar event (destructive, requires confirm)
+- **respond_to_event** Tool -- Accept/decline/tentatively accept invitations (destructive, requires confirm)
+- **check_availability** Tool -- Check free/busy availability for users (safe read operation)
+- Sprint 3.2 documentation (docs/sprints/SPRINT_3_2.md)
+- 516 tests (19 tools)
+
+### Changed
+- Calendar event update validates UPDATABLE_FIELDS
+- Event delete returns 204 No Content
+
+---
+
+## [0.6.0] -- 2026-02-12
+
+### Added
+- **list_calendars** Tool -- List user's calendars with permissions
+- **list_events** Tool -- List calendar events with filtering and pagination
+- **get_event** Tool -- Get full event details including attendees
+- **get_calendar_view** Tool -- Get expanded calendar view for time range
+- Sprint 3.1 documentation (docs/sprints/SPRINT_3_1.md)
+- 473 tests (15 tools)
+- html-to-text conversion for event bodies
+- DEFAULT_SELECT for calendar and event details
+
+### Changed
+- encodeGraphId() refactored as shared utility, applied to all tools (mail + calendar)
+- MSW handlers extended with path disambiguation for overlapping routes
+
+---
+
+## [0.5.0] -- 2026-02-11
+
+### Added
+- **move_email** Tool -- Move email to different folder (destructive, dry_run support)
+- **list_attachments** Tool -- List email attachments with type detection
+- **download_attachment** Tool -- Download attachment with size validation (>10MB rejected)
+- Sprint 2.3 documentation (docs/sprints/SPRINT_2_3.md)
+- 420 tests
+
+### Changed
+- File size formatting shared utility (formatFileSize, isTextContent)
+- Only fileAttachment type supported; itemAttachment and referenceAttachment rejected
+
+---
+
+## [0.4.0] -- 2026-02-11
+
+### Added
+- **send_email** Tool -- Send new email (destructive, requires confirm + idempotency_key)
+- **reply_email** Tool -- Reply to email (destructive, requires confirm + idempotency_key)
+- **forward_email** Tool -- Forward email (destructive, requires confirm + idempotency_key)
+- Sprint 2.2 documentation (docs/sprints/SPRINT_2_2.md)
+- 314 tests
+- Confirmation preview pattern (confirm=false returns preview)
+- Idempotency cache for duplicate detection
+
+### Changed
+- Recipients utility refactored to shared toRecipients() helper
+- Cognitive complexity optimization: preview/execute helpers extracted
 
 ---
 
 ## [0.3.0] -- 2026-02-11
 
-### Hinzugefügt
-- **read_email** Tool -- E-Mail lesen mit HTML-zu-Text-Konvertierung (html-to-text)
-- **list_mail_folders** Tool -- Mail-Ordner auflisten mit Counts und Subfolders
-- **search_emails** Tool -- Volltextsuche via KQL (Keyword Query Language)
-- Sprint-Dokumentation (docs/sprints/SPRINT_2_1.md, 2_2.md, 2_3.md)
-- html-to-text Dependency für E-Mail-Body-Konvertierung
-- 50 neue Tests (219 total)
+### Added
+- **read_email** Tool -- Read email with HTML-to-text conversion
+- **list_mail_folders** Tool -- List mail folders with counts and subfolders
+- **search_emails** Tool -- Full-text search via KQL (Keyword Query Language)
+- Sprint documentation (docs/sprints/SPRINT_2_1.md)
+- html-to-text dependency for email body conversion
+- 50 new tests (219 total)
 
-### Geändert
-- Review Debt aus Phase 1 abgebaut (JSDoc, Error-Tests, DI-Factory)
-- `DEFAULT_SELECT` um mailDetail und mailFolder erweitert
+### Changed
+- Review technical debt cleanup from Phase 1 (JSDoc, error tests, DI factory)
+- DEFAULT_SELECT extended with mailDetail and mailFolder
 
 ---
 
 ## [0.2.0] -- 2026-02-11
 
-### Hinzugefügt
-- GraphClientDeps DI Interface (statt direkter MsalClient-Abhängigkeit)
-- clearClientCache() für Test-Isolation
-- isRecordObject Type Guard (src/utils/type-guards.ts)
-- LimitsConfig Type Export
-- 82 weitere Tests (164 total)
+### Added
+- GraphClientDeps DI interface (instead of direct MsalClient dependency)
+- clearClientCache() for test isolation
+- isRecordObject type guard (src/utils/type-guards.ts)
+- LimitsConfig type export
+- 82 additional tests (164 total)
 
-### Geändert
-- parseRetryAfterMs gibt `number | undefined` zurück
-- ShapeOptions: maxItems und maxBodyLength sind jetzt Pflichtfelder
-- isGraphErrorBody lehnt nicht-Objekt error-Felder ab
-- Retry-Middleware: Doppeltes Header-Lesen behoben
+### Changed
+- parseRetryAfterMs returns `number | undefined`
+- ShapeOptions: maxItems and maxBodyLength now mandatory
+- isGraphErrorBody rejects non-object error fields
+- Retry middleware: fixed double header reading
 
 ---
 
 ## [0.1.0] -- 2026-02-10
 
-### Hinzugefügt
-- **list_emails** Tool -- E-Mails auflisten mit Filter, Suche, Pagination
-- MSAL Device Code Flow (3-stufig: silent, cache, device code)
-- Error-Hierarchie: 8 typisierte Fehlerklassen mit deutschen Meldungen
-- Middleware-Chain: Logging, Retry, ErrorMapping, Auth, HTTP
-- Cross-Cutting Utils: response-shaper, confirmation, idempotency, rate-limit, pagination
-- Graph-Client mit Middleware und Caching
-- @vitest/coverage-v8 mit Coverage-Thresholds (60/50/60/60)
-- husky + lint-staged Pre-Commit Hooks
-- 82 Tests (3 Testdateien)
+### Added
+- **list_emails** Tool -- List emails with filtering, search, pagination
+- MSAL Device Code Flow (3-step: silent, cache, device code)
+- Error hierarchy: 8 typed error classes with messages
+- Middleware chain: Logging, Retry, ErrorMapping, Auth, HTTP
+- Cross-cutting utilities: response-shaper, confirmation, idempotency, rate-limit, pagination
+- Graph client with middleware and caching
+- @vitest/coverage-v8 with coverage thresholds (60/50/60/60)
+- husky + lint-staged pre-commit hooks
+- 82 tests (3 test files)
 
 ---
 
 ## [0.0.1] -- 2026-02-09
 
-### Hinzugefügt
-- Phase 0: Projekt-Scaffold mit allen Infrastruktur-Patterns
-- TypeScript strict mode, Biome, Vitest + MSW Setup
-- MCP SDK Integration mit stdio Transport
-- Zod-basierte Schemas (BaseParams, WriteParams, ListParams)
-- Pino Logger mit PII-Redaktion
-- Docs: ARCHITECTURE.md, SETUP.md (Stub), DATA-PRIVACY.md (Stub)
-- CI/CD: lint, typecheck, test Scripts
+### Added
+- Phase 0: Project scaffold with infrastructure patterns
+- TypeScript strict mode, Biome, Vitest + MSW setup
+- MCP SDK integration with stdio transport
+- Zod-based schemas (BaseParams, WriteParams, ListParams)
+- Pino logger with PII redaction
+- Docs: ARCHITECTURE.md, SETUP.md (stub), DATA-PRIVACY.md (stub)
+- CI/CD: lint, typecheck, test scripts

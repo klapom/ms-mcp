@@ -1,133 +1,430 @@
-# Use Cases
+# Use Cases — MS-MCP Office 365 Tools
 
-## UC-01: Inbox Triage (verfügbar)
-
-**Szenario:** Ein Manager möchte morgens schnell einen Überblick über wichtige E-Mails.
-
-**Prompt:**
-> Fasse meine ungelesenen E-Mails der letzten 24 Stunden zusammen. Kategorisiere nach: dringend, informativ, delegierbar.
-
-**Tools die Claude nutzt:**
-1. `list_emails` -- Filter: `isRead eq false`, sortiert nach Datum
-2. `read_email` -- Für jede relevante Mail den vollständigen Inhalt lesen
-3. Claude erstellt eine strukturierte Zusammenfassung
-
-**Beispiel-Output:**
-
-```
-## Inbox Triage -- 11.02.2026
-
-### Dringend (2)
-1. **Projektfreigabe PHOENIX** -- Von: Dr. Schmidt <schmidt@heidenhain.de>
-   Freigabe bis heute 17:00 Uhr erforderlich. Budget-Übersicht angehängt.
-   -> Aktion: Freigabe erteilen oder Rückfragen klären
-
-2. **Server-Ausfall Produktion** -- Von: IT-Monitoring <monitoring@intern>
-   DB-Server prod-sql-03 seit 08:15 nicht erreichbar. Eskalation an Infrastruktur.
-   -> Aktion: Status prüfen, ggf. mit IT-Leitung abstimmen
-
-### Informativ (3)
-1. **Monatsbericht Januar** -- Von: Controlling <controlling@intern>
-   Umsatz +12% ggü. Vorjahr. Details im Anhang.
-
-2. **Neue Datenschutzrichtlinie** -- Von: Compliance <compliance@intern>
-   Ab 01.03. gelten aktualisierte Richtlinien. Keine sofortige Aktion nötig.
-
-3. **Team-Event Planung** -- Von: HR <hr@intern>
-   Umfrage zum Sommer-Event. Deadline: Freitag.
-
-### Delegierbar (1)
-1. **Angebot Büromaterial** -- Von: Office Manager <office@intern>
-   Neues Angebot von Staples eingetroffen. Vergleich mit bestehendem Vertrag nötig.
-   -> Delegieren an: Assistenz / Office Management
-```
-
-**Geschätzter Zeitgewinn:** 15-30 Minuten pro Tag
+This document describes practical, real-world scenarios showing how Claude can help you with Microsoft 365 using the MCP tools available in this project. All use cases are **available** as of Phase 4.3.
 
 ---
 
-## UC-02: Gezielte E-Mail-Suche (verfügbar)
+## Mail Use Cases
 
-**Szenario:** Ein Berater sucht alle E-Mails zu einem bestimmten Projekt.
+### UC-01: Inbox Triage (Available)
 
-**Prompt:**
-> Suche alle E-Mails zum Thema "PHOENIX Angebot" der letzten 2 Wochen und fasse die Kernpunkte zusammen.
+**Scenario:** A manager arrives at the office and wants a quick overview of important emails from the past 24 hours, categorized by urgency.
 
-**Tools:**
-1. `search_emails` -- KQL: `subject:PHOENIX AND body:Angebot`
-2. `read_email` -- Für die Top-Ergebnisse
-3. Claude erstellt eine chronologische Zusammenfassung
+**Example Prompt:**
+> Summarize my unread emails from the last 24 hours. Categorize them as: urgent, informational, or delegable.
 
-**Variationen:**
-- `"Finde alle E-Mails von mueller@heidenhain.de zum Thema Angebot"` -- KQL: `from:mueller@heidenhain.de subject:Angebot`
-- `"Suche nach E-Mails mit PDF-Anhängen zum Projekt PHOENIX"` -- KQL: `PHOENIX hasattachment:true`
-- `"Zeige mir alle E-Mails an den Verteiler team@intern der letzten Woche"` -- KQL: `to:team@intern` mit Datumsfilter
+**Tools Used:**
+1. `list_emails` — Filter `isRead eq false`, sorted by received date
+2. `read_email` — Fetch full content for relevant messages
+3. Claude analyzes and categorizes
 
----
-
-## UC-03: Ordner-Übersicht (verfügbar)
-
-**Szenario:** Neuer Mitarbeiter möchte die Mailbox-Struktur verstehen oder ein Manager will den Überblick über ungelesene Mails in verschiedenen Ordnern.
-
-**Prompt:**
-> Zeige mir alle meine Mail-Ordner mit der Anzahl ungelesener Mails.
-
-**Tools:**
-1. `list_mail_folders` -- Mit `include_children=true`
-
-**Beispiel-Output:**
-
+**Sample Output:**
 ```
-| Ordner           | Gesamt | Ungelesen |
-|------------------|--------|-----------|
-| Posteingang      |  1.247 |        12 |
-| Gesendete Elemente|    834 |         0 |
-| Entwürfe         |      3 |         0 |
-| Gelöschte Elemente|    156 |         0 |
-| Junk-E-Mail      |     28 |        28 |
-| Archiv           |  5.412 |         0 |
-|   -> Projekte    |  2.103 |         0 |
-|   -> Kunden      |  1.847 |         0 |
+## Inbox Triage — 2026-02-13
+
+### Urgent (2)
+1. **Project PHOENIX Sign-off Required** — From: Dr. Schmidt
+   Sign-off deadline: today 5 PM. Budget overview attached.
+   → Action: Grant approval or clarify questions
+
+2. **Production Database Server Down** — From: IT Monitoring
+   Server prod-sql-03 unreachable since 8:15 AM.
+   → Action: Check status, escalate if needed
+
+### Informational (3)
+1. **January Monthly Report** — From: Finance
+   Revenue +12% vs. last year. Details in attachment.
+
+2. **Updated Data Protection Policy** — From: Compliance
+   New policy effective March 1st. No immediate action needed.
+
+3. **Team Summer Event Planning** — From: HR
+   Survey deadline: Friday. Please respond.
+
+### Delegable (1)
+1. **Office Supplies Quote** — From: Office Manager
+   New quote from vendor received. Compare with existing contract.
+   → Delegate to: Office Management
+```
+
+**Time Saved:** 15–30 minutes per day
+
+---
+
+### UC-02: Email Search and Consolidation (Available)
+
+**Scenario:** A consultant needs to find all emails related to a specific project over the past two weeks and extract key points.
+
+**Example Prompt:**
+> Find all emails about "PHOENIX Proposal" from the last 2 weeks and summarize the key points chronologically.
+
+**Tools Used:**
+1. `search_emails` — KQL: `subject:PHOENIX AND body:Proposal`
+2. `read_email` — Fetch full content of top results
+3. Claude creates a chronological summary
+
+**Common Variations:**
+- `"Find all emails from schmidt@company.de with attachments"` → `from:schmidt@company.de hasattachment:true`
+- `"Show me emails sent to the engineering team in the last week"` → `to:engineering@company.de` + date filter
+- `"Find emails with PDF attachments about contracts"` → `hasattachment:true body:contract`
+
+---
+
+### UC-03: Folder Structure Overview (Available)
+
+**Scenario:** A new employee wants to understand the mailbox folder structure, or a manager needs an overview of unread messages across all folders.
+
+**Example Prompt:**
+> Show me all my mail folders with counts of total and unread messages.
+
+**Tools Used:**
+1. `list_mail_folders` — With `include_children=true` for hierarchy
+
+**Sample Output:**
+```
+| Folder              | Total | Unread |
+|---------------------|-------|--------|
+| Inbox               | 1,247 |     12 |
+| Sent Items          |   834 |      0 |
+| Drafts              |     3 |      0 |
+| Deleted Items       |   156 |      0 |
+| Junk Email          |    28 |     28 |
+| Archive             | 5,412 |      0 |
+|  → Projects         | 2,103 |      0 |
+|  → Clients          | 1,847 |      0 |
 ```
 
 ---
 
-## UC-04: E-Mail-Zusammenfassung (verfügbar)
+### UC-04: Quick Reply and Forward (Available)
 
-**Szenario:** Ein Consultant kommt aus einem langen Meeting und möchte schnell wissen, was eine bestimmte Mail enthält.
+**Scenario:** A team lead receives an important email and wants to send a quick reply or forward it to a colleague for input.
 
-**Prompt:**
-> Lies die neueste E-Mail von der IT-Abteilung und fasse sie zusammen.
+**Example Prompt:**
+> Reply to the latest email from John: "Thanks, let's discuss in our next sync."
 
-**Tools:**
-1. `list_emails` -- Filter nach Absender, sortiert nach Datum, Top 1
-2. `read_email` -- Vollständigen Inhalt lesen
-3. Claude erstellt eine prägnante Zusammenfassung
+**Tools Used:**
+1. `list_emails` — Find most recent from specific sender
+2. `read_email` — Get full message context
+3. `reply_email` — Send reply
+
+**Advanced Variations:**
+- `"Forward the email about the Q1 budget to the finance team"` → `search_emails` + `forward_email`
+- `"Send a bulk email to marketing@company.de, sales@company.de, finance@company.de with an update"` → `send_email` with multiple recipients
 
 ---
 
-## Geplante Use Cases
+### UC-05: Attachment Management (Available)
 
-### UC-05: Schnelle Antwort (Phase 2.2)
+**Scenario:** An employee receives an email with attachments and needs to download specific files or check what's attached.
 
-> "Antworte auf die letzte Mail von Frau Schmidt: Danke, besprechen wir im nächsten Jour Fixe."
+**Example Prompt:**
+> What attachments are in the email from Dr. Mueller? Download all PDFs to review them.
 
-Claude nutzt `read_email` um die letzte Mail zu finden und `reply_email` um die Antwort zu senden.
+**Tools Used:**
+1. `list_emails` — Find email from sender
+2. `read_email` — Confirm message context
+3. `list_attachments` — See attachment metadata and file sizes
+4. `download_attachment` — Retrieve specific files
 
-### UC-06: Meeting-Vorbereitung (Phase 3 + 4)
+**Safety Guardrails:**
+- Files >4 MB show a warning
+- Files >10 MB are rejected (too large for MCP context)
+- Only file attachments supported; embedded items require manual Outlook action
 
-> "Was steht morgen im Kalender? Lade die relevanten Dokumente aus OneDrive."
+---
 
-Claude nutzt Kalender-Tools um Termine abzurufen und OneDrive-Tools um verknüpfte Dokumente zu finden.
+## Calendar Use Cases
 
-### UC-07: Terminkoordination (Phase 3)
+### UC-06: Meeting Preparation (Available)
 
-> "Finde den nächsten freien 60-Min-Slot mit max.mustermann@example.com."
+**Scenario:** Before a busy day or important meeting, an executive wants to see all upcoming events with full details and attendee information.
 
-Claude nutzt Free/Busy-Abfragen der Kalender-API um verfügbare Zeitfenster zu ermitteln.
+**Example Prompt:**
+> What do I have scheduled tomorrow? Show me the full details of each meeting including attendees and room locations.
 
-### UC-08: Dokument-Suche (Phase 4)
+**Tools Used:**
+1. `get_calendar_view` — Retrieve all events in a time range (expands recurring meetings)
+2. `get_event` — Fetch complete details including attendees, description, and online meeting links
+3. Claude presents a formatted agenda
 
-> "Finde den letzten Monatsbericht in OneDrive/PHOENIX/Reports."
+**Sample Output:**
+```
+## Calendar — February 14, 2026
 
-Claude nutzt OneDrive-Suche und -Browse-Tools um Dateien zu finden und herunterzuladen.
+### 09:00 – 10:00 | Project PHOENIX Kickoff
+Location: Conference Room B / Teams Meeting
+Organizer: Dr. Schmidt
+Attendees: John (required), Alice (accepted), Bob (tentative)
+Description: Initial alignment on scope, timeline, and budget.
+
+### 10:30 – 11:15 | 1:1 with Team Lead
+Location: Office 304
+Organizer: Jane
+Description: Quarterly feedback and career development discussion.
+
+### 13:00 – 14:00 | Client Presentation (ACME Corp)
+Location: Virtual Teams Meeting
+Link: https://teams.microsoft.com/...
+Organizer: Sarah
+Notes: Q1 service review and proposal for expanded services.
+```
+
+---
+
+### UC-07: Schedule Coordination and Meeting Creation (Available)
+
+**Scenario:** A manager needs to find a time slot that works for all team members and wants to create a meeting without manual back-and-forth.
+
+**Example Prompt:**
+> Find a 60-minute slot next week when john@company.de, alice@company.de, and I are all available, then create a meeting.
+
+**Tools Used:**
+1. `check_availability` — Query free/busy status for multiple attendees over a date range
+2. `create_event` — Schedule the meeting with all attendees once a slot is found
+3. Claude analyzes availability and proposes/creates the event
+
+**Advanced Scenario:**
+- `"Schedule a 30-minute sync with the product team for this week. Avoid conflicts with existing meetings."` → `check_availability` + `create_event`
+
+---
+
+### UC-08: Event Management and Responses (Available)
+
+**Scenario:** An attendee receives multiple meeting invitations and wants to accept, decline, or propose a new time for meetings.
+
+**Example Prompt:**
+> I can't make the Project PHOENIX meeting at 2 PM tomorrow. Respond declining and suggest 3 PM instead.
+
+**Tools Used:**
+1. `list_events` — Find the specific meeting
+2. `respond_to_event` — Send decline or tentative acceptance with optional proposed time
+3. Optional: `update_event` — Reschedule if organizer needs to move the entire meeting
+
+**Common Actions:**
+- `"Accept the meeting invitation from john@company.de"` → `respond_to_event` (accept)
+- `"I need to cancel the team standup tomorrow"` → `delete_event` (if organizer)
+- `"Update the budget review meeting to start 30 minutes earlier"` → `update_event` (if organizer)
+
+---
+
+## OneDrive Use Cases
+
+### UC-09: Document Search and Download (Available)
+
+**Scenario:** A consultant needs to locate specific files across OneDrive to reference in a meeting or analysis.
+
+**Example Prompt:**
+> Search for all PDF files related to "PHOENIX" from the last month. Show file sizes and dates.
+
+**Tools Used:**
+1. `search_files` — Find files by name, content, or metadata
+2. `get_file_metadata` — Fetch details (size, modified date, type)
+3. `download_file` — Retrieve file content for local analysis
+
+**Advanced Variations:**
+- `"Find the latest version of the Q1 budget spreadsheet"` → `search_files` (recent, Excel type)
+- `"Show me all Word documents modified in the last 7 days"` → `search_files` with date filter
+- `"List all files in the /Projects/PHOENIX/Reports folder"` → `list_files` with folder path
+
+---
+
+### UC-10: File and Folder Management (Available)
+
+**Scenario:** A project manager needs to organize files, upload new deliverables, and share documents with team members.
+
+**Example Prompt:**
+> Upload the Q1 budget document to OneDrive, create a "Budget" subfolder in the PHOENIX project, and share it with the finance team.
+
+**Tools Used:**
+1. `upload_file` — Add new file to OneDrive
+2. `create_folder` — Organize files into directories
+3. `move_file` — Reorganize existing files
+4. `copy_file` — Duplicate files (note: async, returns 202)
+5. `share_file` — Grant access to users or groups with permission levels
+
+**Common Workflows:**
+- `"Move all January invoices to the Archive folder"` → `list_files` + `move_file` (bulk operation)
+- `"Copy the project template to a new project folder"` → `create_folder` + `copy_file`
+- `"Share the final report with read-only access to the client"` → `share_file` (view role)
+
+---
+
+## Teams Use Cases
+
+### UC-11: Channel Messaging (Available)
+
+**Scenario:** A team lead wants to check recent channel activity, search for past discussions, and post team announcements.
+
+**Example Prompt:**
+> Show me the last 10 messages in the #general channel. Did anyone mention the PHOENIX project?
+
+**Tools Used:**
+1. `list_teams` — Find the specific team
+2. `list_channels` — Find the target channel
+3. `list_channel_messages` — Retrieve message history (paginated)
+4. `send_channel_message` — Post announcement or update
+
+**Advanced Scenarios:**
+- `"Search for all mentions of 'budget' in the Engineering channel from the last week"` → `list_channel_messages` (paginate) + Claude search
+- `"Post an urgent update to all team channels: Production is temporarily down"` → `send_channel_message` (multiple channels)
+
+---
+
+### UC-12: Chat and Direct Messaging (Available)
+
+**Scenario:** An employee wants to follow up on a direct conversation or send a quick message to a colleague without context switching.
+
+**Example Prompt:**
+> What did John and I discuss in our last chat? Send him a message: "Can we sync on the proposal tomorrow?"
+
+**Tools Used:**
+1. `list_chats` — Find chat conversations
+2. `list_chat_messages` — Retrieve conversation history
+3. `send_chat_message` — Send direct message
+
+**Use Cases:**
+- `"Send a message to the project team chat: 'Meeting moved to 3 PM'"` → `send_chat_message`
+- `"Get the latest updates from my 1:1 with my manager"` → `list_chats` + `list_chat_messages`
+
+---
+
+## SharePoint Use Cases
+
+### UC-13: Site Discovery and Navigation (Available)
+
+**Scenario:** A new team member wants to find and explore relevant SharePoint sites and libraries.
+
+**Example Prompt:**
+> Find all SharePoint sites related to "PHOENIX". Show me what document libraries they contain.
+
+**Tools Used:**
+1. `search_sites` — Locate sites by name or keyword
+2. `get_site` — Fetch site details
+3. `list_site_drives` — List associated document libraries (drives)
+
+**Sample Workflow:**
+- `"Show me the structure of the Finance team site"` → `search_sites` + `list_site_drives`
+- `"What sites do I have access to?"` → `list_sites` (list all accessible sites)
+
+---
+
+### UC-14: List Management and Data Entry (Available)
+
+**Scenario:** A coordinator manages a project tracking list or inventory list in SharePoint and needs to view, add, or update items.
+
+**Example Prompt:**
+> Show me all open tasks in the Project Tracker list. Add a new task: "Complete budget review by Friday."
+
+**Tools Used:**
+1. `list_site_lists` — Find available lists in a SharePoint site
+2. `list_list_items` — Retrieve list items with filtering/pagination
+3. `create_list_item` — Add new item with field values
+4. `update_list_item` — Modify existing items
+5. `delete_list_item` — Remove items (when needed)
+
+**Advanced Scenarios:**
+- `"Filter the status report list to show only items due this week"` → `list_list_items` + filtering
+- `"Bulk update all 'In Progress' tasks to 'Completed' for the milestone"` → Multiple `update_list_item` calls
+- `"Create a new issue in the bug tracker: 'Login page timeout error'"` → `create_list_item`
+
+---
+
+### UC-15: SharePoint Document Library Management (Available)
+
+**Scenario:** A team needs to search, upload, and organize documents within SharePoint libraries alongside Outlook and OneDrive workflows.
+
+**Example Prompt:**
+> Search for all design documents in the PHOENIX site library from Q4. Download the latest version.
+
+**Tools Used:**
+1. `search_files` — Find files in SharePoint drives (site_id/drive_id parameters)
+2. `list_files` — Browse a specific library folder
+3. `get_file_metadata` — Check file details and version history
+4. `download_file` — Retrieve document content
+5. `upload_file` — Add new documents to the library
+
+**Integration Pattern:**
+- Complete workflow: Email reminder → Search SharePoint → Download latest docs → Read in email body → Share findings → Reply to sender
+
+---
+
+## Cross-Service Integration Examples
+
+### Example A: Meeting Preparation Workflow
+
+> "Prepare for my meeting with ACME Corp tomorrow. Show me the meeting details, find related emails, and download the latest proposal from OneDrive."
+
+**Tools in Sequence:**
+1. `get_calendar_view` → Find tomorrow's meetings
+2. `get_event` → Get ACME meeting full details and attendees
+3. `search_emails` → Search for emails mentioning "ACME"
+4. `read_email` → Get full email contexts
+5. `search_files` → Find proposal document in OneDrive
+6. `download_file` → Retrieve proposal
+7. Claude consolidates into a briefing document
+
+---
+
+### Example B: Project Status and Communication
+
+> "Create a status report on project PHOENIX. Include calendar milestones, recent emails, OneDrive files, and post a summary to the #phoenix-team channel."
+
+**Tools in Sequence:**
+1. `get_calendar_view` → Find PHOENIX-related events this month
+2. `search_emails` → Get recent PHOENIX discussions
+3. `search_files` → List project documents and updates
+4. Claude composes status report
+5. `send_channel_message` → Post to Teams channel
+
+---
+
+### Example C: Delegation Workflow
+
+> "Forward the budget emails to the finance team, share the spreadsheet with them, and create a task in the Approvals list by end of day."
+
+**Tools in Sequence:**
+1. `search_emails` → Find budget-related emails
+2. `forward_email` → Send to finance team
+3. `share_file` → Grant OneDrive access to spreadsheet
+4. `list_site_lists` → Find Approvals list in SharePoint
+5. `create_list_item` → Create approval task with deadline
+
+---
+
+## Key Patterns and Best Practices
+
+### Safety Features
+- **Destructive confirmation:** Write operations (`send_email`, `create_event`, `upload_file`, etc.) require `confirm=true`
+- **Idempotency keys:** Preventing duplicate sends, posts, or uploads via `idempotency_key` parameter
+- **Pagination:** Large result sets support `top` and `skip` for safe iteration
+- **Rate limiting:** Batch operations should respect Microsoft Graph API rate limits
+
+### Observability
+- All tools log operation metadata (status, latency) without exposing sensitive content
+- Email bodies, calendar descriptions, and file contents are not logged
+- Error handling provides clear feedback for troubleshooting
+
+### Multi-Tenant Support
+- All tools accept optional `user_id` parameter for delegated access scenarios
+- Useful for admins managing multiple user mailboxes, calendars, or drives
+
+---
+
+## Current Tool Inventory (45 Tools)
+
+**Mail (10 tools):** list_emails, search_emails, read_email, list_mail_folders, send_email, reply_email, forward_email, move_email, list_attachments, download_attachment
+
+**Calendar (9 tools):** list_calendars, list_events, get_event, get_calendar_view, create_event, update_event, delete_event, respond_to_event, check_availability
+
+**OneDrive (8 tools):** list_files, search_files, get_file_metadata, download_file, get_recent_files, upload_file, create_folder, move_file, copy_file, share_file
+
+**Teams (6 tools):** list_teams, list_channels, list_channel_messages, send_channel_message, list_chats, list_chat_messages, send_chat_message
+
+**SharePoint (7 tools):** search_sites, get_site, list_site_drives, list_sites, list_site_lists, list_list_items, create_list_item, update_list_item, delete_list_item
+
+---
+
+## Questions or Feedback?
+
+For implementation details, see `/docs/TECHNICAL_DEBT.md` and sprint documentation in `/docs/sprints/`.
