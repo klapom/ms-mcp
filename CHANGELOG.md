@@ -3,10 +3,12 @@
 All notable changes to this project are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+**Note:** All entries translated to English. Original German entries have been preserved for historical context.
+
 ## [Unreleased]
 
 ### Added
-- Documentation update — all docs translated to English, retroactive changelog added
+- Phase 6 documentation and specification
 
 ### Fixed
 - **encodeGraphId** now preserves commas in SharePoint composite site IDs (e.g., "hostname,guid,guid") while safely encoding other special characters
@@ -14,6 +16,56 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **list_site_lists** replaced unsupported `$filter` on list/hidden with client-side filtering for tenant compatibility
 - **list_teams** and **list_channels** removed unsupported pagination parameters (`$top`/`$skip`) — Graph API doesn't support these on `/me/joinedTeams` and `/teams/{id}/channels`
 - **Auth error handling** improved: `AuthTokenError` thrown for invalid_grant/AADSTS65001/AADSTS50076 with clear user instructions to re-authenticate
+
+---
+
+## [0.15.0] -- 2026-02-13
+
+### Added
+- **list_contacts** Tool -- List contacts with pagination
+- **get_contact** Tool -- Get contact details
+- **search_contacts** Tool -- Search for contacts by name/email
+- **create_contact** Tool -- Create new contact (destructive, requires confirm + idempotency_key)
+- **update_contact** Tool -- Update contact details (destructive, requires confirm)
+- **delete_contact** Tool -- Delete contact (destructive, requires confirm)
+- **list_contact_folders** Tool -- List contact folders
+- **list_todo_lists** Tool -- List To Do lists
+- **get_todo_list** Tool -- Get To Do list details
+- **list_tasks** Tool -- List tasks in a To Do list with pagination
+- **get_task** Tool -- Get task details
+- **create_task** Tool -- Create new task (destructive, requires confirm + idempotency_key)
+- **update_task** Tool -- Update task details (destructive, requires confirm)
+- **delete_task** Tool -- Delete task (destructive, requires confirm)
+- Phase 6 documentation (docs/sprints/SPRINT_6_1.md)
+- 752 tests (59 tools total, 52 test files)
+- Contacts and To Do modules (contacts-read.ts, contacts-search.ts, contacts-write.ts, todo-lists.ts, todo-tasks.ts, todo-tasks-write.ts)
+
+### Changed
+- Authorization scopes extended: Contacts.ReadWrite, Tasks.ReadWrite
+
+---
+
+## [0.14.0] -- 2026-02-13
+
+### Added
+- **list_teams** Tool -- List Teams user is member of
+- **list_channels** Tool -- List channels in a Teams team
+- **list_channel_messages** Tool -- List messages in a Teams channel with pagination
+- **send_channel_message** Tool -- Send message to Teams channel (destructive, requires confirm)
+- **reply_to_channel_message** Tool -- Reply to message in Teams channel (destructive, requires confirm)
+- **list_chats** Tool -- List Teams chats with pagination
+- **list_chat_messages** Tool -- List messages in a Teams chat
+- **send_chat_message** Tool -- Send message to Teams chat (destructive, requires confirm)
+- **search_sites** Tool -- Search SharePoint sites by keyword
+- **get_site** Tool -- Get SharePoint site details
+- **list_site_drives** Tool -- List drives in a SharePoint site
+- **list_site_lists** Tool -- List SharePoint lists in a site
+- **list_list_items** Tool -- List items in a SharePoint list
+- **create_list_item** Tool -- Create new list item (destructive, requires confirm)
+- **update_list_item** Tool -- Update existing list item (destructive, requires confirm)
+- **delete_list_item** Tool -- Delete list item (destructive, requires confirm)
+- Sprint 5 documentation (docs/sprints/SPRINT_5_1.md, SPRINT_5_2.md, SPRINT_5_3.md)
+- 688 tests (45 tools total)
 
 ---
 

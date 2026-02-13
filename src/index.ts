@@ -12,6 +12,9 @@ import { registerCalendarListTools } from "./tools/calendar-list.js";
 import { registerCalendarRespondTools } from "./tools/calendar-respond.js";
 import { registerCalendarUpdateTools } from "./tools/calendar-update.js";
 import { registerCalendarViewTools } from "./tools/calendar-view.js";
+import { registerContactsReadTools } from "./tools/contacts-read.js";
+import { registerContactsSearchTools } from "./tools/contacts-search.js";
+import { registerContactsWriteTools } from "./tools/contacts-write.js";
 import { registerDriveCopyTools } from "./tools/drive-copy.js";
 import { registerDriveDownloadTools } from "./tools/drive-download.js";
 import { registerDriveFolderTools } from "./tools/drive-folder.js";
@@ -38,6 +41,9 @@ import { registerTeamsChatsTools } from "./tools/teams-chats.js";
 import { registerTeamsListTools } from "./tools/teams-list.js";
 import { registerTeamsMessageTools } from "./tools/teams-messages.js";
 import { registerTeamsSendTools } from "./tools/teams-send.js";
+import { registerTodoListTools } from "./tools/todo-lists.js";
+import { registerTodoTaskWriteTools } from "./tools/todo-tasks-write.js";
+import { registerTodoTaskTools } from "./tools/todo-tasks.js";
 import type { ToolRegistrationFn } from "./types/tools.js";
 import { createLogger } from "./utils/logger.js";
 import { resolveTildePath } from "./utils/path.js";
@@ -100,6 +106,12 @@ const registrations: ToolRegistrationFn[] = [
   registerSharePointSiteTools,
   registerSharePointListTools,
   registerSharePointListWriteTools,
+  registerContactsReadTools,
+  registerContactsSearchTools,
+  registerContactsWriteTools,
+  registerTodoListTools,
+  registerTodoTaskTools,
+  registerTodoTaskWriteTools,
 ];
 
 async function main() {

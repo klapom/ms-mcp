@@ -27,6 +27,8 @@
    - `Mail.Send` — Send emails
    - `Calendars.ReadWrite` — Read and manage calendar events
    - `Files.ReadWrite` — Read and manage files on OneDrive
+   - `Contacts.ReadWrite` — Read and manage contacts
+   - `Tasks.ReadWrite` — Read and manage To Do tasks
    - And others depending on your tool needs
 4. Click **Grant admin consent for [Tenant]** (green button)
 5. Confirm — all permissions should show green checkmarks
@@ -289,3 +291,21 @@ SharePoint tools:
 - `create_list_item` — Create list item
 - `update_list_item` — Update list item
 - `delete_list_item` — Delete list item
+
+Contacts tools:
+- `list_contacts` — List contacts
+- `get_contact` — Get contact details
+- `search_contacts` — Search for contacts
+- `create_contact` — Create new contact
+- `update_contact` — Update contact details
+- `delete_contact` — Delete contact
+- `list_contact_folders` — List contact folders
+
+To Do tools:
+- `list_todo_lists` — List To Do lists
+- `get_todo_list` — Get list details
+- `list_tasks` — List tasks in a list
+- `get_task` — Get task details
+- `create_task` — Create new task
+- `update_task` — Update task details
+- `delete_task` — Delete task

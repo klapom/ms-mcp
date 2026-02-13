@@ -4,17 +4,19 @@
 
 ## MVP Scopes (Delegated)
 
-| Scope | Begründung | Tools |
+| Scope | Description | Tools |
 |---|---|---|
-| Mail.ReadWrite | E-Mails lesen, verschieben, löschen | `list_emails` |
-| Mail.Send | E-Mails senden, antworten, weiterleiten | `list_emails` |
-| Calendars.ReadWrite | Kalender lesen und Termine erstellen/ändern | — |
-| Files.ReadWrite | OneDrive Dateien lesen und schreiben | — |
-| Contacts.ReadWrite | Kontakte verwalten | — |
-| Tasks.ReadWrite | To Do Aufgaben verwalten | — |
-| User.Read | Eigenes Profil lesen | — |
+| Mail.ReadWrite | Read, move, and delete emails | Mail tools |
+| Mail.Send | Send emails, reply, and forward | Mail tools |
+| Calendars.ReadWrite | Read and create/modify calendar events | Calendar tools |
+| Files.ReadWrite | Read and write OneDrive files | OneDrive/SharePoint tools |
+| Contacts.ReadWrite | Manage contacts | Contacts tools |
+| Tasks.ReadWrite | Manage To Do tasks | To Do tools |
+| User.Read | Read own profile | All tools |
 
-## Tool-Presets
+## Scope Presets
+
+These presets bundle commonly-used scopes for different use cases:
 
 ### readonly
 Mail.Read, Calendars.Read, Files.Read, Contacts.Read, Tasks.Read, User.Read
@@ -23,4 +25,4 @@ Mail.Read, Calendars.Read, Files.Read, Contacts.Read, Tasks.Read, User.Read
 Mail.ReadWrite, Mail.Send, Calendars.ReadWrite, Files.ReadWrite, Contacts.ReadWrite, Tasks.ReadWrite, User.Read
 
 ### full
-Alle MVP-Scopes + Teams.ReadWrite, Sites.ReadWrite.All, ChannelMessage.Send
+All MVP scopes + Teams.ReadWrite, Sites.ReadWrite.All, ChannelMessage.Send (includes Teams and SharePoint advanced features)

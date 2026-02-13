@@ -15,6 +15,13 @@
 | `respond_to_event` | Respond to a calendar event invitation (accept, decline, or tentativelyAccept). Requires confirm=true to actually respond — without it, fetches the event and returns a preview. Errors if you are the organizer. Use idempotency_key to prevent duplicate responses. | calendar-respond | 🟢 safe |
 | `update_event` | Update an existing calendar event. Requires confirm=true to actually update — without it, fetches the current event and returns a preview with current vs new values. At least one updatable field must be provided. Use idempotency_key to prevent duplicate updates. | calendar-update | 🟡 moderate |
 | `get_calendar_view` | Get a calendar view for a specific time range. Unlike list_events, this expands recurring events into individual occurrences. Requires startDateTime and endDateTime in ISO 8601 format. Use calendar_id for a specific calendar. | calendar-view | 🟢 safe |
+| `list_contacts` | List contacts from Outlook. Returns name, email, phone, and company. Supports $filter, $orderby, and pagination. Use folder_id for a specific contact folder. | contacts-read | 🟢 safe |
+| `get_contact` | Get full details of a single contact including all addresses, phones, notes, and categories. | contacts-read | 🟢 safe |
+| `list_contact_folders` | List all contact folders in the mailbox. Returns folder name and ID. | contacts-read | 🟢 safe |
+| `search_contacts` | Search contacts by name, email, company, or other fields. Uses full-text search. For structured filtering, use list_contacts with $filter instead. | contacts-search | 🟢 safe |
+| `create_contact` | Create a new Outlook contact. Requires confirm=true to actually create — without it, returns a preview. Supports name, email, phone, company, address, and more. Use idempotency_key to prevent duplicate creates. | contacts-write | 🟡 moderate |
+| `update_contact` | Update an existing Outlook contact. Requires confirm=true to actually update — without it, fetches the current contact and returns a preview. At least one updatable field must be provided. Use idempotency_key to prevent duplicate updates. | contacts-write | 🟡 moderate |
+| `delete_contact` | Delete an Outlook contact. Requires confirm=true to actually delete — without it, fetches the contact and returns a preview. Use idempotency_key to prevent duplicate deletes. | contacts-write | 🔴 destructive |
 | `copy_file` | Copy a file or folder in OneDrive. Requires confirm=true to actually copy — without it, returns a preview. Copy is asynchronous (returns immediately, copy happens in background). Optionally rename with new_name. Use idempotency_key to prevent duplicate copies. | drive-copy | 🟡 moderate |
 | `download_file` | Download a file from OneDrive by ID. Text files are returned as UTF-8, binary files as base64. Files >4MB show a warning, >10MB are rejected. Use get_file_metadata first to check size. | drive-download | 🟢 safe |
 | `create_folder` | Create a new folder in OneDrive. Requires confirm=true to actually create — without it, returns a preview. Fails if a folder with the same name already exists (409 conflict). Use idempotency_key to prevent duplicate creates. | drive-folder | 🟡 moderate |
@@ -51,5 +58,12 @@
 | `list_channel_messages` | List messages in a Teams channel. Returns sender, timestamp, importance, and body (truncated to 500 chars). Max 50 messages per page. | teams-messages | 🟢 safe |
 | `send_channel_message` | Send a message to a Teams channel. Requires confirm=true to actually send — without it, returns a preview. Supports HTML or text content and importance levels. Use idempotency_key to prevent duplicate sends. | teams-send | 🔴 destructive |
 | `reply_to_channel_message` | Reply to a message in a Teams channel. Requires confirm=true to actually send — without it, returns a preview. Use idempotency_key to prevent duplicate replies. | teams-send | 🔴 destructive |
+| `list_todo_lists` | List all Microsoft To Do task lists. Returns list name, type (defaultList, flaggedEmails), and sharing status. | todo-lists | 🟢 safe |
+| `get_todo_list` | Get details of a single Microsoft To Do list including name, owner, and sharing status. | todo-lists | 🟢 safe |
+| `create_task` | Create a new task in a Microsoft To Do list. Requires confirm=true to actually create — without it, returns a preview. Supports title, body, due date, reminder, importance, status, and categories. Use idempotency_key to prevent duplicate creates. | todo-tasks-write | 🟡 moderate |
+| `update_task` | Update an existing task in a Microsoft To Do list. Requires confirm=true to actually update — without it, fetches the current task and returns a preview. At least one updatable field must be provided. Use idempotency_key to prevent duplicate updates. | todo-tasks-write | 🟡 moderate |
+| `delete_task` | Delete a task from a Microsoft To Do list. Requires confirm=true to actually delete — without it, fetches the task and returns a preview. Use idempotency_key to prevent duplicate deletes. | todo-tasks-write | 🔴 destructive |
+| `list_tasks` | List tasks in a Microsoft To Do list. Returns title, status, due date, and importance. Supports $filter and $orderby. | todo-tasks | 🟢 safe |
+| `get_task` | Get full details of a single task including body, dates, reminder, and categories. Body HTML is converted to plain text. | todo-tasks | 🟢 safe |
 
-_45 Tools registriert._
+_59 Tools registriert._

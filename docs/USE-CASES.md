@@ -1,6 +1,6 @@
 # Use Cases — MS-MCP Office 365 Tools
 
-This document describes practical, real-world scenarios showing how Claude can help you with Microsoft 365 using the MCP tools available in this project. All use cases are **available** as of Phase 4.3.
+This document describes practical, real-world scenarios showing how Claude can help you with Microsoft 365 using the MCP tools available in this project. All use cases are **available** as of Phase 6.
 
 ---
 
@@ -411,7 +411,58 @@ Notes: Q1 service review and proposal for expanded services.
 
 ---
 
-## Current Tool Inventory (45 Tools)
+## Contacts Use Cases
+
+### UC-16: Contact Management (Available)
+
+**Scenario:** An employee needs to maintain and organize their contact list, search for specific contacts, and add new contacts from meetings or emails.
+
+**Example Prompt:**
+> Show me all contacts in my "Business Partners" folder. Find the contact for Alice Schmidt.
+
+**Tools Used:**
+1. `list_contact_folders` — List contact folders
+2. `list_contacts` — Retrieve contacts in a folder with filtering
+3. `get_contact` — Get full contact details
+4. `search_contacts` — Search for contacts by name or email
+5. `create_contact` — Add new contact
+6. `update_contact` — Update existing contact information
+7. `delete_contact` — Remove contacts (destructive, requires confirm)
+
+**Common Scenarios:**
+- `"Create a new contact for john@company.de with phone number +49 123 456789"` → `create_contact`
+- `"Find all contacts with 'Schmidt' in their name"` → `search_contacts`
+- `"Update Alice's phone number to +49 987 654321"` → `update_contact` (requires confirm)
+
+---
+
+## To Do Use Cases
+
+### UC-17: Task and List Management (Available)
+
+**Scenario:** An employee manages their tasks and projects in Microsoft To Do, creating lists for different areas and organizing tasks with priorities.
+
+**Example Prompt:**
+> Show me all my to-do lists. Add a new task "Complete budget review" to the "Finance" list with high priority.
+
+**Tools Used:**
+1. `list_todo_lists` — List all To Do lists
+2. `get_todo_list` — Get list details
+3. `list_tasks` — List tasks in a list with filtering
+4. `get_task` — Get full task details
+5. `create_task` — Create new task (destructive, requires confirm + idempotency_key)
+6. `update_task` — Update task status, priority, due date (destructive, requires confirm)
+7. `delete_task` — Remove task (destructive, requires confirm)
+
+**Common Scenarios:**
+- `"Create a new task list called 'Q1 Projects'"` → `create_list` (via list management)
+- `"Mark the 'Project PHOENIX' task as complete"` → `update_task` (set status to completed)
+- `"What tasks are due this week?"` → `list_tasks` with due date filter
+- `"Move all completed tasks to the archive"` → Multiple `update_task` or `delete_task` calls
+
+---
+
+## Current Tool Inventory (59 Tools)
 
 **Mail (10 tools):** list_emails, search_emails, read_email, list_mail_folders, send_email, reply_email, forward_email, move_email, list_attachments, download_attachment
 
@@ -422,6 +473,10 @@ Notes: Q1 service review and proposal for expanded services.
 **Teams (8 tools):** list_teams, list_channels, list_channel_messages, send_channel_message, reply_to_channel_message, list_chats, list_chat_messages, send_chat_message
 
 **SharePoint (8 tools):** search_sites, get_site, list_site_drives, list_site_lists, list_list_items, create_list_item, update_list_item, delete_list_item
+
+**Contacts (7 tools):** list_contacts, get_contact, search_contacts, create_contact, update_contact, delete_contact, list_contact_folders
+
+**To Do (7 tools):** list_todo_lists, get_todo_list, list_tasks, get_task, create_task, update_task, delete_task
 
 ---
 

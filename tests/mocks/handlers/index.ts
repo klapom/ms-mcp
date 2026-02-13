@@ -2,6 +2,7 @@ import type { HttpHandler } from "msw";
 import { calendarWriteHandlers } from "./calendar-write.js";
 import { calendarHandlers } from "./calendar.js";
 import { chatHandlers } from "./chats.js";
+import { contactHandlers } from "./contacts.js";
 import { driveWriteHandlers } from "./drive-write.js";
 import { driveHandlers } from "./drive.js";
 import { mailAttachmentHandlers } from "./mail-attachments.js";
@@ -13,6 +14,7 @@ import { mailHandlers } from "./mail.js";
 import { sharepointListHandlers } from "./sharepoint-lists.js";
 import { sharepointHandlers } from "./sharepoint.js";
 import { teamsHandlers } from "./teams.js";
+import { todoHandlers } from "./todo.js";
 
 /**
  * MSW handler order matters: more specific routes must come before generic ones.
@@ -37,4 +39,6 @@ export const handlers: HttpHandler[] = [
   ...chatHandlers,
   ...sharepointListHandlers,
   ...sharepointHandlers,
+  ...contactHandlers,
+  ...todoHandlers,
 ];

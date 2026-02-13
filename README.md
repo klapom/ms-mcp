@@ -8,9 +8,9 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 
 ## Features
 
-### Available (Phase 5 Complete)
+### Available (Phase 6 Complete)
 
-**45 tools across 5 modules:**
+**59 tools across 7 modules:**
 
 #### Mail (10 tools)
 `list_emails` · `read_email` · `search_emails` · `list_mail_folders` · `send_email` · `reply_email` · `forward_email` · `move_email` · `list_attachments` · `download_attachment`
@@ -26,6 +26,12 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 
 #### SharePoint (8 tools)
 `search_sites` · `get_site` · `list_site_drives` · `list_site_lists` · `list_list_items` · `create_list_item` · `update_list_item` · `delete_list_item`
+
+#### Contacts (7 tools)
+`list_contacts` · `get_contact` · `search_contacts` · `create_contact` · `update_contact` · `delete_contact` · `list_contact_folders`
+
+#### To Do (7 tools)
+`list_todo_lists` · `get_todo_list` · `list_tasks` · `get_task` · `create_task` · `update_task` · `delete_task`
 
 ## Example Prompts
 
@@ -94,7 +100,7 @@ pnpm test
 | Linting & Format | Biome (no ESLint/Prettier) |
 | Build Tool | tsup |
 | Logging | pino (structured JSON, GDPR-compliant) |
-| Test Coverage | ~690 unit tests, E2E suite against M365 tenant |
+| Test Coverage | 752 unit tests across 52 test files, E2E suite against M365 tenant |
 
 ## Key Design Principles
 
@@ -119,7 +125,7 @@ pnpm test
 
 ### Developer Experience
 - **Zod as SSoT:** Single source of truth for schemas → TypeScript types → JSON Schema → Runtime validation
-- **MCP Tool Pattern:** Consistent pattern across all 45 tools (schema → handler → registration → tests)
+- **MCP Tool Pattern:** Consistent pattern across all 59 tools (schema → handler → registration → tests)
 - **Test Coverage:** Happy path, error cases, pagination, validation for each tool
 - **Dev Server:** Hot-reload with `pnpm dev`
 
@@ -222,7 +228,7 @@ Claude uses: search_emails → read_email → list_attachments → download_atta
 
 The project includes comprehensive test coverage:
 
-- **Unit Tests:** 685+ tests covering all tools, error cases, pagination, and validation
+- **Unit Tests:** 752 tests covering all tools, error cases, pagination, and validation
 - **E2E Tests:** Integration tests against a real M365 developer tenant (nightly runs)
 - **MSW Mocks:** All Graph API endpoints mocked for fast, deterministic unit tests
 - **Snapshot Tests:** Verify formatted output consistency
