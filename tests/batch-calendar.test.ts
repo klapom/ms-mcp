@@ -1,7 +1,16 @@
 import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it } from "vitest";
+import type { Config } from "../src/config.js";
 import { BatchDeleteEventsParams } from "../src/schemas/batch-operations.js";
 import { executeBatch, summarizeBatchResult } from "../src/utils/batch.js";
+
+const testConfig: Config = {
+  limits: { maxItems: 100, maxBodyLength: 50000 },
+  auth: { clientId: "test-client", tenantId: "test-tenant" },
+  logging: { level: "silent" },
+  cache: { tokenCachePath: "/tmp/test-cache.json" },
+};
 
 function createTestGraphClient(): Client {
   return Client.initWithMiddleware({
@@ -124,6 +133,46 @@ describe("batch_delete_events", () => {
 
       const result = await executeBatch(client, requests);
       expect(result.responses[0].status).toBe(403);
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Tool handler tests
+  // -----------------------------------------------------------------------
+  describe("Tool handler", () => {
+    it("should register and execute batch_delete_events tool", async () => {
+      const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
+      const { registerBatchCalendarTools } = await import("../src/tools/batch-calendar.js");
+
+      const testServer = new McpServer({ name: "test", version: "0.0.1" });
+      const graphClient = createTestGraphClient();
+
+      let capturedHandler: ((params: unknown) => Promise<CallToolResult>) | null = null;
+      const originalTool = testServer.tool.bind(testServer);
+      testServer.tool = (name: string, description: string, schema: unknown, handler: unknown) => {
+        if (name === "batch_delete_events") {
+          capturedHandler = handler as (params: unknown) => Promise<CallToolResult>;
+        }
+        return originalTool(name, description, schema, handler);
+      };
+
+      registerBatchCalendarTools(testServer, graphClient, testConfig);
+
+      expect(capturedHandler).not.toBeNull();
+
+      const result = await capturedHandler?.({ event_ids: ["evt-001"], confirm: true });
+      expect(result).toBeDefined();
+      expect(result?.content).toBeDefined();
+    });
+
+    it("should register without throwing", async () => {
+      const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
+      const { registerBatchCalendarTools } = await import("../src/tools/batch-calendar.js");
+
+      const testServer = new McpServer({ name: "test", version: "0.0.1" });
+      const graphClient = createTestGraphClient();
+
+      expect(() => registerBatchCalendarTools(testServer, graphClient, testConfig)).not.toThrow();
     });
   });
 });

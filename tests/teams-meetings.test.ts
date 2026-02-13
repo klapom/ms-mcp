@@ -1,7 +1,16 @@
 import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { describe, expect, it } from "vitest";
+import type { Config } from "../src/config.js";
 import { ErrorMappingMiddleware } from "../src/middleware/error-mapping.js";
 import { GetMeetingTranscriptParams } from "../src/schemas/teams-meetings.js";
+
+const testConfig: Config = {
+  limits: { maxItems: 100, maxBodyLength: 50000 },
+  auth: { clientId: "test-client", tenantId: "test-tenant" },
+  logging: { level: "silent" },
+  cache: { tokenCachePath: "/tmp/test-cache.json" },
+};
 
 function createTestGraphClient(): Client {
   return Client.initWithMiddleware({
@@ -105,6 +114,46 @@ describe("get_meeting_transcript", () => {
       await expect(
         client.api("/me/onlineMeetings/nonexistent/transcripts").get(),
       ).rejects.toThrow();
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Tool handler tests
+  // -----------------------------------------------------------------------
+  describe("Tool handler", () => {
+    it("should register and execute get_meeting_transcript tool", async () => {
+      const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
+      const { registerTeamsMeetingsTools } = await import("../src/tools/teams-meetings.js");
+
+      const testServer = new McpServer({ name: "test", version: "0.0.1" });
+      const graphClient = createTestGraphClient();
+
+      let capturedHandler: ((params: unknown) => Promise<CallToolResult>) | null = null;
+      const originalTool = testServer.tool.bind(testServer);
+      testServer.tool = (name: string, description: string, schema: unknown, handler: unknown) => {
+        if (name === "get_meeting_transcript") {
+          capturedHandler = handler as (params: unknown) => Promise<CallToolResult>;
+        }
+        return originalTool(name, description, schema, handler);
+      };
+
+      registerTeamsMeetingsTools(testServer, graphClient, testConfig);
+
+      expect(capturedHandler).not.toBeNull();
+
+      const result = await capturedHandler?.({ meeting_id: "meeting-001" });
+      expect(result).toBeDefined();
+      expect(result?.content).toBeDefined();
+    });
+
+    it("should register without throwing", async () => {
+      const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
+      const { registerTeamsMeetingsTools } = await import("../src/tools/teams-meetings.js");
+
+      const testServer = new McpServer({ name: "test", version: "0.0.1" });
+      const graphClient = createTestGraphClient();
+
+      expect(() => registerTeamsMeetingsTools(testServer, graphClient, testConfig)).not.toThrow();
     });
   });
 });

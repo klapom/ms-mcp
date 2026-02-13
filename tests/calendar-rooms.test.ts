@@ -1,10 +1,19 @@
 import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it } from "vitest";
+import type { Config } from "../src/config.js";
 import { FindAvailableRoomsParams, ListMeetingRoomsParams } from "../src/schemas/calendar-rooms.js";
 
 // ---------------------------------------------------------------------------
 // Test helpers
 // ---------------------------------------------------------------------------
+
+const testConfig: Config = {
+  limits: { maxItems: 100, maxBodyLength: 50000 },
+  auth: { clientId: "test-client", tenantId: "test-tenant" },
+  logging: { level: "silent" },
+  cache: { tokenCachePath: "/tmp/test-cache.json" },
+};
 
 function createTestGraphClient(): Client {
   return Client.initWithMiddleware({
@@ -203,6 +212,49 @@ describe("find_available_rooms", () => {
       expect(schedules.length).toBeGreaterThan(0);
       expect(schedules[0].scheduleId).toBeDefined();
       expect(schedules[0].availabilityView).toBeDefined();
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Tool handler tests
+  // -----------------------------------------------------------------------
+  describe("Tool handler", () => {
+    it("should register and execute list_meeting_rooms tool", async () => {
+      const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
+      const { registerCalendarRoomTools } = await import("../src/tools/calendar-rooms.js");
+
+      const testServer = new McpServer({ name: "test", version: "0.0.1" });
+      const graphClient = createTestGraphClient();
+
+      let capturedHandler: ((params: unknown) => Promise<CallToolResult>) | null = null;
+      const originalTool = testServer.tool.bind(testServer);
+      testServer.tool = (name: string, description: string, schema: unknown, handler: unknown) => {
+        if (name === "list_meeting_rooms") {
+          capturedHandler = handler as (params: unknown) => Promise<CallToolResult>;
+        }
+        return originalTool(name, description, schema, handler);
+      };
+
+      registerCalendarRoomTools(testServer, graphClient, testConfig);
+
+      expect(capturedHandler).not.toBeNull();
+
+      const result = await capturedHandler?.({
+        start_date_time: "2026-02-15T10:00:00",
+        end_date_time: "2026-02-15T11:00:00",
+      });
+      expect(result).toBeDefined();
+      expect(result?.content).toBeDefined();
+    });
+
+    it("should register without throwing", async () => {
+      const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
+      const { registerCalendarRoomTools } = await import("../src/tools/calendar-rooms.js");
+
+      const testServer = new McpServer({ name: "test", version: "0.0.1" });
+      const graphClient = createTestGraphClient();
+
+      expect(() => registerCalendarRoomTools(testServer, graphClient, testConfig)).not.toThrow();
     });
   });
 });

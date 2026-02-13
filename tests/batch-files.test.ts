@@ -1,7 +1,16 @@
 import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it } from "vitest";
+import type { Config } from "../src/config.js";
 import { BatchMoveFilesParams } from "../src/schemas/batch-operations.js";
 import { executeBatch, summarizeBatchResult } from "../src/utils/batch.js";
+
+const testConfig: Config = {
+  limits: { maxItems: 100, maxBodyLength: 50000 },
+  auth: { clientId: "test-client", tenantId: "test-tenant" },
+  logging: { level: "silent" },
+  cache: { tokenCachePath: "/tmp/test-cache.json" },
+};
 
 function createTestGraphClient(): Client {
   return Client.initWithMiddleware({
@@ -153,6 +162,50 @@ describe("batch_move_files", () => {
 
       const result = await executeBatch(client, requests);
       expect(result.responses[0].status).toBe(403);
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Tool handler tests
+  // -----------------------------------------------------------------------
+  describe("Tool handler", () => {
+    it("should register and execute batch_move_files tool", async () => {
+      const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
+      const { registerBatchFilesTools } = await import("../src/tools/batch-files.js");
+
+      const testServer = new McpServer({ name: "test", version: "0.0.1" });
+      const graphClient = createTestGraphClient();
+
+      let capturedHandler: ((params: unknown) => Promise<CallToolResult>) | null = null;
+      const originalTool = testServer.tool.bind(testServer);
+      testServer.tool = (name: string, description: string, schema: unknown, handler: unknown) => {
+        if (name === "batch_move_files") {
+          capturedHandler = handler as (params: unknown) => Promise<CallToolResult>;
+        }
+        return originalTool(name, description, schema, handler);
+      };
+
+      registerBatchFilesTools(testServer, graphClient, testConfig);
+
+      expect(capturedHandler).not.toBeNull();
+
+      const result = await capturedHandler?.({
+        file_ids: ["file-001"],
+        destination_folder_id: "folder-001",
+        confirm: true,
+      });
+      expect(result).toBeDefined();
+      expect(result?.content).toBeDefined();
+    });
+
+    it("should register without throwing", async () => {
+      const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
+      const { registerBatchFilesTools } = await import("../src/tools/batch-files.js");
+
+      const testServer = new McpServer({ name: "test", version: "0.0.1" });
+      const graphClient = createTestGraphClient();
+
+      expect(() => registerBatchFilesTools(testServer, graphClient, testConfig)).not.toThrow();
     });
   });
 });

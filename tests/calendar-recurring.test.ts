@@ -1,5 +1,7 @@
 import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { beforeEach, describe, expect, it } from "vitest";
+import type { Config } from "../src/config.js";
 import { ErrorMappingMiddleware } from "../src/middleware/error-mapping.js";
 import {
   CreateRecurringEventParams,
@@ -11,6 +13,13 @@ import {
 // ---------------------------------------------------------------------------
 // Test helpers
 // ---------------------------------------------------------------------------
+
+const testConfig: Config = {
+  limits: { maxItems: 100, maxBodyLength: 50000 },
+  auth: { clientId: "test-client", tenantId: "test-tenant" },
+  logging: { level: "silent" },
+  cache: { tokenCachePath: "/tmp/test-cache.json" },
+};
 
 function createTestGraphClient(): Client {
   return Client.initWithMiddleware({
@@ -349,6 +358,54 @@ describe("update_event_series", () => {
       } catch (error) {
         expect(error).toHaveProperty("code", "NotFoundError");
       }
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Tool handler tests
+  // -----------------------------------------------------------------------
+  describe("Tool handler", () => {
+    it("should register and execute create_recurring_event tool", async () => {
+      const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
+      const { registerCalendarRecurringTools } = await import("../src/tools/calendar-recurring.js");
+
+      const testServer = new McpServer({ name: "test", version: "0.0.1" });
+      const graphClient = createTestGraphClient();
+
+      let capturedHandler: ((params: unknown) => Promise<CallToolResult>) | null = null;
+      const originalTool = testServer.tool.bind(testServer);
+      testServer.tool = (name: string, description: string, schema: unknown, handler: unknown) => {
+        if (name === "create_recurring_event") {
+          capturedHandler = handler as (params: unknown) => Promise<CallToolResult>;
+        }
+        return originalTool(name, description, schema, handler);
+      };
+
+      registerCalendarRecurringTools(testServer, graphClient, testConfig);
+
+      expect(capturedHandler).not.toBeNull();
+
+      const result = await capturedHandler?.({
+        subject: "Weekly Meeting",
+        start: { dateTime: "2026-02-15T10:00:00", timeZone: "UTC" },
+        end: { dateTime: "2026-02-15T11:00:00", timeZone: "UTC" },
+        recurrence_pattern: { type: "weekly", interval: 1, days_of_week: ["monday"] },
+        recurrence_range: { type: "endDate", start_date: "2026-02-15", end_date: "2026-03-15" },
+      });
+      expect(result).toBeDefined();
+      expect(result?.content).toBeDefined();
+    });
+
+    it("should register without throwing", async () => {
+      const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
+      const { registerCalendarRecurringTools } = await import("../src/tools/calendar-recurring.js");
+
+      const testServer = new McpServer({ name: "test", version: "0.0.1" });
+      const graphClient = createTestGraphClient();
+
+      expect(() =>
+        registerCalendarRecurringTools(testServer, graphClient, testConfig),
+      ).not.toThrow();
     });
   });
 });
