@@ -12,7 +12,7 @@
 | Scope | Reason |
 |---|---|
 | `TeamsActivity.Read` | Read Teams activity feed and notifications |
-| `OnlineMeetings.Read.All` | Access meeting transcripts and recordings |
+| `OnlineMeetings.Read` | Access meeting transcripts and recordings |
 | `Channel.Create` | Create new Teams channels |
 | `TeamMember.Read.All` | List team members and roles |
 
@@ -157,7 +157,7 @@ ListTeamMembersParams = ListParams.extend({
 
 **Graph API:** GET /me/onlineMeetings/{id}/transcripts
 **Classification:** safe (read-only)
-**Permission:** OnlineMeetings.Read.All
+**Permission:** OnlineMeetings.Read
 
 **Functionality:**
 - Retrieve meeting transcript content (VTT format)
@@ -427,7 +427,7 @@ export function formatTranscriptText(parsed: ParsedTranscript): string {
 - [ ] Meeting transcripts parsed and formatted correctly
 - [ ] 45 new tests covering happy path + errors + edge cases
 - [ ] No regressions in existing tools
-- [ ] New scopes (TeamsActivity.Read, OnlineMeetings.Read.All, Channel.Create, TeamMember.Read.All) documented
+- [ ] New scopes (TeamsActivity.Read, OnlineMeetings.Read, Channel.Create, TeamMember.Read.All) documented
 - [ ] E2E tests: list_mentions, create_channel, get_meeting_transcript
 
 ---
@@ -439,7 +439,7 @@ export function formatTranscriptText(parsed: ParsedTranscript): string {
 3. **Transcript Languages:** get_meeting_transcript returns first available transcript. Multi-language selection deferred.
 4. **Private Channel Members:** Adding initial members to private channel requires additional API call (not included in MVP).
 5. **Activity Marking as Read:** Marking notifications as read requires separate tool (Phase 9 candidate).
-6. **Meeting Recordings:** Downloading meeting recordings requires separate tool + OnlineMeetings.Read.All scope (Phase 9).
+6. **Meeting Recordings:** Downloading meeting recordings requires separate tool + OnlineMeetings.Read scope (Phase 9).
 7. **Channel Management:** Updating/deleting channels requires separate tools (Phase 9).
 
 ---
