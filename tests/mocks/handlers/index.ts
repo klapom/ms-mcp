@@ -6,6 +6,7 @@ import { contactHandlers } from "./contacts.js";
 import { driveWriteHandlers } from "./drive-write.js";
 import { driveHandlers } from "./drive.js";
 import { mailAttachmentHandlers } from "./mail-attachments.js";
+import { mailExtensionHandlers } from "./mail-extensions.js";
 import { mailForwardHandlers } from "./mail-forward.js";
 import { mailMoveHandlers } from "./mail-move.js";
 import { mailReplyHandlers } from "./mail-reply.js";
@@ -33,6 +34,7 @@ export const handlers: HttpHandler[] = [
   ...mailAttachmentHandlers,
   ...mailMoveHandlers,
   ...mailHandlers,
+  ...mailExtensionHandlers,
   ...mailSendHandlers,
   ...mailReplyHandlers,
   ...mailForwardHandlers,

@@ -19,21 +19,21 @@ The server is organized into six distinct layers, each responsible for a specifi
   - Loads configuration via `loadConfig()` (env: `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`)
   - Initializes authentication via `createDefaultAuthDeps()` (creates MSAL client with persistent token cache)
   - Implements fail-fast: checks for cached token before starting MCP server (exits with instructions if not authenticated)
-  - Registers 66 tools from all domain modules (Mail, Calendar, OneDrive/SharePoint, Teams, SharePoint Lists, Contacts, To Do, User & Directory)
+  - Registers 73 tools from all domain modules (Mail, Calendar, OneDrive/SharePoint, Teams, SharePoint Lists, Contacts, To Do, User & Directory)
   - Establishes stdio transport for MCP JSON-RPC communication
 
 ### 2. Tool Layer (`src/tools/`)
 
 - **Responsibility:** Domain-specific request handlers organized by domain module
-- **Module Organization (66 tools across 16 modules):**
-  - **Mail** (10 tools): `mail.ts`, `mail-read.ts`, `mail-search.ts`, `mail-folders.ts`, `mail-send.ts`, `mail-reply.ts`, `mail-forward.ts`, `mail-move.ts`, `mail-attachments.ts`
+- **Module Organization (73 tools across 53 modules):**
+  - **Mail** (18 tools): `mail.ts`, `mail-read.ts`, `mail-search.ts`, `mail-folders.ts`, `mail-send.ts`, `mail-reply.ts`, `mail-forward.ts`, `mail-move.ts`, `mail-attachments.ts`, `mail-delete.ts`, `mail-drafts.ts`, `mail-folder-create.ts`, `mail-flag.ts`, `mail-rules-list.ts`
   - **Calendar** (9 tools): `calendar-list.ts`, `calendar-events.ts`, `calendar-view.ts`, `calendar-create.ts`, `calendar-update.ts`, `calendar-delete.ts`, `calendar-respond.ts`, `calendar-availability.ts`
   - **OneDrive/SharePoint** (10 tools): `drive-list.ts`, `drive-search.ts`, `drive-metadata.ts`, `drive-download.ts`, `drive-upload.ts`, `drive-folder.ts`, `drive-move.ts`, `drive-copy.ts`, `drive-share.ts` (supports SharePoint via `site_id`/`drive_id`)
   - **Teams** (8 tools): `teams-list.ts`, `teams-messages.ts`, `teams-send.ts`, `teams-chats.ts`, `teams-chat-messages.ts`
   - **SharePoint** (8 tools): `sharepoint-sites.ts`, `sharepoint-lists.ts`, `sharepoint-list-write.ts`
   - **Contacts** (7 tools): `contacts-read.ts`, `contacts-search.ts`, `contacts-write.ts`
   - **To Do** (7 tools): `todo-lists.ts`, `todo-tasks.ts`, `todo-tasks-write.ts`
-  - **User & Directory** (7 tools): `users.ts`, `users-profile.ts`, `users-search.ts`, `users-manager.ts`, `users-groups.ts`, `users-photo.ts`
+  - **User & Directory** (7 tools): `user-profile.ts`, `user-search.ts`, `user-org.ts`, `user-photo.ts`
 
 - **Pattern:** Each module exports a `register*Tools()` function that calls `server.tool()` for each tool in that domain
 
@@ -325,7 +325,7 @@ Every tool follows this structure:
 ### Testing Strategy
 
 - **Unit Tests:** Vitest + MSW (Mock Service Worker)
-  - 790+ tests across 54 test files
+  - 800+ tests across 60 test files
   - MSW intercepts HTTP requests, returns mock Graph responses
   - Tests validation, happy path, error cases, pagination, confirmation
 - **E2E Tests:** Real M365 Developer Tenant

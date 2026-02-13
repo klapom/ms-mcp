@@ -1,6 +1,6 @@
 # Use Cases — MS-MCP Office 365 Tools
 
-This document describes practical, real-world scenarios showing how Claude can help you with Microsoft 365 using the MCP tools available in this project. All use cases are **available** as of Phase 6.
+This document describes practical, real-world scenarios showing how Claude can help you with Microsoft 365 using the MCP tools available in this project. All use cases are **available** as of Phase 7 (73 tools across 8 modules).
 
 ---
 
@@ -131,6 +131,103 @@ This document describes practical, real-world scenarios showing how Claude can h
 - Files >4 MB show a warning
 - Files >10 MB are rejected (too large for MCP context)
 - Only file attachments supported; embedded items require manual Outlook action
+
+---
+
+### UC-05B: Draft Management and Email Composition (Available, Phase 7)
+
+**Scenario:** An employee needs to write a complex email but wants to save it as a draft, refine it over time, and add attachments before sending.
+
+**Example Prompt:**
+> Create a draft email to alice@company.com with subject "Q1 Budget Proposal". Save it to drafts so I can refine it later. When ready, add the budget spreadsheet and send it.
+
+**Tools Used:**
+1. `create_draft` — Create draft email in Drafts folder
+2. `add_attachment` — Add file attachments to draft (up to 3 MB)
+3. `send_draft` — Send the finalized draft
+
+**Common Scenarios:**
+- `"Create a draft email for my approval workflow"` → `create_draft`
+- `"Add the presentation.pptx to the draft email"` → `add_attachment`
+- `"Send all my draft emails"` → `list_emails` (drafts folder) + `send_draft` (bulk)
+
+---
+
+### UC-05C: Email Flagging and Follow-Up Management (Available, Phase 7)
+
+**Scenario:** A team member receives important emails and wants to flag them for follow-up with specific due dates or completion tracking.
+
+**Example Prompt:**
+> Flag the email from John about the Q1 budget with a follow-up due date of Friday.
+
+**Tools Used:**
+1. `list_emails` — Find the specific email
+2. `flag_email` — Set flag with optional due date and completion status
+3. Optional: `update_email` — Later remove or update flag
+
+**Advanced Scenarios:**
+- `"Flag all unread emails from my manager for urgent follow-up"` → `list_emails` + `flag_email` (bulk)
+- `"Mark the Q1 budget email as complete"` → `flag_email` (set completion)
+- `"Clear the flag on the production incident email"` → `flag_email` (remove)
+
+---
+
+### UC-05D: Mail Folder Organization (Available, Phase 7)
+
+**Scenario:** A new employee wants to organize their mailbox by creating custom folders for different projects or departments.
+
+**Example Prompt:**
+> Create a folder structure for projects. Add folders: "PHOENIX", "Client-ABC", "Finance".
+
+**Tools Used:**
+1. `create_mail_folder` — Create new folder
+2. `move_email` — Organize existing emails into folders
+3. `list_mail_folders` — View folder structure
+
+**Common Scenarios:**
+- `"Create a Projects folder with subfolders for each active project"` → `create_mail_folder` (hierarchical)
+- `"Move all emails about the PHOENIX project to the PHOENIX folder"` → `search_emails` + `move_email` (bulk)
+- `"Show me the structure of my mail folders"` → `list_mail_folders` (with hierarchy)
+
+---
+
+### UC-05E: Email Deletion and Cleanup (Available, Phase 7)
+
+**Scenario:** A user wants to permanently delete old emails that are no longer needed, rather than moving them to Deleted Items.
+
+**Example Prompt:**
+> Find all emails older than 6 months from the "Old Proposals" folder and permanently delete them.
+
+**Tools Used:**
+1. `search_emails` or `list_emails` — Find emails matching criteria
+2. `delete_email` — Permanently delete (not move to Deleted Items)
+
+**Safety Note:**
+- This action is **permanent** and cannot be undone
+- Use `list_emails` or `search_emails` first to verify before deleting
+- `delete_email` is marked as destructive and requires `confirm=true`
+
+**Common Scenarios:**
+- `"Delete all emails from 2024"` → `search_emails` (date filter) + `delete_email`
+- `"Clean up duplicate emails from bulk mailing"` → `search_emails` + `delete_email` (with confirmation)
+
+---
+
+### UC-05F: Message Rules and Inbox Automation (Available, Phase 7, Read-Only)
+
+**Scenario:** A manager wants to understand what message rules are set up in their mailbox to control email organization.
+
+**Example Prompt:**
+> Show me all my inbox message rules. What rules are automatically processing my emails?
+
+**Tools Used:**
+1. `list_mail_rules` — Read-only: list all message rules
+
+**Note:** Creating or modifying rules is not yet supported. This tool provides visibility into existing automation.
+
+**Common Scenarios:**
+- `"What rules are forwarding emails to other addresses?"` → `list_mail_rules` (review all)
+- `"Show me rules that are moving emails to folders"` → `list_mail_rules` + Claude analysis
 
 ---
 
@@ -524,9 +621,9 @@ Notes: Q1 service review and proposal for expanded services.
 
 ---
 
-## Current Tool Inventory (66 Tools)
+## Current Tool Inventory (73 Tools, Phase 7 Complete)
 
-**Mail (10 tools):** list_emails, search_emails, read_email, list_mail_folders, send_email, reply_email, forward_email, move_email, list_attachments, download_attachment
+**Mail (18 tools):** list_emails, search_emails, read_email, list_mail_folders, send_email, reply_email, forward_email, move_email, list_attachments, download_attachment, delete_email, create_draft, send_draft, add_attachment, flag_email, create_mail_folder, list_mail_rules
 
 **Calendar (9 tools):** list_calendars, list_events, get_event, get_calendar_view, create_event, update_event, delete_event, respond_to_event, check_availability
 

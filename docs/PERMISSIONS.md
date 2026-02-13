@@ -13,16 +13,14 @@
 | Contacts.ReadWrite | Kontakte verwalten | — |
 | Tasks.ReadWrite | To Do Aufgaben verwalten | — |
 | User.Read | Eigenes Profil lesen | — |
-| User.Read.All | Benutzerprofile und Verzeichnis lesen | `get_my_profile`, `search_users`, `get_user`, `get_manager`, `list_direct_reports`, `list_user_groups`, `get_user_photo` |
-| Directory.Read.All | Verzeichnisstruktur lesen | `search_users`, `get_user`, `get_manager`, `list_direct_reports`, `list_user_groups` |
 
 ## Tool-Presets
 
 ### readonly
-Mail.Read, Calendars.Read, Files.Read, Contacts.Read, Tasks.Read, User.Read, User.Read.All, Directory.Read.All
+Mail.Read, Calendars.Read, Files.Read, Contacts.Read, Tasks.Read, User.Read
 
 ### mvp
-Mail.ReadWrite, Mail.Send, Calendars.ReadWrite, Files.ReadWrite, Contacts.ReadWrite, Tasks.ReadWrite, User.Read, User.Read.All, Directory.Read.All
+Mail.ReadWrite, Mail.Send, Calendars.ReadWrite, Files.ReadWrite, Contacts.ReadWrite, Tasks.ReadWrite, User.Read
 
 ### full
 Alle MVP-Scopes + Teams.ReadWrite, Sites.ReadWrite.All, ChannelMessage.Send

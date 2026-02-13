@@ -25,11 +25,16 @@ import { registerDriveSearchTools } from "./tools/drive-search.js";
 import { registerDriveShareTools } from "./tools/drive-share.js";
 import { registerDriveUploadTools } from "./tools/drive-upload.js";
 import { registerMailAttachmentTools } from "./tools/mail-attachments.js";
+import { registerMailDeleteTools } from "./tools/mail-delete.js";
+import { registerMailDraftTools } from "./tools/mail-drafts.js";
+import { registerMailFlagTools } from "./tools/mail-flag.js";
+import { registerMailFolderCreateTools } from "./tools/mail-folder-create.js";
 import { registerMailFolderTools } from "./tools/mail-folders.js";
 import { registerMailForwardTools } from "./tools/mail-forward.js";
 import { registerMailMoveTools } from "./tools/mail-move.js";
 import { registerMailReadTools } from "./tools/mail-read.js";
 import { registerMailReplyTools } from "./tools/mail-reply.js";
+import { registerMailRulesListTools } from "./tools/mail-rules-list.js";
 import { registerMailSearchTools } from "./tools/mail-search.js";
 import { registerMailSendTools } from "./tools/mail-send.js";
 import { registerMailTools } from "./tools/mail.js";
@@ -85,6 +90,11 @@ const registrations: ToolRegistrationFn[] = [
   registerMailForwardTools,
   registerMailMoveTools,
   registerMailAttachmentTools,
+  registerMailDeleteTools,
+  registerMailDraftTools,
+  registerMailFolderCreateTools,
+  registerMailFlagTools,
+  registerMailRulesListTools,
   registerCalendarListTools,
   registerCalendarEventTools,
   registerCalendarViewTools,

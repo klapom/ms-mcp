@@ -8,12 +8,12 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 
 ## Features
 
-### Available (Phase 6 Complete, Sprint 7.1 In Progress)
+### Available (Phase 7 Complete)
 
-**66 tools across 8 modules:**
+**73 tools across 8 modules:**
 
-#### Mail (10 tools)
-`list_emails` · `read_email` · `search_emails` · `list_mail_folders` · `send_email` · `reply_email` · `forward_email` · `move_email` · `list_attachments` · `download_attachment`
+#### Mail (18 tools)
+`list_emails` · `read_email` · `search_emails` · `list_mail_folders` · `send_email` · `reply_email` · `forward_email` · `move_email` · `list_attachments` · `download_attachment` · `delete_email` · `create_draft` · `send_draft` · `add_attachment` · `flag_email` · `create_mail_folder` · `list_mail_rules`
 
 #### Calendar (9 tools)
 `list_calendars` · `list_events` · `get_event` · `get_calendar_view` · `create_event` · `update_event` · `delete_event` · `respond_to_event` · `check_availability`
@@ -35,6 +35,28 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 
 #### User & Directory (7 tools)
 `get_my_profile` · `search_users` · `get_user` · `get_manager` · `list_direct_reports` · `list_user_groups` · `get_user_photo`
+
+## Roadmap Status
+
+**Phase 0–7: Complete** (All 73 tools implemented)
+- Mail: 18 tools (list, read, send, move, attachments, drafts, flags, rules)
+- Calendar: 9 tools (list, create, update, delete, respond, availability)
+- OneDrive: 10 tools (list, search, upload, download, share, move, copy)
+- Teams: 8 tools (channels, chats, messaging)
+- SharePoint: 8 tools (sites, lists, list items)
+- Contacts: 7 tools (list, create, update, delete, search, folders)
+- To Do: 7 tools (lists, tasks, task management)
+- User & Directory: 7 tools (profiles, search, org chart, photos)
+
+**Phase 8: Advanced Features** (Planned)
+- Mail: Advanced rules, message signing, attachment streaming
+- Calendar: Recurring events, event series management
+- Drive: Delta sync, versioning, advanced permissions
+- Teams: Threaded replies, reactions, file sharing
+- SharePoint: Document versioning, advanced list queries
+- Contacts: Group management, distribution lists
+- To Do: Task dependencies, recurring tasks
+- Notifications: Webhook subscriptions, real-time updates
 
 ## Example Prompts
 
@@ -103,7 +125,7 @@ pnpm test
 | Linting & Format | Biome (no ESLint/Prettier) |
 | Build Tool | tsup |
 | Logging | pino (structured JSON, GDPR-compliant) |
-| Test Coverage | 790+ unit tests across 54 test files, E2E suite against M365 tenant |
+| Test Coverage | 800+ unit tests across 60 test files, E2E suite against M365 tenant |
 
 ## Key Design Principles
 
@@ -232,7 +254,7 @@ Claude uses: search_emails → read_email → list_attachments → download_atta
 
 The project includes comprehensive test coverage:
 
-- **Unit Tests:** 752 tests covering all tools, error cases, pagination, and validation
+- **Unit Tests:** 800+ tests covering all tools, error cases, pagination, and validation
 - **E2E Tests:** Integration tests against a real M365 developer tenant (nightly runs)
 - **MSW Mocks:** All Graph API endpoints mocked for fast, deterministic unit tests
 - **Snapshot Tests:** Verify formatted output consistency

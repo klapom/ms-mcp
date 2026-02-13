@@ -34,11 +34,18 @@
 | `upload_file` | Upload a file to OneDrive. Requires confirm=true to actually upload — without it, returns a preview. Content must be base64-encoded. Max 4 MB (simple upload). Use idempotency_key to prevent duplicate uploads. | drive-upload | 🟡 moderate |
 | `list_attachments` | List all attachments of an email with name, type, size, and inline status. Use download_attachment to retrieve file content. | mail-attachments | 🟢 safe |
 | `download_attachment` | Download a single attachment by ID. Only file attachments are supported. Text files are returned as UTF-8, binary files as base64. Files >4MB show a warning, >10MB are rejected. | mail-attachments | 🟢 safe |
+| `delete_email` | Permanently delete an email message. This action cannot be undone - the message is deleted permanently, not moved to Deleted Items. | mail-delete | 🔴 destructive |
+| `create_draft` | Create a draft email message. The draft is saved to the Drafts folder and can be edited or sent later using send_draft. | mail-drafts | 🟡 moderate |
+| `send_draft` | Send a draft email message that was previously created with create_draft. The message will be sent immediately. | mail-drafts | 🔴 destructive |
+| `add_attachment` | Add a file attachment to a draft email. Maximum size: 3 MB via direct POST. For larger files, use upload session (not yet implemented). | mail-drafts | 🟢 safe |
+| `flag_email` | Set or clear a flag on an email message. Flags can mark messages for follow-up with optional due dates and completion status. | mail-flag | 🟢 safe |
+| `create_mail_folder` | Create a new mail folder. Can be created at root level or under a parent folder. Use list_mail_folders to see existing folders. | mail-folder-create | 🟡 moderate |
 | `list_mail_folders` | List all mail folders in the mailbox. Returns folder name, item counts, and unread counts. Well-known folder names (inbox, sentitems, drafts, deleteditems, junkemail, outbox, archive) can be used as folder IDs in other mail tools. Use include_children=true to also list subfolders (1 level deep). | mail-folders | 🟢 safe |
 | `forward_email` | Forward an existing email to new recipients. Attachments from the original email are included automatically. Requires confirm=true to actually send — without it, fetches the original email and returns a preview. Use idempotency_key to prevent duplicate forwards. | mail-forward | 🔴 destructive |
 | `move_email` | Move an email to a different folder. Use dry_run=true or omit confirm to preview. Returns the new message ID (may change on move). Requires confirm=true to execute. Use idempotency_key to prevent duplicate moves. | mail-move | 🔴 destructive |
 | `read_email` | Read a single email by ID with full body content and metadata. Returns subject, from, to, cc, bcc, body (text or HTML), dates, and conversation context. Use format= | mail-read | 🟢 safe |
 | `reply_email` | Reply to an existing email. Use reply_all=true to reply to all recipients. Requires confirm=true to actually send — without it, fetches the original email and returns a preview with context. Use idempotency_key to prevent duplicate replies. | mail-reply | 🔴 destructive |
+| `list_mail_rules` | List inbox message rules (read-only). Rules automatically process incoming messages based on conditions and actions. | mail-rules-list | 🟢 safe |
 | `search_emails` | Search emails using KQL (Keyword Query Language). Optimized for full-text search across subject, body, from, and attachments. Examples:  | mail-search | 🟢 safe |
 | `send_email` | Send a new email. Requires confirm=true to actually send — without it, returns a preview. Supports To, CC, BCC, subject, body (text or HTML), importance, and save_to_sent_items. Use idempotency_key to prevent duplicate sends. | mail-send | 🔴 destructive |
 | `list_emails` | List emails from a mailbox folder with optional filtering, search and pagination. Returns email metadata (subject, from, date, preview) optimized for LLM context. Use folder parameter for specific folders (inbox, sentitems, drafts). Supports OData $filter for structured queries and KQL search for full-text search. | mail | 🟢 safe |
@@ -73,4 +80,4 @@
 | `get_manager` | Get the manager of a user. Returns manager | user-profile | 🟢 safe |
 | `search_users` | Search for users in the directory by name, email, or job title. Supports partial matches and fuzzy search. | user-search | 🟢 safe |
 
-_66 Tools registriert._
+_73 Tools registriert._

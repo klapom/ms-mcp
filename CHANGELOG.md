@@ -7,10 +7,42 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Planned (Phase 8 - Advanced Features)
+- Mail: Advanced rules management, message signing, attachment streaming
+- Calendar: Recurring event series management, meeting room finder
+- Drive: Delta sync, versioning, advanced share permissions
+- Teams: Message threads, reactions, file sharing integration
+- SharePoint: Document versioning, advanced list queries, folder hierarchy
+- Contacts: Group management, distribution lists
+- To Do: Task dependencies, recurring tasks
+- Notifications: Webhook subscriptions, real-time updates
+
+---
+
+## [0.16.0] -- 2026-02-13
+
+### Added
+- **Mail extensions (7 new tools):** `delete_email`, `create_draft`, `send_draft`, `add_attachment`, `flag_email`, `create_mail_folder`, `list_mail_rules`
+- **Phase 7 complete:** All 73 tools across 8 modules now available
+- Draft email management with attachment support
+- Email flagging with due dates and completion tracking
+- Custom mail folder creation and organization
+- Email deletion (permanent, not moved to Deleted Items)
+- Message rules visibility (read-only)
+- 800+ tests across 60 test files
+
+### Changed
+- Mail module expanded from 10 to 18 tools (Phase 7)
+- Documentation updated: README, ARCHITECTURE, USE-CASES, SETUP
+
+---
+
+## [0.15.0] -- 2026-02-13
+
 ### Added
 - **User & Directory tools (7 new tools):** `get_my_profile`, `search_users`, `get_user`, `get_manager`, `list_direct_reports`, `list_user_groups`, `get_user_photo`
+- **Phase 6 complete:** Directory and org chart access
 - New scopes required: User.Read.All, Directory.Read.All (Sprint 7.1)
-- Phase 6 documentation and specification
 
 ### Fixed
 - **encodeGraphId** now preserves commas in SharePoint composite site IDs (e.g., "hostname,guid,guid") while safely encoding other special characters

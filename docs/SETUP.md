@@ -237,77 +237,17 @@ This typically happens when:
 
 ## Available Tools
 
-For a complete list of available tools and their required permissions, see `docs/PERMISSIONS.md`.
+For a complete list of all 73 available tools and their required permissions, see `docs/PERMISSIONS.md` and `docs/TOOLS.md`.
 
-Email tools:
-- `list_emails` — List emails with filtering, searching, pagination
-- `read_email` — Read individual email (HTML-to-text, metadata)
-- `list_mail_folders` — List mail folders (counts, subfolders)
-- `search_emails` — Full-text search via KQL
-- `send_email` — Send email
-- `reply_email` — Reply to email
-- `forward_email` — Forward email
-- `move_email` — Move email to folder
-- `list_attachments` — List email attachments
-- `download_attachment` — Download attachment
+**Summary by module:**
 
-Calendar tools:
-- `list_calendars` — List calendars
-- `list_events` — List calendar events
-- `get_event` — Get event details
-- `get_calendar_view` — Get calendar view for time range
-- `create_event` — Create event
-- `update_event` — Update event
-- `delete_event` — Delete event
-- `respond_to_event` — Accept/decline event invitation
-- `check_availability` — Check availability of users
+- **Mail (18 tools):** Email CRUD, search, attachments, drafts, flags, rules, folders
+- **Calendar (9 tools):** Events, availability checks, RSVP, scheduling
+- **OneDrive (10 tools):** File storage, sharing, search, download/upload
+- **Teams (8 tools):** Team/channel messaging, chats, message history
+- **SharePoint (8 tools):** Site discovery, document libraries, list management
+- **Contacts (7 tools):** Contact management, search, folders
+- **To Do (7 tools):** Task lists, tasks, task management
+- **User & Directory (7 tools):** User profiles, org chart, group membership, photos
 
-OneDrive tools:
-- `list_files` — List files on OneDrive
-- `search_files` — Search files on OneDrive
-- `get_file_metadata` — Get file metadata
-- `download_file` — Download file
-- `get_recent_files` — Get recently used files
-- `upload_file` — Upload file
-- `create_folder` — Create folder
-- `move_file` — Move file
-- `copy_file` — Copy file
-- `share_file` — Share file
-
-Teams tools:
-- `list_teams` — List teams you're a member of
-- `list_channels` — List channels in a team
-- `list_channel_messages` — List messages in a channel
-- `send_channel_message` — Send message to channel
-- `reply_to_channel_message` — Reply to a channel message
-- `list_chats` — List your chats
-- `list_chat_messages` — List messages in a chat
-- `send_chat_message` — Send message to a chat
-
-SharePoint tools:
-- `search_sites` — Search for SharePoint sites
-- `get_site` — Get site details
-- `list_site_drives` — List document libraries in a site
-- `list_site_lists` — List lists in a site
-- `list_list_items` — List items in a SharePoint list
-- `create_list_item` — Create list item
-- `update_list_item` — Update list item
-- `delete_list_item` — Delete list item
-
-Contacts tools:
-- `list_contacts` — List contacts
-- `get_contact` — Get contact details
-- `search_contacts` — Search for contacts
-- `create_contact` — Create new contact
-- `update_contact` — Update contact details
-- `delete_contact` — Delete contact
-- `list_contact_folders` — List contact folders
-
-To Do tools:
-- `list_todo_lists` — List To Do lists
-- `get_todo_list` — Get list details
-- `list_tasks` — List tasks in a list
-- `get_task` — Get task details
-- `create_task` — Create new task
-- `update_task` — Update task details
-- `delete_task` — Delete task
+See `docs/TOOLS.md` for complete list of all 73 tools with descriptions.
