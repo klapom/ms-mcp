@@ -22,10 +22,12 @@ import { teamsActivityHandlers } from "./teams-activity.js";
 import { teamsMeetingsHandlers } from "./teams-meetings.js";
 import { teamsHandlers } from "./teams.js";
 import { todoHandlers } from "./todo.js";
+import { uploadSessionHandlers } from "./upload-session.js";
 import { userHandlers } from "./user.js";
 
 /**
  * MSW handler order matters: more specific routes must come before generic ones.
+ * - Upload session handlers: createUploadSession, chunk upload, copy status, attach item/reference
  * - Calendar write handlers: POST/PATCH/DELETE before GET
  * - Attachment handlers: /messages/:id/attachments/:aid before /messages/:id
  * - Move handlers: POST /messages/:id/move before generic GET /messages/:id
@@ -33,6 +35,7 @@ import { userHandlers } from "./user.js";
  * - mail*Handlers: write POST handlers (send, reply, forward)
  */
 export const handlers: HttpHandler[] = [
+  ...uploadSessionHandlers,
   ...batchHandlers,
   ...calendarRecurrenceHandlers,
   ...calendarRoomHandlers,

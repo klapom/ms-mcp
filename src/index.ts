@@ -22,6 +22,7 @@ import { registerCalendarViewTools } from "./tools/calendar-view.js";
 import { registerContactsReadTools } from "./tools/contacts-read.js";
 import { registerContactsSearchTools } from "./tools/contacts-search.js";
 import { registerContactsWriteTools } from "./tools/contacts-write.js";
+import { registerDriveCopyStatusTools } from "./tools/drive-copy-status.js";
 import { registerDriveCopyTools } from "./tools/drive-copy.js";
 import { registerDriveDownloadTools } from "./tools/drive-download.js";
 import { registerDriveFolderTools } from "./tools/drive-folder.js";
@@ -30,8 +31,11 @@ import { registerDriveMetadataTools } from "./tools/drive-metadata.js";
 import { registerDriveMoveTools } from "./tools/drive-move.js";
 import { registerDriveSearchTools } from "./tools/drive-search.js";
 import { registerDriveShareTools } from "./tools/drive-share.js";
+import { registerDriveUploadLargeTools } from "./tools/drive-upload-large.js";
 import { registerDriveUploadTools } from "./tools/drive-upload.js";
 import { registerFilesDeltaTools } from "./tools/files-delta.js";
+import { registerMailAttachItemTools } from "./tools/mail-attach-item.js";
+import { registerMailAttachReferenceTools } from "./tools/mail-attach-reference.js";
 import { registerMailAttachmentTools } from "./tools/mail-attachments.js";
 import { registerMailDeleteTools } from "./tools/mail-delete.js";
 import { registerMailDraftTools } from "./tools/mail-drafts.js";
@@ -107,6 +111,8 @@ const registrations: ToolRegistrationFn[] = [
   registerMailForwardTools,
   registerMailMoveTools,
   registerMailAttachmentTools,
+  registerMailAttachItemTools,
+  registerMailAttachReferenceTools,
   registerMailDeleteTools,
   registerMailDraftTools,
   registerMailFolderCreateTools,
@@ -129,9 +135,11 @@ const registrations: ToolRegistrationFn[] = [
   registerDriveMetadataTools,
   registerDriveDownloadTools,
   registerDriveUploadTools,
+  registerDriveUploadLargeTools,
   registerDriveFolderTools,
   registerDriveMoveTools,
   registerDriveCopyTools,
+  registerDriveCopyStatusTools,
   registerDriveShareTools,
   registerTeamsListTools,
   registerTeamsMessageTools,
