@@ -31,6 +31,7 @@
    - `Files.ReadWrite` — Read and manage files on OneDrive
    - `Contacts.ReadWrite` — Read and manage contacts
    - `Tasks.ReadWrite` — Read and manage To Do tasks
+   - `Notes.ReadWrite` — Read and manage OneNote notebooks and pages (Sprint 9.2)
    - And others depending on your tool needs
 4. Click **Grant admin consent for [Tenant]** (green button)
 5. Confirm — all permissions should show green checkmarks
@@ -237,7 +238,7 @@ This typically happens when:
 
 ## Available Tools
 
-For a complete list of all 99 available tools and their required permissions, see `docs/PERMISSIONS.md` and `docs/TOOLS.md`.
+For a complete list of all 105 available tools and their required permissions, see `docs/PERMISSIONS.md` and `docs/TOOLS.md`.
 
 **Summary by module:**
 
@@ -248,7 +249,8 @@ For a complete list of all 99 available tools and their required permissions, se
 - **SharePoint (8 tools):** Site discovery, document libraries, list management
 - **Contacts (7 tools):** Contact management, search, folders
 - **To Do (7 tools):** Task lists, tasks, task management
+- **OneNote (6 tools):** Notebooks, sections, pages, note search, note creation
 - **User & Directory (7 tools):** User profiles, org chart, group membership, photos
 - **Advanced Features (15 tools):** Message signing, meeting rooms, delegate access, advanced sharing
 
-See `docs/TOOLS.md` for complete list of all 99 tools with descriptions.
+See `docs/TOOLS.md` for complete list of all 105 tools with descriptions.

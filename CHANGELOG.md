@@ -15,7 +15,32 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - SharePoint: Document versioning, advanced list queries, folder hierarchy
 - Contacts: Group management, distribution lists
 - To Do: Task dependencies, recurring tasks
+- OneNote: Advanced page content, section hierarchy, collaborative notebooks
 - Notifications: Webhook subscriptions, real-time updates
+
+---
+
+## [0.18.0] -- 2026-02-13
+
+### Added
+- **Sprint 9.2: OneNote Integration (6 new tools)**
+  - `list_notebooks` — List all OneNote notebooks
+  - `list_sections` — List sections within a notebook
+  - `list_pages` — List pages within a section
+  - `get_page_content` — Retrieve full page content with formatting
+  - `create_page` — Create new OneNote pages with rich content
+  - `search_notes` — Search across all notebooks and pages
+- **Phase 9 complete:** 105 tools across 10 modules (up from 99 tools)
+- OneNote module added: 6 tools for note-taking and research workflows
+- Full notebook hierarchy support: notebooks → sections → pages
+- Page content retrieval with HTML-to-text conversion
+- Full-text search across OneNote with OData filters
+- 1200+ tests across 80+ test files
+
+### Changed
+- All documentation updated for Sprint 9.2 (README, ARCHITECTURE, USE-CASES, SETUP)
+- Tool count increased from 99 to 105 in all references
+- Permission matrix updated: `Notes.ReadWrite` added for OneNote tools
 
 ---
 

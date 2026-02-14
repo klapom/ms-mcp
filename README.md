@@ -8,9 +8,9 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 
 ## Features
 
-### Available (Phase 9.1 Complete)
+### Available (Sprint 9.2 Complete)
 
-**99 tools across 9 modules:**
+**105 tools across 10 modules:**
 
 #### Mail (20 tools)
 `list_emails` · `read_email` · `search_emails` · `list_mail_folders` · `send_email` · `reply_email` · `forward_email` · `move_email` · `list_attachments` · `download_attachment` · `delete_email` · `create_draft` · `send_draft` · `add_attachment` · `flag_email` · `create_mail_folder` · `list_mail_rules` · `attach_item` · `attach_reference`
@@ -33,12 +33,15 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 #### To Do (7 tools)
 `list_todo_lists` · `get_todo_list` · `list_tasks` · `get_task` · `create_task` · `update_task` · `delete_task`
 
+#### OneNote (6 tools)
+`list_notebooks` · `list_sections` · `list_pages` · `get_page_content` · `create_page` · `search_notes`
+
 #### User & Directory (7 tools)
 `get_my_profile` · `search_users` · `get_user` · `get_manager` · `list_direct_reports` · `list_user_groups` · `get_user_photo`
 
 ## Roadmap Status
 
-**Phase 0–9.1: Complete** (All 99 tools implemented)
+**Sprint 9.2: Complete** (All 105 tools implemented)
 - Mail: 20 tools (list, read, send, move, attachments, drafts, flags, rules, Outlook items, references)
 - Calendar: 9 tools (list, create, update, delete, respond, availability)
 - OneDrive: 12 tools (list, search, upload, download, share, move, copy, large files, async monitoring)
@@ -46,11 +49,13 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 - SharePoint: 8 tools (sites, lists, list items)
 - Contacts: 7 tools (list, create, update, delete, search, folders)
 - To Do: 7 tools (lists, tasks, task management)
+- OneNote: 6 tools (notebooks, sections, pages, search, note-taking)
 - User & Directory: 7 tools (profiles, search, org chart, photos)
 - Advanced Features: 15 tools (message signing, meeting rooms, delegate access, advanced sharing)
 
-**Phase 9 (Complete):** File attachments, large file uploads, async operations
+**Phase 9 (Complete):** File attachments, large file uploads, async operations, OneNote integration
 - Sprint 9.1: `attach_item`, `attach_reference`, `upload_large_file`, `poll_copy_status`
+- Sprint 9.2: `list_notebooks`, `list_sections`, `list_pages`, `get_page_content`, `create_page`, `search_notes`
 
 **Phase 10+: Future Enhancements** (Planned)
 - Mail: Message signing, advanced attachment streaming
@@ -134,7 +139,7 @@ pnpm test
 | Linting & Format | Biome (no ESLint/Prettier) |
 | Build Tool | tsup |
 | Logging | pino (structured JSON, GDPR-compliant) |
-| Test Coverage | 1162+ unit tests across 74 test files, E2E suite against M365 tenant |
+| Test Coverage | 1200+ unit tests across 80+ test files, E2E suite against M365 tenant |
 
 ## Key Design Principles
 
@@ -159,7 +164,7 @@ pnpm test
 
 ### Developer Experience
 - **Zod as SSoT:** Single source of truth for schemas → TypeScript types → JSON Schema → Runtime validation
-- **MCP Tool Pattern:** Consistent pattern across all 99 tools (schema → handler → registration → tests)
+- **MCP Tool Pattern:** Consistent pattern across all 105 tools (schema → handler → registration → tests)
 - **Test Coverage:** Happy path, error cases, pagination, validation for each tool
 - **Dev Server:** Hot-reload with `pnpm dev`
 
@@ -169,8 +174,8 @@ For detailed architecture, design decisions, and technical debt tracking:
 
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — System design, data flow, error handling
 - **[docs/TECHNICAL_DEBT.md](docs/TECHNICAL_DEBT.md)** — Known limitations, refactoring backlog, future improvements
-- **[docs/USE-CASES.md](docs/USE-CASES.md)** — Real-world scenarios and workflows (updated for Sprint 9.1)
-- **[docs/PERMISSIONS.md](docs/PERMISSIONS.md)** — API scopes and tool permissions (updated for Sprint 9.1)
+- **[docs/USE-CASES.md](docs/USE-CASES.md)** — Real-world scenarios and workflows (updated for Sprint 9.2)
+- **[docs/PERMISSIONS.md](docs/PERMISSIONS.md)** — API scopes and tool permissions (updated for Sprint 9.2)
 
 ## Authentication
 

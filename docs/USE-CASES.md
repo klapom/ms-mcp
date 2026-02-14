@@ -1,6 +1,6 @@
 # Use Cases — MS-MCP Office 365 Tools
 
-This document describes practical, real-world scenarios showing how Claude can help you with Microsoft 365 using the MCP tools available in this project. All use cases are **available** as of Phase 9.1 (99 tools across 9 modules).
+This document describes practical, real-world scenarios showing how Claude can help you with Microsoft 365 using the MCP tools available in this project. All use cases are **available** as of Sprint 9.2 (105 tools across 10 modules).
 
 ---
 
@@ -668,6 +668,81 @@ Notes: Q1 service review and proposal for expanded services.
 
 ---
 
+## OneNote Use Cases
+
+### UC-11: Note Taking and Research (Available, Sprint 9.2)
+
+**Scenario:** A researcher or consultant maintains OneNote notebooks for different projects and needs to create organized notes, search for past information, and retrieve detailed page content.
+
+**Example Prompt:**
+> Show me all my OneNote notebooks. In the PHOENIX project notebook, what sections do I have? Create a new page called "Q1 Meeting Notes" in the Meetings section.
+
+**Tools Used:**
+1. `list_notebooks` — Retrieve all notebooks the user has access to
+2. `list_sections` — List sections within the PHOENIX notebook
+3. `create_page` — Create a new page in the Meetings section
+4. Optional: `list_pages` — Browse existing pages in a section
+
+**Sample Output:**
+```
+## Notebooks (3)
+1. PHOENIX Project (Modified: 2026-02-13)
+2. Personal (Modified: 2026-02-10)
+3. Team Knowledge Base (Modified: 2026-02-08)
+
+## PHOENIX Project — Sections (5)
+1. Overview
+2. Meetings
+3. Research
+4. Decisions
+5. Archive
+
+## Creating New Page
+Title: "Q1 Meeting Notes"
+Section: Meetings
+Status: ✓ Created successfully
+```
+
+**Time Saved:** 5–10 minutes per research session through rapid note organization
+
+---
+
+### UC-11B: Full-Text Search Across Notes (Available, Sprint 9.2)
+
+**Scenario:** An employee needs to find information across all OneNote notebooks without manually browsing through each one.
+
+**Example Prompt:**
+> Search my OneNote for all mentions of "budget" from the last month. Show me which notebooks and pages contain that information.
+
+**Tools Used:**
+1. `search_notes` — Full-text search across all notebooks and pages
+2. Optional: `get_page_content` — Retrieve detailed content from relevant pages
+
+**Advanced Variations:**
+- `"Find all notes about the Q1 proposal and compile them into a summary"` → `search_notes` → `get_page_content` (multiple pages)
+- `"Search for action items I mentioned in my research notes"` → `search_notes` with keyword filter
+
+---
+
+### UC-11C: Page Content Retrieval and Analysis (Available, Sprint 9.2)
+
+**Scenario:** A team member needs to retrieve the full content of a OneNote page, including formatted text, to review or analyze information.
+
+**Example Prompt:**
+> Get the full content of the "Q1 Meeting Notes" page from the PHOENIX notebook and summarize the key decisions.
+
+**Tools Used:**
+1. `list_notebooks` — Find the PHOENIX notebook
+2. `list_sections` — Find the Meetings section
+3. `list_pages` — Find the "Q1 Meeting Notes" page
+4. `get_page_content` — Retrieve full page content with formatting
+
+**Sample Workflow:**
+- `"Extract all action items from the Q1 Planning page"` → `get_page_content` + Claude analysis
+- `"Compare the notes from the Feb 13 meeting with the Feb 6 meeting"` → Multiple `get_page_content` calls
+
+---
+
 ## To Do Use Cases
 
 ### UC-17: Task and List Management (Available)
@@ -694,7 +769,7 @@ Notes: Q1 service review and proposal for expanded services.
 
 ---
 
-## Current Tool Inventory (99 Tools, Phase 9.1 Complete)
+## Current Tool Inventory (105 Tools, Sprint 9.2 Complete)
 
 **Mail (20 tools):** list_emails, search_emails, read_email, list_mail_folders, send_email, reply_email, forward_email, move_email, list_attachments, download_attachment, delete_email, create_draft, send_draft, add_attachment, flag_email, create_mail_folder, list_mail_rules, attach_item, attach_reference
 
@@ -709,6 +784,8 @@ Notes: Q1 service review and proposal for expanded services.
 **Contacts (7 tools):** list_contacts, get_contact, search_contacts, create_contact, update_contact, delete_contact, list_contact_folders
 
 **To Do (7 tools):** list_todo_lists, get_todo_list, list_tasks, get_task, create_task, update_task, delete_task
+
+**OneNote (6 tools):** list_notebooks, list_sections, list_pages, get_page_content, create_page, search_notes
 
 **User & Directory (7 tools):** get_my_profile, search_users, get_user, get_manager, list_direct_reports, list_user_groups, get_user_photo
 

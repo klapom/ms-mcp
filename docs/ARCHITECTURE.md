@@ -19,13 +19,13 @@ The server is organized into six distinct layers, each responsible for a specifi
   - Loads configuration via `loadConfig()` (env: `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`)
   - Initializes authentication via `createDefaultAuthDeps()` (creates MSAL client with persistent token cache)
   - Implements fail-fast: checks for cached token before starting MCP server (exits with instructions if not authenticated)
-  - Registers 99 tools from all domain modules (Mail, Calendar, OneDrive/SharePoint, Teams, SharePoint Lists, Contacts, To Do, User & Directory, Advanced Features)
+  - Registers 105 tools from all domain modules (Mail, Calendar, OneDrive/SharePoint, Teams, SharePoint Lists, Contacts, To Do, OneNote, User & Directory, Advanced Features)
   - Establishes stdio transport for MCP JSON-RPC communication
 
 ### 2. Tool Layer (`src/tools/`)
 
 - **Responsibility:** Domain-specific request handlers organized by domain module
-- **Module Organization (99 tools across 74 modules):**
+- **Module Organization (105 tools across 80+ modules):**
   - **Mail** (20 tools): `mail.ts`, `mail-read.ts`, `mail-search.ts`, `mail-folders.ts`, `mail-send.ts`, `mail-reply.ts`, `mail-forward.ts`, `mail-move.ts`, `mail-attachments.ts`, `mail-delete.ts`, `mail-drafts.ts`, `mail-folder-create.ts`, `mail-flag.ts`, `mail-rules-list.ts`, `mail-attach-item.ts`, `mail-attach-reference.ts`
   - **Calendar** (9 tools): `calendar-list.ts`, `calendar-events.ts`, `calendar-view.ts`, `calendar-create.ts`, `calendar-update.ts`, `calendar-delete.ts`, `calendar-respond.ts`, `calendar-availability.ts`
   - **OneDrive/SharePoint** (12 tools): `drive-list.ts`, `drive-search.ts`, `drive-metadata.ts`, `drive-download.ts`, `drive-upload.ts`, `drive-upload-large.ts`, `drive-folder.ts`, `drive-move.ts`, `drive-copy.ts`, `drive-copy-status.ts`, `drive-share.ts` (supports SharePoint via `site_id`/`drive_id`)
@@ -33,6 +33,7 @@ The server is organized into six distinct layers, each responsible for a specifi
   - **SharePoint** (8 tools): `sharepoint-sites.ts`, `sharepoint-lists.ts`, `sharepoint-list-write.ts`
   - **Contacts** (7 tools): `contacts-read.ts`, `contacts-search.ts`, `contacts-write.ts`
   - **To Do** (7 tools): `todo-lists.ts`, `todo-tasks.ts`, `todo-tasks-write.ts`
+  - **OneNote** (6 tools): `onenote-notebooks.ts`, `onenote-sections.ts`, `onenote-pages.ts`, `onenote-search.ts`
   - **User & Directory** (7 tools): `user-profile.ts`, `user-search.ts`, `user-org.ts`, `user-photo.ts`
   - **Advanced Features** (15 tools): Message signing, meeting room finder, delegate access, advanced sharing (Phase 8)
 
@@ -254,7 +255,7 @@ Every tool follows this structure:
 - **Device Code Flow:** User opens link in browser, authentication happens out-of-band
 - **Token Cache:** Persistent JSON file at `~/.ms-mcp/token-cache.json` (user-readable, encrypted by OS)
 - **Fail-Fast:** Server exits if no cached token (prevents silent auth failures in MCP mode)
-- **Scopes:** Fixed set of scopes requested on login (User.Read, Mail.ReadWrite, Mail.Send, Calendars.ReadWrite, Files.ReadWrite, Contacts.ReadWrite, Tasks.ReadWrite, Teams.ReadWrite, Sites.ReadWrite.All, ChannelMessage.Send)
+- **Scopes:** Fixed set of scopes requested on login (User.Read, Mail.ReadWrite, Mail.Send, Calendars.ReadWrite, Files.ReadWrite, Contacts.ReadWrite, Tasks.ReadWrite, Notes.ReadWrite, Teams.ReadWrite, Sites.ReadWrite.All, ChannelMessage.Send)
 
 ### Authorization
 - **Graph API Enforces:** Microsoft 365 access controls
@@ -270,13 +271,14 @@ Every tool follows this structure:
 
 | Module | Tools | Responsibility | Key Resources |
 |--------|-------|-----------------|----------------|
-| **Mail** | 10 | Email CRUD, search, attachments | list_emails, read_email, send_email, move_email, download_attachment |
+| **Mail** | 20 | Email CRUD, search, attachments | list_emails, read_email, send_email, move_email, download_attachment |
 | **Calendar** | 9 | Events, availability, RSVP | list_events, create_event, respond_to_event, check_availability |
 | **OneDrive/SharePoint** | 12 | File storage, sharing, large uploads | list_files, upload_file, upload_large_file, share_file, move_file, copy_file, poll_copy_status |
 | **Teams** | 8 | Team collaboration, channels, chats | list_teams, send_channel_message, list_chats, send_chat_message |
 | **SharePoint** | 8 | Site structure, lists, list items | search_sites, list_list_items, create_list_item |
 | **Contacts** | 7 | Contact CRUD, search, folders | list_contacts, get_contact, create_contact, delete_contact |
 | **To Do** | 7 | Task lists, tasks, CRUD | list_todo_lists, list_tasks, create_task, update_task, delete_task |
+| **OneNote** | 6 | Note-taking, notebooks, sections, pages | list_notebooks, list_sections, list_pages, get_page_content, create_page, search_notes |
 | **User & Directory** | 7 | User profiles, search, org chart | get_my_profile, search_users, get_user, get_manager, list_direct_reports, list_user_groups, get_user_photo |
 | **Auth** | — | Token acquisition, caching | MSAL Device Code Flow, persistent file cache |
 | **Utils** | — | Shared concerns | Response shaping, error mapping, logging, pagination |
@@ -326,7 +328,7 @@ Every tool follows this structure:
 ### Testing Strategy
 
 - **Unit Tests:** Vitest + MSW (Mock Service Worker)
-  - 1162+ tests across 74 test files
+  - 1200+ tests across 80+ test files
   - MSW intercepts HTTP requests, returns mock Graph responses
   - Tests validation, happy path, error cases, pagination, confirmation
 - **E2E Tests:** Real M365 Developer Tenant

@@ -192,6 +192,7 @@ export const DEFAULT_SELECT: Record<string, string[]> = {
   ],
   group: ["id", "displayName", "description", "mail", "mailEnabled", "securityEnabled"],
   mailRule: ["id", "displayName", "sequence", "isEnabled", "hasError", "conditions", "actions"],
+  page: ["id", "title", "createdDateTime", "lastModifiedDateTime", "contentUrl"],
 };
 
 /**
