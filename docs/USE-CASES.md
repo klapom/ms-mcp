@@ -1,6 +1,6 @@
 # Use Cases — MS-MCP Office 365 Tools
 
-This document describes practical, real-world scenarios showing how Claude can help you with Microsoft 365 using the MCP tools available in this project. All use cases are **available** as of Sprint 9.2 (105 tools across 10 modules).
+This document describes practical, real-world scenarios showing how Claude can help you with Microsoft 365 using the MCP tools available in this project. All use cases are **available** as of Sprint 9.4 (108 tools across 11 modules).
 
 ---
 
@@ -668,6 +668,62 @@ Notes: Q1 service review and proposal for expanded services.
 
 ---
 
+## Presence Use Cases
+
+### UC-21: Check Team Member Availability (Available, Sprint 9.4)
+
+**Scenario:** A project manager needs to quickly check if team members are available before scheduling an urgent meeting.
+
+**Example Prompt:**
+> Are John and Alice available right now? What's their current status?
+
+**Tools Used:**
+1. `get_presence` — Check John's real-time presence (availability, activity, status message)
+2. `get_presence` — Check Alice's presence status
+3. Claude presents a summary with availability and any custom status messages
+
+**Sample Output:**
+```
+## Team Availability — February 14, 2026
+
+### John Schmidt
+Availability: Available
+Activity: In a call
+Status: "In Q1 budget meeting, back at 3 PM"
+
+### Alice Mueller
+Availability: Busy
+Activity: Working
+Status: "Focus time until 2 PM"
+
+→ Recommendation: Wait until 2 PM for a group meeting with Alice, call John after his current meeting
+```
+
+---
+
+### UC-21B: Set Your Status for Out-of-Office (Available, Sprint 9.4)
+
+**Scenario:** An employee is going on vacation and wants to set a custom status message to inform colleagues.
+
+**Example Prompt:**
+> Set my status message to "Out of office until Feb 21, back on Feb 22. For urgent matters, contact Alice."
+
+**Tools Used:**
+1. `set_status_message` — Set custom status message with optional expiration
+2. Claude confirms the status update
+
+**Advanced Variations:**
+- `"Set my status to 'In a meeting' for the next 2 hours"` → `set_status_message` with expiration
+- `"Clear my status message"` → `set_status_message` (without message)
+- `"Get my current presence status"` → `get_my_presence` (check what's currently set)
+
+**Safety Note:**
+- `set_status_message` is a destructive operation requiring `confirm=true`
+- Status messages can have optional expiration (auto-clear after a set time)
+- Useful for temporary absences, focus time, or meeting blocks
+
+---
+
 ## OneNote Use Cases
 
 ### UC-11: Note Taking and Research (Available, Sprint 9.2)
@@ -769,7 +825,7 @@ Status: ✓ Created successfully
 
 ---
 
-## Current Tool Inventory (105 Tools, Sprint 9.2 Complete)
+## Current Tool Inventory (108 Tools, Sprint 9.4 Complete)
 
 **Mail (20 tools):** list_emails, search_emails, read_email, list_mail_folders, send_email, reply_email, forward_email, move_email, list_attachments, download_attachment, delete_email, create_draft, send_draft, add_attachment, flag_email, create_mail_folder, list_mail_rules, attach_item, attach_reference
 
@@ -786,6 +842,8 @@ Status: ✓ Created successfully
 **To Do (7 tools):** list_todo_lists, get_todo_list, list_tasks, get_task, create_task, update_task, delete_task
 
 **OneNote (6 tools):** list_notebooks, list_sections, list_pages, get_page_content, create_page, search_notes
+
+**Presence (3 tools):** get_my_presence, get_presence, set_status_message
 
 **User & Directory (7 tools):** get_my_profile, search_users, get_user, get_manager, list_direct_reports, list_user_groups, get_user_photo
 

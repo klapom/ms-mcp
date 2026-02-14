@@ -55,6 +55,7 @@ import { registerOneNoteNotebooksTools } from "./tools/onenote-notebooks.js";
 import { registerOneNotePagesTools } from "./tools/onenote-pages.js";
 import { registerOneNoteSearchTools } from "./tools/onenote-search.js";
 import { registerOneNoteSectionsTools } from "./tools/onenote-sections.js";
+import { registerPresenceTools } from "./tools/presence.js";
 import { registerSearchAllTools } from "./tools/search-all.js";
 import { registerAdvancedSearchContactsTools } from "./tools/search-contacts-advanced.js";
 import { registerAdvancedSearchEmailsTools } from "./tools/search-emails-advanced.js";
@@ -170,6 +171,7 @@ const registrations: ToolRegistrationFn[] = [
   registerOneNotePagesTools,
   registerOneNoteSearchTools,
   registerOneNoteSectionsTools,
+  registerPresenceTools,
   registerUserProfileTools,
   registerUserSearchTools,
   registerUserOrgTools,

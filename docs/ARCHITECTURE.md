@@ -19,13 +19,13 @@ The server is organized into six distinct layers, each responsible for a specifi
   - Loads configuration via `loadConfig()` (env: `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`)
   - Initializes authentication via `createDefaultAuthDeps()` (creates MSAL client with persistent token cache)
   - Implements fail-fast: checks for cached token before starting MCP server (exits with instructions if not authenticated)
-  - Registers 105 tools from all domain modules (Mail, Calendar, OneDrive/SharePoint, Teams, SharePoint Lists, Contacts, To Do, OneNote, User & Directory, Advanced Features)
+  - Registers 108 tools from all domain modules (Mail, Calendar, OneDrive/SharePoint, Teams, SharePoint Lists, Contacts, To Do, OneNote, Presence, User & Directory, Advanced Features)
   - Establishes stdio transport for MCP JSON-RPC communication
 
 ### 2. Tool Layer (`src/tools/`)
 
 - **Responsibility:** Domain-specific request handlers organized by domain module
-- **Module Organization (105 tools across 80+ modules):**
+- **Module Organization (108 tools across 11 modules):**
   - **Mail** (20 tools): `mail.ts`, `mail-read.ts`, `mail-search.ts`, `mail-folders.ts`, `mail-send.ts`, `mail-reply.ts`, `mail-forward.ts`, `mail-move.ts`, `mail-attachments.ts`, `mail-delete.ts`, `mail-drafts.ts`, `mail-folder-create.ts`, `mail-flag.ts`, `mail-rules-list.ts`, `mail-attach-item.ts`, `mail-attach-reference.ts`
   - **Calendar** (9 tools): `calendar-list.ts`, `calendar-events.ts`, `calendar-view.ts`, `calendar-create.ts`, `calendar-update.ts`, `calendar-delete.ts`, `calendar-respond.ts`, `calendar-availability.ts`
   - **OneDrive/SharePoint** (12 tools): `drive-list.ts`, `drive-search.ts`, `drive-metadata.ts`, `drive-download.ts`, `drive-upload.ts`, `drive-upload-large.ts`, `drive-folder.ts`, `drive-move.ts`, `drive-copy.ts`, `drive-copy-status.ts`, `drive-share.ts` (supports SharePoint via `site_id`/`drive_id`)
@@ -34,6 +34,7 @@ The server is organized into six distinct layers, each responsible for a specifi
   - **Contacts** (7 tools): `contacts-read.ts`, `contacts-search.ts`, `contacts-write.ts`
   - **To Do** (7 tools): `todo-lists.ts`, `todo-tasks.ts`, `todo-tasks-write.ts`
   - **OneNote** (6 tools): `onenote-notebooks.ts`, `onenote-sections.ts`, `onenote-pages.ts`, `onenote-search.ts`
+  - **Presence** (3 tools): `presence.ts` — Real-time presence and status management
   - **User & Directory** (7 tools): `user-profile.ts`, `user-search.ts`, `user-org.ts`, `user-photo.ts`
   - **Advanced Features** (15 tools): Message signing, meeting room finder, delegate access, advanced sharing (Phase 8)
 
@@ -293,6 +294,7 @@ Every tool follows this structure:
 | **Contacts** | 7 | Contact CRUD, search, folders | list_contacts, get_contact, create_contact, delete_contact |
 | **To Do** | 7 | Task lists, tasks, CRUD | list_todo_lists, list_tasks, create_task, update_task, delete_task |
 | **OneNote** | 6 | Note-taking, notebooks, sections, pages | list_notebooks, list_sections, list_pages, get_page_content, create_page, search_notes |
+| **Presence** | 3 | Real-time status, availability | get_my_presence, get_presence, set_status_message |
 | **User & Directory** | 7 | User profiles, search, org chart | get_my_profile, search_users, get_user, get_manager, list_direct_reports, list_user_groups, get_user_photo |
 | **Auth** | — | Token acquisition, caching | MSAL Device Code Flow, persistent file cache |
 | **Utils** | — | Shared concerns | Response shaping, error mapping, logging, pagination |

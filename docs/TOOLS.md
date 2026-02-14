@@ -71,6 +71,9 @@
 | `get_page_content` | Get the full content of a OneNote page. Returns page title, metadata, and content converted to plain text. Content is limited to 10,000 characters. Note: include_images is reserved for future use. | onenote-pages | 🟢 safe |
 | `search_notes` | Search OneNote pages using full-text search. Searches across page titles and content. Returns matching pages with metadata including creation/modification dates and content URLs. | onenote-search | 🟢 safe |
 | `list_sections` | List sections in a OneNote notebook. Returns section name, creation date, modification date, and pages URL. | onenote-sections | 🟢 safe |
+| `get_my_presence` | Get your current presence status (availability, activity, status message) | presence | 🟢 safe |
+| `get_presence` | Get another user | presence | 🟢 safe |
+| `set_status_message` | Set your custom status message with optional expiration (destructive, requires confirmation) | presence | 🔴 destructive |
 | `search_all` | Universal search across all Microsoft 365 content types. Searches emails, events, files, contacts, and Teams messages in a single query. Results are grouped by type with previews. Use entity_types to limit search scope. For detailed results, use the type-specific search tools. | search-all | 🟢 safe |
 | `advanced_search_contacts` | Advanced contact/people search using KQL via Microsoft Search API. Searches across displayName, emailAddress, companyName, and jobTitle. Returns relevance-ranked results. Examples:  | search-contacts-advanced | 🟢 safe |
 | `advanced_search_emails` | Advanced email search using KQL (Keyword Query Language) via Microsoft Search API. Supports complex queries with from, subject, hasAttachment, date ranges, and boolean operators. Returns relevance-ranked results. Examples:  | search-emails-advanced | 🟢 safe |
@@ -112,4 +115,4 @@
 | `get_manager` | Get the manager of a user. Returns manager | user-profile | 🟢 safe |
 | `search_users` | Search for users in the directory by name, email, or job title. Supports partial matches and fuzzy search. | user-search | 🟢 safe |
 
-_105 Tools registriert._
+_108 Tools registriert._

@@ -8,9 +8,9 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 
 ## Features
 
-### Available (Sprint 9.3 Complete - Infrastructure optimization)
+### Available (Sprint 9.4 Complete - Presence Integration)
 
-**105 tools across 10 modules** with response caching:
+**108 tools across 11 modules** with response caching:
 
 #### Mail (20 tools)
 `list_emails` · `read_email` · `search_emails` · `list_mail_folders` · `send_email` · `reply_email` · `forward_email` · `move_email` · `list_attachments` · `download_attachment` · `delete_email` · `create_draft` · `send_draft` · `add_attachment` · `flag_email` · `create_mail_folder` · `list_mail_rules` · `attach_item` · `attach_reference`
@@ -39,14 +39,25 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 #### User & Directory (7 tools)
 `get_my_profile` · `search_users` · `get_user` · `get_manager` · `list_direct_reports` · `list_user_groups` · `get_user_photo`
 
+#### Presence (3 tools)
+`get_my_presence` · `get_presence` · `set_status_message`
+
 ## Roadmap Status
+
+**Sprint 9.4: Complete** (Presence Integration)
+- `get_my_presence` — Check your own availability, activity, and status message
+- `get_presence` — Check team member availability for scheduling
+- `set_status_message` — Set custom status with optional expiration (destructive)
+- Tool count increased from 105 to 108
+- Module count increased from 10 to 11 (new Presence module)
+- Presence.Read permission added to auth scopes
 
 **Sprint 9.3: Complete** (Infrastructure optimization - Response caching + Webhooks docs)
 - Response caching layer with LRU cache and TTL-based expiration
 - CachingMiddleware for transparent GET request caching on Graph API
 - Automatic cache invalidation on write operations (POST/PATCH/DELETE)
 - Comprehensive webhooks documentation for external service integration
-- Tool count remains 105 (infrastructure only, no new tools)
+- Tool count: 105 (infrastructure only, no new tools)
 
 **Phase 9 (Complete):** File attachments, large file uploads, async operations, OneNote integration, caching
 - Sprint 9.1: `attach_item`, `attach_reference`, `upload_large_file`, `poll_copy_status`
@@ -161,7 +172,7 @@ pnpm test
 
 ### Developer Experience
 - **Zod as SSoT:** Single source of truth for schemas → TypeScript types → JSON Schema → Runtime validation
-- **MCP Tool Pattern:** Consistent pattern across all 105 tools (schema → handler → registration → tests)
+- **MCP Tool Pattern:** Consistent pattern across all 108 tools (schema → handler → registration → tests)
 - **Test Coverage:** Happy path, error cases, pagination, validation for each tool
 - **Dev Server:** Hot-reload with `pnpm dev`
 
@@ -171,8 +182,8 @@ For detailed architecture, design decisions, and technical debt tracking:
 
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — System design, data flow, error handling
 - **[docs/TECHNICAL_DEBT.md](docs/TECHNICAL_DEBT.md)** — Known limitations, refactoring backlog, future improvements
-- **[docs/USE-CASES.md](docs/USE-CASES.md)** — Real-world scenarios and workflows (updated for Sprint 9.2)
-- **[docs/PERMISSIONS.md](docs/PERMISSIONS.md)** — API scopes and tool permissions (updated for Sprint 9.2)
+- **[docs/USE-CASES.md](docs/USE-CASES.md)** — Real-world scenarios and workflows (updated for Sprint 9.4)
+- **[docs/PERMISSIONS.md](docs/PERMISSIONS.md)** — API scopes and tool permissions (updated for Sprint 9.4)
 
 ## Authentication
 

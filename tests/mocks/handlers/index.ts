@@ -16,6 +16,7 @@ import { mailReplyHandlers } from "./mail-reply.js";
 import { mailSendHandlers } from "./mail-send.js";
 import { mailHandlers } from "./mail.js";
 import { onenoteHandlers } from "./onenote.js";
+import { presenceHandlers } from "./presence.js";
 import { searchHandlers } from "./search.js";
 import { sharepointListHandlers } from "./sharepoint-lists.js";
 import { sharepointHandlers } from "./sharepoint.js";
@@ -60,6 +61,7 @@ export const handlers: HttpHandler[] = [
   ...contactHandlers,
   ...todoHandlers,
   ...onenoteHandlers,
+  ...presenceHandlers,
   ...userHandlers,
   ...searchHandlers,
 ];

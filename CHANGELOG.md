@@ -3,7 +3,6 @@
 All notable changes to this project are documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-**Note:** All entries translated to English. Original German entries have been preserved for historical context.
 
 ## [Unreleased]
 
@@ -17,6 +16,24 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - To Do: Task dependencies, recurring tasks
 - OneNote: Advanced page content, section hierarchy, collaborative notebooks
 - Notifications: Webhook subscriptions, real-time updates
+
+---
+
+## [0.20.0] -- 2026-02-14
+
+### Added
+- **Sprint 9.4: Presence Integration (3 new tools)**
+  - `get_my_presence` — Get current user's presence status (availability, activity, status message)
+  - `get_presence` — Get another user's presence status by user ID or email
+  - `set_status_message` — Set custom status message with optional expiration (destructive, requires confirmation)
+- **Phase 9 presence module:** 3 tools for real-time status management and team availability
+- Tool count increased from 105 to 108 across 11 modules
+- Presence.Read permission added for presence status queries
+
+### Changed
+- Module count increased from 10 to 11 (added Presence module)
+- Tool count: 108 tools (up from 105)
+- Documentation updated: README, ARCHITECTURE, USE-CASES, SETUP
 
 ---
 
