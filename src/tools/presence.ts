@@ -58,11 +58,8 @@ async function handleGetMyPresence(
 ): Promise<ToolResult> {
   const url = parsed.user_id ? `/users/${encodeGraphId(parsed.user_id)}/presence` : "/me/presence";
 
-  const presence = (await graphClient
-    .api(url)
-    .select(["id", "availability", "activity", "statusMessage"])
-    .get()) as {
-    id: string;
+  const presence = (await graphClient.api(url).get()) as {
+    id?: string;
     availability: string;
     activity: string;
     statusMessage?: { message?: { content?: string }; expiresAt?: string };
@@ -90,11 +87,8 @@ async function handleGetPresence(
 ): Promise<ToolResult> {
   const url = `/users/${encodeGraphId(parsed.user_id)}/presence`;
 
-  const presence = (await graphClient
-    .api(url)
-    .select(["id", "availability", "activity", "statusMessage"])
-    .get()) as {
-    id: string;
+  const presence = (await graphClient.api(url).get()) as {
+    id?: string;
     availability: string;
     activity: string;
     statusMessage?: { message?: { content?: string }; expiresAt?: string };

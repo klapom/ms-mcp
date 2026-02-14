@@ -121,8 +121,8 @@ export class CachingMiddleware implements Middleware {
     if (method === "GET") {
       const cached = this.cache.get(cacheKey);
       if (cached) {
-        // Cache hit - populate context.response with cached response
-        context.response = cached.value as Response;
+        // Cache hit - clone the cached response to avoid body stream exhaustion
+        context.response = (cached.value as Response).clone();
         this.logger?.info({ url, method: "GET", cached: true }, "graph_request");
         return;
       }
@@ -136,7 +136,8 @@ export class CachingMiddleware implements Middleware {
     // For GET requests, store response in cache
     if (method === "GET" && context.response && context.response.ok) {
       const ttl = getTtlForResource(url);
-      this.cache.set(cacheKey, context.response, ttl);
+      // Clone response before caching to preserve the original for downstream middleware
+      this.cache.set(cacheKey, context.response.clone(), ttl);
       this.logger?.info({ url, method: "GET", cached: false, ttl }, "graph_request");
     }
 
