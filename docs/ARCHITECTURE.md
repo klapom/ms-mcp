@@ -51,8 +51,15 @@ The server is organized into six distinct layers, each responsible for a specifi
 
 ### 4. Middleware Layer (`src/middleware/`)
 
-- **Responsibility:** Cross-cutting concerns: error mapping, logging, retry logic
+- **Responsibility:** Cross-cutting concerns: caching, error mapping, logging, retry logic
 - **Components:**
+  - **CachingMiddleware** (`caching-middleware.ts`): Transparent response caching for GET requests
+    - Cache-before-request check for GET operations
+    - Cache-after-response store for successful GET responses
+    - Automatic cache invalidation on POST/PATCH/DELETE operations
+    - Pattern-based invalidation: POST → invalidate list, PATCH/DELETE → invalidate detail and list
+    - TTL-based expiration with per-resource configuration (cache-config.ts)
+    - Cache metrics for observability (hits, misses, size, hit rate)
   - **ErrorMappingMiddleware** (`error-mapping.ts`): Maps Graph HTTP errors → typed MCP errors
     - HTTP 400 → `ValidationError`
     - HTTP 401 → `AuthError`
@@ -117,6 +124,13 @@ The server is organized into six distinct layers, each responsible for a specifi
     - `createLogger()`: Scoped logger (no PII, no tokens logged)
   - **Path Resolution** (`path.ts`): Tilde expansion for config paths
     - `resolveTildePath()`: Expands `~` to home directory
+  - **Cache Manager** (`cache.ts`): LRU cache with TTL and invalidation
+    - `CacheManager`: In-memory LRU cache with configurable max size
+    - `get()`: Retrieve cached value with TTL check
+    - `set()`: Store value with TTL and LRU eviction
+    - `invalidatePattern()`: Invalidate caches matching URL pattern (for write operations)
+    - `getMetrics()`: Observability metrics (hits, misses, size, hit rate)
+    - Attached to Graph client middleware stack for transparent caching
 
 ## Cross-Cutting Patterns
 
@@ -404,6 +418,11 @@ Add to `claude_desktop_config.json`:
 
 ## Performance Considerations
 
+- **Response Caching:** CachingMiddleware provides transparent LRU caching with TTL for GET requests
+  - Reduces redundant Graph API calls for repeated reads
+  - Automatic invalidation on write operations (POST/PATCH/DELETE)
+  - Per-resource TTL configuration (default: 5 minutes for lists, 10 minutes for details)
+  - Cache metrics available for observability and tuning
 - **Context Budget:** DEFAULT_SELECT limits fields per entity type, responses truncated to 500-1000 chars per body field
 - **Pagination:** All list operations paginate with `$top=25` by default, provide `skip` for subsequent pages
 - **Token Cache:** Persistent file cache reduces Device Code Flow prompts on restarts
@@ -412,6 +431,19 @@ Add to `claude_desktop_config.json`:
 - **Logging:** Structured JSON allows efficient parsing and filtering by observability tools
 - **Graph API Quirks:** Some endpoints don't support pagination parameters; fallback to client-side filtering where needed
 
+## Webhooks & Change Notifications
+
+While the MCP server itself does not implement webhook endpoints (unsuitable for local/CLI tools), comprehensive documentation is provided for external services:
+
+- **[docs/WEBHOOKS.md](../WEBHOOKS.md)** — Patterns for consuming Microsoft Graph change notifications
+  - Real-time subscription patterns for Mail, Calendar, OneDrive, Teams, Contacts, To Do
+  - Webhook validation and handling
+  - Subscription lifecycle management (renewal, expiration)
+  - Client state authentication for notifications
+  - Example endpoint implementations in Python, Node.js
+
+This documentation enables building complementary services that receive real-time updates from Microsoft 365 and feed them into the MCP server via polling or event-driven architectures.
+
 ## Future Enhancements
 
 - **Teams:** Message threads, reactions
@@ -419,4 +451,4 @@ Add to `claude_desktop_config.json`:
 - **Contacts:** Group management, advanced filtering
 - **To Do:** Recurring tasks, task categories, advanced scheduling
 - **Advanced Drive:** Delta sync, versioning, sharing permissions
-- **Notifications:** Event subscriptions (webhooks)
+- **External Integrations:** Webhook consumer patterns, event-driven architecture support

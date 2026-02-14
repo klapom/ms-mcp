@@ -20,6 +20,27 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.19.0] -- 2026-02-14
+
+### Added
+- **Sprint 9.3: Response Caching + Webhooks Documentation (Infrastructure only)**
+  - Response caching layer: LRU cache with TTL and automatic invalidation
+  - CachingMiddleware for transparent GET request caching on Graph API
+  - Automatic cache invalidation for write operations (POST/PATCH/DELETE)
+  - Cache metrics for observability (hit/miss rate, size, entries)
+  - Comprehensive webhooks documentation (WEBHOOKS.md) for pattern reference
+  - Cache configuration with per-resource TTL settings
+- No new tools (infrastructure optimization)
+- Tool count remains 105 across all modules
+- Performance improvement: transparent response caching reduces redundant Graph API calls
+
+### Changed
+- Graph client initialized with CacheManager for middleware attachment
+- Response caching enabled by default (no configuration changes required)
+- Documentation updated: ARCHITECTURE.md includes caching layer description
+
+---
+
 ## [0.18.0] -- 2026-02-13
 
 ### Added

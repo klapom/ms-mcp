@@ -80,6 +80,7 @@ import { registerUserPhotoTools } from "./tools/user-photo.js";
 import { registerUserProfileTools } from "./tools/user-profile.js";
 import { registerUserSearchTools } from "./tools/user-search.js";
 import type { ToolRegistrationFn } from "./types/tools.js";
+import { CacheManager } from "./utils/cache.js";
 import { createLogger } from "./utils/logger.js";
 import { resolveTildePath } from "./utils/path.js";
 
@@ -213,7 +214,11 @@ async function main() {
     process.exit(1);
   }
 
-  const graphClient = getGraphClient(authDeps);
+  // Initialize response cache for performance optimization
+  const cache = new CacheManager();
+  logger.info("Response cache initialized");
+
+  const graphClient = getGraphClient(authDeps, cache);
 
   for (const register of registrations) {
     register(server, graphClient, config);

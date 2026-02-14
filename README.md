@@ -8,9 +8,9 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 
 ## Features
 
-### Available (Sprint 9.2 Complete)
+### Available (Sprint 9.3 Complete - Infrastructure optimization)
 
-**105 tools across 10 modules:**
+**105 tools across 10 modules** with response caching:
 
 #### Mail (20 tools)
 `list_emails` · `read_email` · `search_emails` · `list_mail_folders` · `send_email` · `reply_email` · `forward_email` · `move_email` · `list_attachments` · `download_attachment` · `delete_email` · `create_draft` · `send_draft` · `add_attachment` · `flag_email` · `create_mail_folder` · `list_mail_rules` · `attach_item` · `attach_reference`
@@ -41,21 +41,17 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 
 ## Roadmap Status
 
-**Sprint 9.2: Complete** (All 105 tools implemented)
-- Mail: 20 tools (list, read, send, move, attachments, drafts, flags, rules, Outlook items, references)
-- Calendar: 9 tools (list, create, update, delete, respond, availability)
-- OneDrive: 12 tools (list, search, upload, download, share, move, copy, large files, async monitoring)
-- Teams: 8 tools (channels, chats, messaging)
-- SharePoint: 8 tools (sites, lists, list items)
-- Contacts: 7 tools (list, create, update, delete, search, folders)
-- To Do: 7 tools (lists, tasks, task management)
-- OneNote: 6 tools (notebooks, sections, pages, search, note-taking)
-- User & Directory: 7 tools (profiles, search, org chart, photos)
-- Advanced Features: 15 tools (message signing, meeting rooms, delegate access, advanced sharing)
+**Sprint 9.3: Complete** (Infrastructure optimization - Response caching + Webhooks docs)
+- Response caching layer with LRU cache and TTL-based expiration
+- CachingMiddleware for transparent GET request caching on Graph API
+- Automatic cache invalidation on write operations (POST/PATCH/DELETE)
+- Comprehensive webhooks documentation for external service integration
+- Tool count remains 105 (infrastructure only, no new tools)
 
-**Phase 9 (Complete):** File attachments, large file uploads, async operations, OneNote integration
+**Phase 9 (Complete):** File attachments, large file uploads, async operations, OneNote integration, caching
 - Sprint 9.1: `attach_item`, `attach_reference`, `upload_large_file`, `poll_copy_status`
 - Sprint 9.2: `list_notebooks`, `list_sections`, `list_pages`, `get_page_content`, `create_page`, `search_notes`
+- Sprint 9.3: Response caching, webhooks documentation
 
 **Phase 10+: Future Enhancements** (Planned)
 - Mail: Message signing, advanced attachment streaming
@@ -140,6 +136,7 @@ pnpm test
 | Build Tool | tsup |
 | Logging | pino (structured JSON, GDPR-compliant) |
 | Test Coverage | 1200+ unit tests across 80+ test files, E2E suite against M365 tenant |
+| Response Caching | LRU cache with TTL and automatic invalidation for GET requests |
 
 ## Key Design Principles
 

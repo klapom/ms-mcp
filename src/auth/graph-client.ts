@@ -1,9 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
 import type { Context, Middleware } from "@microsoft/microsoft-graph-client";
+import { CachingMiddleware } from "../middleware/caching-middleware.js";
 import { ErrorMappingMiddleware } from "../middleware/error-mapping.js";
 import { LoggingMiddleware } from "../middleware/logging.js";
 import { RetryMiddleware } from "../middleware/retry.js";
+import type { CacheManager } from "../utils/cache.js";
 import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger("graph-client");
@@ -65,22 +67,34 @@ class AuthMiddleware implements Middleware {
 /**
  * Builds the middleware chain used by the Graph client.
  *
- * Order: Logging -> Retry -> ErrorMapping -> Auth -> HTTPMessageHandler
+ * Order: Logging -> Caching (optional) -> Retry -> ErrorMapping -> Auth -> HTTPMessageHandler
  *
  * - LoggingMiddleware records structured request/response metadata.
+ * - CachingMiddleware (if cache provided) caches GET responses and invalidates on writes.
  * - RetryMiddleware handles transient 429 / 5xx failures with exponential backoff.
  * - ErrorMappingMiddleware converts HTTP error responses to typed errors.
  * - AuthMiddleware attaches the Bearer token.
  * - HTTPMessageHandler performs the actual network fetch.
+ *
+ * @param deps - Authentication dependencies
+ * @param cache - Optional cache manager for response caching
  */
-function buildMiddlewareChain(deps: GraphClientDeps): Middleware {
+function buildMiddlewareChain(deps: GraphClientDeps, cache?: CacheManager): Middleware {
   const loggingMiddleware = new LoggingMiddleware();
   const retryMiddleware = new RetryMiddleware();
   const errorMappingMiddleware = new ErrorMappingMiddleware();
   const authMiddleware = new AuthMiddleware(deps);
   const httpMessageHandler = new HTTPMessageHandler();
 
-  loggingMiddleware.setNext(retryMiddleware);
+  // Build chain with optional caching middleware
+  if (cache) {
+    const cachingMiddleware = new CachingMiddleware(cache, logger);
+    loggingMiddleware.setNext(cachingMiddleware);
+    cachingMiddleware.setNext(retryMiddleware);
+  } else {
+    loggingMiddleware.setNext(retryMiddleware);
+  }
+
   retryMiddleware.setNext(errorMappingMiddleware);
   errorMappingMiddleware.setNext(authMiddleware);
   authMiddleware.setNext(httpMessageHandler);
@@ -91,11 +105,14 @@ function buildMiddlewareChain(deps: GraphClientDeps): Middleware {
 /**
  * Creates a Microsoft Graph API client with a full middleware chain.
  *
- * Middleware order: Logging -> Retry -> ErrorMapping -> Auth -> HTTPMessageHandler
+ * Middleware order: Logging -> Caching (optional) -> Retry -> ErrorMapping -> Auth -> HTTPMessageHandler
+ *
+ * @param deps - Authentication dependencies
+ * @param cache - Optional cache manager for response caching
  */
-export function createGraphClient(deps: GraphClientDeps): Client {
+export function createGraphClient(deps: GraphClientDeps, cache?: CacheManager): Client {
   logger.debug("Creating Graph client with middleware chain");
-  const middleware = buildMiddlewareChain(deps);
+  const middleware = buildMiddlewareChain(deps, cache);
   return Client.initWithMiddleware({ middleware, defaultVersion: "v1.0" });
 }
 
@@ -118,12 +135,15 @@ const clientCache = new Map<string, Client>();
  *
  * The cache key is derived from the GraphClientDeps's tenantId and clientId,
  * so identical credentials always share a single client instance.
+ *
+ * @param deps - Authentication dependencies
+ * @param cache - Optional cache manager for response caching (shared across all clients)
  */
-export function getGraphClient(deps: GraphClientDeps): Client {
+export function getGraphClient(deps: GraphClientDeps, cache?: CacheManager): Client {
   const key = `${deps.tenantId}:${deps.clientId}`;
   let client = clientCache.get(key);
   if (!client) {
-    client = createGraphClient(deps);
+    client = createGraphClient(deps, cache);
     clientCache.set(key, client);
     logger.debug({ tenantId: deps.tenantId }, "Graph client cached");
   }
