@@ -18,7 +18,26 @@
  *   pnpm tsx scripts/test-sprint-9-2-e2e.ts
  */
 
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { Client } from "@microsoft/microsoft-graph-client";
+
+// Load .env file
+try {
+  const envPath = resolve(process.cwd(), ".env");
+  const envContent = readFileSync(envPath, "utf-8");
+  for (const line of envContent.split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith("#")) {
+      const [key, ...valueParts] = trimmed.split("=");
+      if (key && valueParts.length > 0) {
+        process.env[key] = valueParts.join("=");
+      }
+    }
+  }
+} catch (error) {
+  console.error("Warning: Could not load .env file");
+}
 import { getGraphClient } from "../src/auth/graph-client.js";
 import { MsalClient } from "../src/auth/msal-client.js";
 import { createCachePlugin } from "../src/auth/token-cache.js";
