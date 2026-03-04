@@ -77,7 +77,9 @@ function formatEmailSummary(email: Record<string, unknown>): string {
   const readIndicator = isRead ? " " : "[NEW]";
   const importanceIndicator = importance === "high" ? "[!]" : "";
 
-  return `${readIndicator}${importanceIndicator} ${subject}\n  From: ${from} | ${date}\n  ${preview}`;
+  const uid = typeof email.id === "string" ? `\n  ID: ${email.id}` : "";
+  const webLink = typeof email.webLink === "string" ? `\n  URL: ${email.webLink}` : "";
+  return `${readIndicator}${importanceIndicator} ${subject}\n  From: ${from} | ${date}\n  ${preview}${uid}${webLink}`;
 }
 
 function getFromAddress(email: Record<string, unknown>): string {

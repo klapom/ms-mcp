@@ -13,7 +13,16 @@ export interface ShapeOptions {
  * Default $select fields per entity type (Context-Budget).
  */
 export const DEFAULT_SELECT: Record<string, string[]> = {
-  mail: ["id", "subject", "from", "receivedDateTime", "bodyPreview", "isRead", "importance"],
+  mail: [
+    "id",
+    "subject",
+    "from",
+    "receivedDateTime",
+    "bodyPreview",
+    "isRead",
+    "importance",
+    "webLink",
+  ],
   mailDetail: [
     "id",
     "subject",
@@ -31,6 +40,7 @@ export const DEFAULT_SELECT: Record<string, string[]> = {
     "internetMessageId",
     "replyTo",
     "parentFolderId",
+    "webLink",
   ],
   event: [
     "id",

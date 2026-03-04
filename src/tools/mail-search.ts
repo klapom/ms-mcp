@@ -178,7 +178,8 @@ function formatSearchResult(email: Record<string, unknown>): string {
   const readIndicator = isRead ? " " : "[NEW]";
   const importanceIndicator = importance === "high" ? "[!]" : "";
 
-  return `${readIndicator}${importanceIndicator} ${subject}\n  From: ${from} | ${date}\n  ${preview}\n  ID: ${id}`;
+  const webLink = typeof email.webLink === "string" ? `\n  URL: ${email.webLink}` : "";
+  return `${readIndicator}${importanceIndicator} ${subject}\n  From: ${from} | ${date}\n  ${preview}\n  ID: ${id}${webLink}`;
 }
 
 function getFromAddress(email: Record<string, unknown>): string {

@@ -136,6 +136,7 @@ function formatEmailDetail(
   const isRead = email.isRead === true ? "Ja" : "Nein";
   const hasAttachments = email.hasAttachments === true ? "Ja" : "Nein";
   const conversationId = typeof email.conversationId === "string" ? email.conversationId : "";
+  const webLink = typeof email.webLink === "string" ? email.webLink : "";
 
   const lines: string[] = [`Subject: ${subject}`, `From: ${from}`, `To: ${to}`];
 
@@ -150,6 +151,8 @@ function formatEmailDetail(
     `Attachments: ${hasAttachments}`,
     `Conversation-ID: ${conversationId}`,
   );
+
+  if (webLink) lines.push(`Web-URL: ${webLink}`);
 
   if (includeHeaders && Array.isArray(email.internetMessageHeaders)) {
     lines.push(...formatInternetHeaders(email.internetMessageHeaders));
