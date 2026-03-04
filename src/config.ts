@@ -14,8 +14,8 @@ const ConfigSchema = z.object({
     toolPreset: ToolPreset.default("mvp"),
   }),
   limits: z.object({
-    maxItems: z.number().int().positive().default(25),
-    maxBodyLength: z.number().int().positive().default(500),
+    maxItems: z.number().int().positive().max(100).default(25),
+    maxBodyLength: z.number().int().positive().max(10000).default(500),
   }),
   cache: z.object({
     tokenCachePath: z.string().default("~/.ms-mcp/token-cache.json"),
