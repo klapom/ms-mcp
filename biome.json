@@ -37,6 +37,6 @@
     }
   },
   "files": {
-    "ignore": ["dist/", "node_modules/", "*.json", "coverage/"]
+    "ignore": ["dist/", "node_modules/", "*.json", "coverage/", "scripts/", "notification-service-poc.ts"]
   }
 }
