@@ -3,17 +3,25 @@
  *
  * Provides automatic caching of GET requests with:
  * - Cache-before-request check for GET
- * - Cache-after-response store for GET
+ * - Cache-after-response store for GET (as parsed JSON, not Response objects)
  * - Automatic invalidation on POST/PATCH/DELETE
  *
- * Note: This middleware caches the raw Response objects, not parsed JSON.
- * The Graph SDK handles JSON parsing downstream.
+ * Caches parsed JSON + status code instead of Response objects for better
+ * memory efficiency and serialization safety.
  */
 
 import type { Context, Middleware } from "@microsoft/microsoft-graph-client";
 import type { Logger } from "pino";
 import { getTtlForResource } from "../config/cache-config.js";
 import type { CacheManager } from "../utils/cache.js";
+
+/**
+ * Cached response shape — stores parsed JSON instead of Response objects.
+ */
+export interface CachedResponse {
+  status: number;
+  body: unknown;
+}
 
 /**
  * Build cache key from request context
@@ -121,8 +129,12 @@ export class CachingMiddleware implements Middleware {
     if (method === "GET") {
       const cached = this.cache.get(cacheKey);
       if (cached) {
-        // Cache hit - clone the cached response to avoid body stream exhaustion
-        context.response = (cached.value as Response).clone();
+        // Cache hit - reconstruct Response from cached JSON
+        const entry = cached.value as CachedResponse;
+        context.response = new Response(JSON.stringify(entry.body), {
+          status: entry.status,
+          headers: { "Content-Type": "application/json" },
+        });
         this.logger?.info({ url, method: "GET", cached: true }, "graph_request");
         return;
       }
@@ -133,12 +145,19 @@ export class CachingMiddleware implements Middleware {
       await this.nextMiddleware.execute(context);
     }
 
-    // For GET requests, store response in cache
+    // For GET requests, store parsed JSON in cache
     if (method === "GET" && context.response && context.response.ok) {
       const ttl = getTtlForResource(url);
-      // Clone response before caching to preserve the original for downstream middleware
-      this.cache.set(cacheKey, context.response.clone(), ttl);
-      this.logger?.info({ url, method: "GET", cached: false, ttl }, "graph_request");
+      try {
+        const cloned = context.response.clone();
+        const body: unknown = await cloned.json();
+        const cachedResponse: CachedResponse = { status: context.response.status, body };
+        this.cache.set(cacheKey, cachedResponse, ttl);
+        this.logger?.info({ url, method: "GET", cached: false, ttl }, "graph_request");
+      } catch {
+        // Body is not JSON — skip caching
+        this.logger?.debug({ url }, "Skipping cache: response is not JSON");
+      }
     }
 
     // For write operations, invalidate related caches

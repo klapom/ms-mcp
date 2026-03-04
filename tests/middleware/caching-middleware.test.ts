@@ -50,10 +50,12 @@ describe("CachingMiddleware", () => {
       expect(context.response).toBeDefined();
       expect(executeCount).toBe(1);
 
-      // Check that response was cached
+      // Check that response was cached as JSON
       const cached = cache.get("GET:/me/mailFolders:me");
       expect(cached).toBeDefined();
-      expect(cached?.value).toBe(context.response);
+      const entry = cached?.value as { status: number; body: unknown };
+      expect(entry.status).toBe(200);
+      expect(entry.body).toEqual({ value: [{ id: "test" }] });
     });
 
     it("should return cached response on second GET", async () => {
@@ -67,7 +69,9 @@ describe("CachingMiddleware", () => {
       // Second request — cache hit
       await middleware.execute(context2);
       expect(executeCount).toBe(1); // Still only 1 call to next middleware
-      expect(context2.response).toBe(context1.response); // Same cached response
+      // Cached response is reconstructed from JSON, so check body content
+      const body = await context2.response?.json();
+      expect(body).toEqual({ value: [{ id: "test" }] });
     });
 
     it("should cache responses with different user IDs separately", async () => {
@@ -82,7 +86,8 @@ describe("CachingMiddleware", () => {
 
       expect(cached1).toBeDefined();
       expect(cached2).toBeDefined();
-      expect(cached1?.value).not.toBe(cached2?.value);
+      // Both are separate cache entries
+      expect(cached1).not.toBe(cached2);
     });
   });
 
