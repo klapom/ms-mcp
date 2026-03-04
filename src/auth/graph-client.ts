@@ -1,9 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
 import type { Context, Middleware } from "@microsoft/microsoft-graph-client";
+import { LRUCache } from "lru-cache";
 import { CachingMiddleware } from "../middleware/caching-middleware.js";
+import { CircuitBreakerMiddleware } from "../middleware/circuit-breaker.js";
 import { ErrorMappingMiddleware } from "../middleware/error-mapping.js";
 import { LoggingMiddleware } from "../middleware/logging.js";
+import { RequestCoalescingMiddleware } from "../middleware/request-coalescing.js";
 import { RetryMiddleware } from "../middleware/retry.js";
 import type { CacheManager } from "../utils/cache.js";
 import { createLogger } from "../utils/logger.js";
@@ -67,10 +70,12 @@ class AuthMiddleware implements Middleware {
 /**
  * Builds the middleware chain used by the Graph client.
  *
- * Order: Logging -> Caching (optional) -> Retry -> ErrorMapping -> Auth -> HTTPMessageHandler
+ * Order: Logging -> RequestCoalescing -> Caching (optional) -> CircuitBreaker -> Retry -> ErrorMapping -> Auth -> HTTPMessageHandler
  *
  * - LoggingMiddleware records structured request/response metadata.
+ * - RequestCoalescingMiddleware deduplicates identical concurrent GET requests.
  * - CachingMiddleware (if cache provided) caches GET responses and invalidates on writes.
+ * - CircuitBreakerMiddleware prevents repeated failures to the same endpoint.
  * - RetryMiddleware handles transient 429 / 5xx failures with exponential backoff.
  * - ErrorMappingMiddleware converts HTTP error responses to typed errors.
  * - AuthMiddleware attaches the Bearer token.
@@ -81,20 +86,25 @@ class AuthMiddleware implements Middleware {
  */
 function buildMiddlewareChain(deps: GraphClientDeps, cache?: CacheManager): Middleware {
   const loggingMiddleware = new LoggingMiddleware();
+  const coalescingMiddleware = new RequestCoalescingMiddleware();
+  const circuitBreakerMiddleware = new CircuitBreakerMiddleware();
   const retryMiddleware = new RetryMiddleware();
   const errorMappingMiddleware = new ErrorMappingMiddleware();
   const authMiddleware = new AuthMiddleware(deps);
   const httpMessageHandler = new HTTPMessageHandler();
 
-  // Build chain with optional caching middleware
+  // Build chain: Logging -> Coalescing -> Caching? -> CircuitBreaker -> Retry -> ErrorMapping -> Auth -> HTTP
+  loggingMiddleware.setNext(coalescingMiddleware);
+
   if (cache) {
     const cachingMiddleware = new CachingMiddleware(cache, logger);
-    loggingMiddleware.setNext(cachingMiddleware);
-    cachingMiddleware.setNext(retryMiddleware);
+    coalescingMiddleware.setNext(cachingMiddleware);
+    cachingMiddleware.setNext(circuitBreakerMiddleware);
   } else {
-    loggingMiddleware.setNext(retryMiddleware);
+    coalescingMiddleware.setNext(circuitBreakerMiddleware);
   }
 
+  circuitBreakerMiddleware.setNext(retryMiddleware);
   retryMiddleware.setNext(errorMappingMiddleware);
   errorMappingMiddleware.setNext(authMiddleware);
   authMiddleware.setNext(httpMessageHandler);
@@ -105,7 +115,7 @@ function buildMiddlewareChain(deps: GraphClientDeps, cache?: CacheManager): Midd
 /**
  * Creates a Microsoft Graph API client with a full middleware chain.
  *
- * Middleware order: Logging -> Caching (optional) -> Retry -> ErrorMapping -> Auth -> HTTPMessageHandler
+ * Middleware order: Logging -> Coalescing -> Caching (optional) -> CircuitBreaker -> Retry -> ErrorMapping -> Auth -> HTTP
  *
  * @param deps - Authentication dependencies
  * @param cache - Optional cache manager for response caching
@@ -117,17 +127,21 @@ export function createGraphClient(deps: GraphClientDeps, cache?: CacheManager): 
 }
 
 /**
- * Cache of Graph client instances keyed by "tenantId:clientId".
+ * LRU cache of Graph client instances keyed by "tenantId:clientId".
  *
  * Prevents redundant client creation for the same identity — each unique
  * GraphClientDeps identity gets exactly one Graph client with its own middleware
  * chain.
  *
- * NOTE: This cache has no eviction strategy. For the current single-tenant use case
- * this is fine (typically 1 entry). For multi-tenant scenarios (Phase 5+), consider
- * adding LRU eviction or TTL-based cleanup to prevent memory leaks.
+ * Cache evicts least-recently-used entries when full (max 10 entries) to prevent
+ * memory leaks in multi-tenant scenarios.
  */
-const clientCache = new Map<string, Client>();
+const clientCache = new LRUCache<string, Client>({
+  max: 10,
+  dispose: (_client, key) => {
+    logger.debug({ key }, "Graph client evicted from cache");
+  },
+});
 
 /**
  * Returns a cached Graph client for the given GraphClientDeps, creating one if
