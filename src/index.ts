@@ -269,7 +269,7 @@ async function main() {
   const graphClient = getGraphClient(authDeps, cache);
 
   for (const register of registrations) {
-    register(server, graphClient, config);
+    register(server, graphClient, config, authDeps);
   }
 
   const transport = new StdioServerTransport();

@@ -150,15 +150,16 @@ function buildDownloadResult(full: FileAttachmentFull, warning: string | null): 
 async function handleDownloadAttachment(
   graphClient: Client,
   parsed: DownloadAttachmentParamsType,
+  getAccessToken?: () => Promise<string>,
 ): Promise<ToolResult> {
   const startTime = Date.now();
   const userPath = resolveUserPath(parsed.user_id);
   const apiPath = `${userPath}/messages/${encodeGraphId(parsed.message_id)}/attachments/${encodeGraphId(parsed.attachment_id)}`;
 
-  // Step 1: Metadata-only GET
+  // Step 1: Metadata-only GET (no contentBytes — Graph SDK v3 omits it)
   const meta = (await graphClient
     .api(apiPath)
-    .select("@odata.type,name,contentType,size,isInline,contentId")
+    .select("name,contentType,size,isInline")
     .get()) as AttachmentMetadata;
 
   // Type check
@@ -186,8 +187,49 @@ async function handleDownloadAttachment(
   const warning =
     meta.size > SIZE_WARNING_THRESHOLD ? `This attachment is ${formatFileSize(meta.size)}.` : null;
 
-  // Step 2: Full GET (with contentBytes)
-  const full = (await graphClient.api(apiPath).get()) as FileAttachmentFull;
+  // Step 2: Download contentBytes via native fetch.
+  // Graph SDK v3 strips contentBytes from JSON responses. Bypass the SDK entirely
+  // and use native fetch with the auth token to get the full JSON.
+  let contentBytes = "";
+
+  if (getAccessToken) {
+    try {
+      const token = await getAccessToken();
+      const url = `https://graph.microsoft.com/v1.0${apiPath}`;
+      const resp = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (resp.ok) {
+        const json = (await resp.json()) as Record<string, unknown>;
+        contentBytes = (json.contentBytes as string) ?? "";
+      } else {
+        logger.warn({ status: resp.status }, "Native fetch for attachment failed");
+      }
+    } catch (err) {
+      logger.warn({ err }, "Native fetch for contentBytes failed");
+    }
+  }
+
+  if (!contentBytes) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Could not download "${meta.name}" (${formatFileSize(meta.size)}). The Graph API did not return the file content.`,
+        },
+      ],
+      isError: true,
+    };
+  }
+
+  const full: FileAttachmentFull = {
+    "@odata.type": meta["@odata.type"],
+    name: meta.name,
+    contentType: meta.contentType,
+    size: meta.size,
+    isInline: meta.isInline,
+    contentBytes,
+  };
 
   const endTime = Date.now();
   logger.info(
@@ -208,6 +250,7 @@ export function registerMailAttachmentTools(
   server: McpServer,
   graphClient: Client,
   _config: Config,
+  deps?: { getAccessToken(): Promise<string> },
 ): void {
   server.tool(
     "list_attachments",
@@ -240,7 +283,7 @@ export function registerMailAttachmentTools(
     async (params) => {
       try {
         const parsed = DownloadAttachmentParams.parse(params);
-        return await handleDownloadAttachment(graphClient, parsed);
+        return await handleDownloadAttachment(graphClient, parsed, deps?.getAccessToken.bind(deps));
       } catch (error) {
         if (error instanceof McpToolError) {
           logger.warn(
