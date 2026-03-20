@@ -38,7 +38,7 @@ function formatAttachmentLine(index: number, att: AttachmentListItem): string {
   const prefix = att.size > SIZE_WARNING_THRESHOLD ? "[!]" : `[${index}]`;
   const warningNote = att.size > SIZE_WARNING_THRESHOLD ? " — Larger than 4 MB" : "";
 
-  return `${prefix} ${att.name} (${att.contentType}, ${sizeStr}${inlineMarker}) — ${typeName}${warningNote}`;
+  return `${prefix} ${att.name} (${att.contentType}, ${sizeStr}${inlineMarker}) — ${typeName}${warningNote}\n    ID: ${att.id}`;
 }
 
 async function handleListAttachments(
