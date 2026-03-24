@@ -142,7 +142,8 @@ function buildDraftBody(parsed: {
       content: parsed.body ?? "",
     },
     importance: parsed.importance,
-    saveToSentItems: parsed.save_to_sent_items,
+    // Note: saveToSentItems is NOT a valid property for draft creation (POST /me/messages).
+    // It is only used when sending via POST /me/sendMail. Omitted here intentionally.
   };
 
   if (parsed.to && parsed.to.length > 0) {
