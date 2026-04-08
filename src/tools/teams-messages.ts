@@ -1,7 +1,7 @@
 import type { Client } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Config } from "../config.js";
-import { ListChannelMessagesParams } from "../schemas/teams.js";
+import { ListChannelMessagesParams, ListChannelRepliesParams } from "../schemas/teams.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
 import { encodeGraphId } from "../utils/graph-id.js";
 import { convertHtmlToText } from "../utils/html-convert.js";
@@ -91,6 +91,58 @@ export function registerTeamsMessageTools(
           logger.warn(
             { tool: "list_channel_messages", status: error.httpStatus, code: error.code },
             "list_channel_messages failed",
+          );
+          return {
+            content: [{ type: "text" as const, text: formatErrorForUser(error) }],
+            isError: true,
+          };
+        }
+        throw error;
+      }
+    },
+  );
+
+  server.tool(
+    "list_channel_replies",
+    "List replies to a specific message in a Teams channel. Returns sender, timestamp, and body.",
+    ListChannelRepliesParams.shape,
+    async (params) => {
+      try {
+        const parsed = ListChannelRepliesParams.parse(params);
+        const teamId = encodeGraphId(parsed.team_id);
+        const channelId = encodeGraphId(parsed.channel_id);
+        const messageId = encodeGraphId(parsed.message_id);
+        const url = `/teams/${teamId}/channels/${channelId}/messages/${messageId}/replies`;
+
+        const top = Math.min(parsed.top ?? config.limits.maxItems, 50);
+
+        const page = await fetchPage<Record<string, unknown>>(graphClient, url, {
+          top,
+          skip: parsed.skip,
+        });
+
+        if (page.items.length === 0) {
+          return { content: [{ type: "text", text: "No replies found." }] };
+        }
+
+        const lines = page.items.map((item) => formatMessage(item));
+        const total = page.totalCount ?? page.items.length;
+        const hint =
+          page.items.length < total
+            ? `\nShowing ${page.items.length} of ${total} replies. Use skip: ${page.items.length} for the next page.`
+            : `\nShowing ${page.items.length} of ${total} replies.`;
+
+        logger.info(
+          { tool: "list_channel_replies", count: page.items.length },
+          "list_channel_replies completed",
+        );
+
+        return { content: [{ type: "text", text: lines.join("\n\n") + hint }] };
+      } catch (error) {
+        if (error instanceof McpToolError) {
+          logger.warn(
+            { tool: "list_channel_replies", status: error.httpStatus, code: error.code },
+            "list_channel_replies failed",
           );
           return {
             content: [{ type: "text" as const, text: formatErrorForUser(error) }],

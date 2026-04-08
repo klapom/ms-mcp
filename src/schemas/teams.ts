@@ -28,6 +28,17 @@ export const ListChannelMessagesParams = ListParams.extend({
 export type ListChannelMessagesParamsType = z.infer<typeof ListChannelMessagesParams>;
 
 // ---------------------------------------------------------------------------
+// list_channel_replies
+// ---------------------------------------------------------------------------
+
+export const ListChannelRepliesParams = ListParams.extend({
+  team_id: z.string().min(1).describe("The ID of the team."),
+  channel_id: z.string().min(1).describe("The ID of the channel."),
+  message_id: z.string().min(1).describe("The ID of the root message to list replies for."),
+});
+export type ListChannelRepliesParamsType = z.infer<typeof ListChannelRepliesParams>;
+
+// ---------------------------------------------------------------------------
 // send_channel_message
 // ---------------------------------------------------------------------------
 
