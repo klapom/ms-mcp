@@ -24,6 +24,39 @@ export interface CachedResponse {
 }
 
 /**
+ * Extract the HTTP method from a Graph client context.
+ *
+ * The Graph SDK passes `context.request` either as:
+ * - a `Request` object (has `.method`), or
+ * - a URL string with the method on `context.options.method`
+ *   (the path taken by GraphRequest#get/post/patch/delete — see Graph SDK
+ *   `GraphRequest.ts`). Reading `.method` off a string silently yields
+ *   `undefined`, which previously caused write requests to be treated
+ *   as GETs and cached.
+ */
+function extractMethod(context: Context): string {
+  const req = context.request;
+  if (typeof req !== "string" && req && "method" in req) {
+    return req.method.toUpperCase();
+  }
+  return context.options?.method?.toUpperCase() ?? "GET";
+}
+
+/**
+ * Extract the request URL from a Graph client context (string or Request).
+ */
+function extractUrl(context: Context): string {
+  const req = context.request;
+  if (typeof req === "string") {
+    return req;
+  }
+  if (req && "url" in req) {
+    return req.url;
+  }
+  return "";
+}
+
+/**
  * Build cache key from request context
  * Format: {method}:{path}:{userId}
  *
@@ -31,8 +64,8 @@ export interface CachedResponse {
  * @returns Cache key string
  */
 function buildCacheKey(context: Context): string {
-  const method = context.request?.method ?? "GET";
-  const url = context.request?.url ?? "";
+  const method = extractMethod(context);
+  const url = extractUrl(context);
   // Extract user ID from URL if present (e.g., /users/{userId}/...)
   // Otherwise use "me" as identifier
   const userMatch = /\/users\/([^/]+)/.exec(url);
@@ -53,8 +86,8 @@ function buildCacheKey(context: Context): string {
  * @param context - Graph client context
  */
 function invalidateRelatedCaches(cache: CacheManager, context: Context): void {
-  const method = context.request?.method ?? "";
-  const url = context.request?.url ?? "";
+  const method = extractMethod(context);
+  const url = extractUrl(context);
 
   // Extract resource path (remove query params)
   const resourcePath = url.split("?")[0];
@@ -121,8 +154,8 @@ export class CachingMiddleware implements Middleware {
   }
 
   async execute(context: Context): Promise<void> {
-    const method = context.request?.method ?? "GET";
-    const url = context.request?.url ?? "";
+    const method = extractMethod(context);
+    const url = extractUrl(context);
     const cacheKey = buildCacheKey(context);
 
     // For GET requests, check cache first

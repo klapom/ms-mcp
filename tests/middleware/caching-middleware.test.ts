@@ -217,4 +217,64 @@ describe("CachingMiddleware", () => {
       expect(cache.get("DELETE:/me/contacts/456:me")).toBeUndefined();
     });
   });
+
+  // The Graph SDK's real call shape: POST/PATCH/DELETE set `context.request`
+  // to a string URL and put the method on `context.options.method`. The
+  // caching middleware must still recognise these as writes and must not
+  // treat them as cacheable GETs.
+  describe("Graph SDK-shaped contexts (request as URL string + options.method)", () => {
+    function createSdkContext(method: string, url: string): Context {
+      return {
+        request: url,
+        options: { method },
+      } as unknown as Context;
+    }
+
+    it("should not cache a POST when context.request is a URL string", async () => {
+      // First POST — response must not be stored as a GET cache entry.
+      const firstCtx = createSdkContext("POST", "/me/messages");
+      await middleware.execute(firstCtx);
+
+      expect(executeCount).toBe(1);
+      // No cache entry for either the fake "GET:" key or the "POST:" key.
+      expect(cache.get("GET:/me/messages:me")).toBeUndefined();
+      expect(cache.get("POST:/me/messages:me")).toBeUndefined();
+
+      // Second POST — must actually hit the downstream middleware again,
+      // not return a cached response from the first POST.
+      const secondCtx = createSdkContext("POST", "/me/messages");
+      await middleware.execute(secondCtx);
+
+      expect(executeCount).toBe(2);
+    });
+
+    it("should invalidate list cache on SDK-shaped POST", async () => {
+      // Seed a cached GET /me/messages list.
+      const getCtx = createContext("GET", "/me/messages");
+      await middleware.execute(getCtx);
+      expect(cache.get("GET:/me/messages:me")).toBeDefined();
+
+      // Now issue the POST in the real SDK shape.
+      const postCtx = createSdkContext("POST", "/me/messages");
+      await middleware.execute(postCtx);
+
+      expect(cache.get("GET:/me/messages:me")).toBeUndefined();
+    });
+
+    it("should not cache a PATCH when context.request is a URL string", async () => {
+      const ctx = createSdkContext("PATCH", "/me/events/abc");
+      await middleware.execute(ctx);
+
+      expect(cache.get("GET:/me/events/abc:me")).toBeUndefined();
+      expect(cache.get("PATCH:/me/events/abc:me")).toBeUndefined();
+    });
+
+    it("should not cache a DELETE when context.request is a URL string", async () => {
+      const ctx = createSdkContext("DELETE", "/me/messages/123");
+      await middleware.execute(ctx);
+
+      expect(cache.get("GET:/me/messages/123:me")).toBeUndefined();
+      expect(cache.get("DELETE:/me/messages/123:me")).toBeUndefined();
+    });
+  });
 });
