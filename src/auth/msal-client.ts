@@ -20,13 +20,14 @@ export class AuthTokenError extends Error {
   }
 }
 
-// Default scopes for MVP + Phase 8
+// Default scopes for MVP + Phase 8 + Phase 9 fixes
 const DEFAULT_SCOPES = [
   "User.Read",
   "Mail.ReadWrite",
   "Mail.Send",
   "Calendars.ReadWrite",
   "Calendars.ReadWrite.Shared", // Phase 8.3: share_calendar
+  "Place.Read.All", // Phase 8.3: list_rooms (was missing — 403 without this)
   "Files.ReadWrite",
   "Contacts.ReadWrite",
   "Tasks.ReadWrite",
@@ -40,6 +41,7 @@ const DEFAULT_SCOPES = [
   "Sites.ReadWrite.All",
   "TeamsActivity.Read", // Phase 8.4: list_activity_feed, list_mentions
   "OnlineMeetings.Read", // Phase 8.4: get_meeting_transcript
+  "Presence.ReadWrite", // Phase 9.4: set_status_message (was missing — 403 without this)
 ];
 
 /**
