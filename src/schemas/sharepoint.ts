@@ -69,7 +69,7 @@ export type ListListItemsParamsType = z.infer<typeof ListListItemsParams>;
 export const CreateListItemParams = WriteParams.extend({
   site_id: z.string().min(1).describe("The ID of the SharePoint site."),
   list_id: z.string().min(1).describe("The ID of the list."),
-  fields: z.record(z.unknown()).describe("Field values for the new list item."),
+  fields: z.record(z.string(), z.unknown()).describe("Field values for the new list item."),
 });
 export type CreateListItemParamsType = z.infer<typeof CreateListItemParams>;
 
@@ -81,7 +81,7 @@ export const UpdateListItemParams = WriteParams.extend({
   site_id: z.string().min(1).describe("The ID of the SharePoint site."),
   list_id: z.string().min(1).describe("The ID of the list."),
   item_id: z.string().min(1).describe("The ID of the list item to update."),
-  fields: z.record(z.unknown()).describe("Field values to update."),
+  fields: z.record(z.string(), z.unknown()).describe("Field values to update."),
 });
 export type UpdateListItemParamsType = z.infer<typeof UpdateListItemParams>;
 
