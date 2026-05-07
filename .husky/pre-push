@@ -2,12 +2,12 @@
 # Pre-push hook: Run security audit and E2E tests before pushing to remote
 
 echo "Pre-push: Running pnpm audit (production dependencies)..."
-pnpm audit --prod 2>/dev/null
-AUDIT_EXIT=$?
-
-if [ $AUDIT_EXIT -ne 0 ]; then
+# Husky invokes hooks with `sh -e`, so any non-zero exit aborts the hook.
+# pnpm audit returns non-zero when vulnerabilities are found — using `if !`
+# keeps this check non-blocking as documented below.
+if ! pnpm audit --prod 2>/dev/null; then
     echo ""
-    echo "WARNING: pnpm audit found vulnerabilities (exit code: $AUDIT_EXIT)."
+    echo "WARNING: pnpm audit found vulnerabilities."
     echo "   Review with: pnpm audit --prod"
     echo "   This is non-blocking but should be addressed."
     echo ""
