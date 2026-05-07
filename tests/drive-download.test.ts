@@ -2,6 +2,7 @@ import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
 import { beforeEach, describe, expect, it } from "vitest";
 import { ErrorMappingMiddleware } from "../src/middleware/error-mapping.js";
 import { DownloadFileParams } from "../src/schemas/files.js";
+import { buildDriveItemUrl } from "../src/tools/drive-download.js";
 
 function createTestGraphClient(): Client {
   return Client.initWithMiddleware({
@@ -38,6 +39,26 @@ describe("download_file", () => {
         user_id: "admin@tenant.com",
       });
       expect(result.user_id).toBe("admin@tenant.com");
+    });
+  });
+
+  describe("buildDriveItemUrl", () => {
+    const drive = "/me/drive";
+
+    it("addresses IDs via /items/<id>", () => {
+      expect(buildDriveItemUrl(drive, "01ABC")).toBe("/me/drive/items/01ABC");
+    });
+
+    it("URL-encodes unsafe chars in IDs", () => {
+      expect(buildDriveItemUrl(drive, "a+b/c=d")).toBe("/me/drive/items/a%2Bb%2Fc%3Dd");
+    });
+
+    it("addresses leading-slash values via /root:<path>", () => {
+      expect(buildDriveItemUrl(drive, "/Brand/logo.svg")).toBe("/me/drive/root:/Brand/logo.svg");
+    });
+
+    it("strips trailing slashes on paths", () => {
+      expect(buildDriveItemUrl(drive, "/Brand/")).toBe("/me/drive/root:/Brand");
     });
   });
 

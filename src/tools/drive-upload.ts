@@ -5,7 +5,7 @@ import type { UploadFileParamsType } from "../schemas/drive-write.js";
 import { UploadFileParams } from "../schemas/drive-write.js";
 import type { ToolResult } from "../types/tools.js";
 import { checkConfirmation, formatPreview } from "../utils/confirmation.js";
-import { resolveDrivePath } from "../utils/drive-path.js";
+import { normalizeDrivePath, resolveDrivePath } from "../utils/drive-path.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
 import { formatFileSize } from "../utils/file-size.js";
 import { idempotencyCache } from "../utils/idempotency.js";
@@ -50,7 +50,8 @@ async function executeUpload(
   }
 
   const drivePath = resolveDrivePath(parsed.user_id, parsed.site_id, parsed.drive_id);
-  const cleanPath = parsed.path.startsWith("/") ? parsed.path : `/${parsed.path}`;
+  const normalized = normalizeDrivePath(parsed.path, parsed.site_id);
+  const cleanPath = normalized.startsWith("/") ? normalized : `/${normalized}`;
   const url = `${drivePath}/root:${cleanPath}:/content`;
 
   const result = (await graphClient

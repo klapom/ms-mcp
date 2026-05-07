@@ -27,7 +27,11 @@ export const ListFilesParams = ListParams.extend({
   path: z
     .string()
     .optional()
-    .describe("Folder path (e.g. '/Documents/Reports'). Mutually exclusive with folder_id."),
+    .describe(
+      "Folder path relative to the drive root (e.g. '/Reports' or '/Brand/Logos'). " +
+        "Do NOT prefix with '/Documents' — the drive root IS the Documents area in OneDrive Personal. " +
+        "Empty string or '/' means root. Mutually exclusive with folder_id.",
+    ),
 });
 export type ListFilesParamsType = z.infer<typeof ListFilesParams>;
 
@@ -61,7 +65,13 @@ export type GetFileMetadataParamsType = z.infer<typeof GetFileMetadataParams>;
 
 export const DownloadFileParams = BaseParams.extend({
   ...driveLocationFields,
-  file_id: z.string().min(1).describe("The ID of the file to download."),
+  file_id: z
+    .string()
+    .min(1)
+    .describe(
+      "Either a Graph item ID (opaque string) OR a drive-root-relative path starting with '/' " +
+        "(e.g. '/Brand/Logos/logo.svg'). Do NOT prefix paths with '/Documents'.",
+    ),
 });
 export type DownloadFileParamsType = z.infer<typeof DownloadFileParams>;
 

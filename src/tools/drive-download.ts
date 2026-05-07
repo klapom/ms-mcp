@@ -4,7 +4,7 @@ import type { Config } from "../config.js";
 import type { DownloadFileParamsType } from "../schemas/files.js";
 import { DownloadFileParams } from "../schemas/files.js";
 import type { ToolResult } from "../types/tools.js";
-import { resolveDrivePath } from "../utils/drive-path.js";
+import { normalizeDrivePath, resolveDrivePath } from "../utils/drive-path.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
 import { formatFileSize, isTextContent } from "../utils/file-size.js";
 import { encodeGraphId } from "../utils/graph-id.js";
@@ -32,13 +32,25 @@ function buildMetadataHeader(meta: DriveItemMetadata): string {
   return lines.join("\n");
 }
 
+export function buildDriveItemUrl(drivePath: string, fileId: string, siteId?: string): string {
+  // Accept either a Graph item ID or a path starting with "/" (e.g. "/folder/file.md").
+  // Paths are addressed via the /root: addressing mode; IDs via /items/.
+  if (fileId.startsWith("/")) {
+    const normalized = normalizeDrivePath(fileId, siteId);
+    const trimmed = normalized.replace(/\/+$/, "");
+    return `${drivePath}/root:${trimmed}`;
+  }
+  return `${drivePath}/items/${encodeGraphId(fileId)}`;
+}
+
 async function handleDownloadFile(
   graphClient: Client,
   parsed: DownloadFileParamsType,
 ): Promise<ToolResult> {
   const startTime = Date.now();
   const drivePath = resolveDrivePath(parsed.user_id, parsed.site_id, parsed.drive_id);
-  const itemUrl = `${drivePath}/items/${encodeGraphId(parsed.file_id)}`;
+  const itemUrl = buildDriveItemUrl(drivePath, parsed.file_id, parsed.site_id);
+  const isPathRef = parsed.file_id.startsWith("/");
 
   // Step 1: Metadata
   const meta = (await graphClient
@@ -79,10 +91,14 @@ async function handleDownloadFile(
       ? `Warning: This file is ${formatFileSize(meta.size)}.\n`
       : "";
 
-  // Step 2: Download content
-  const contentUrl = `${itemUrl}/content`;
-  const response = (await graphClient.api(contentUrl).get()) as ArrayBuffer;
-  const buffer = Buffer.from(response);
+  // Step 2: Download content. Path-addressed items use /root:/path:/content.
+  const contentUrl = isPathRef ? `${itemUrl}:/content` : `${itemUrl}/content`;
+  const response = await graphClient.api(contentUrl).getStream();
+  const chunks: Buffer[] = [];
+  for await (const chunk of response as AsyncIterable<Buffer | Uint8Array | string>) {
+    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : Buffer.from(chunk));
+  }
+  const buffer = Buffer.concat(chunks);
 
   const mimeType = meta.file?.mimeType ?? "application/octet-stream";
   const isText = isTextContent(mimeType, meta.name);

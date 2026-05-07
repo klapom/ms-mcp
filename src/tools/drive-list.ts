@@ -4,7 +4,7 @@ import type { Config } from "../config.js";
 import { resolveUserPath } from "../schemas/common.js";
 import type { GetRecentFilesParamsType, ListFilesParamsType } from "../schemas/files.js";
 import { GetRecentFilesParams, ListFilesParams } from "../schemas/files.js";
-import { resolveDrivePath } from "../utils/drive-path.js";
+import { normalizeDrivePath, resolveDrivePath } from "../utils/drive-path.js";
 import { McpToolError, ValidationError, formatErrorForUser } from "../utils/errors.js";
 import { formatFileSize } from "../utils/file-size.js";
 import { encodeGraphId } from "../utils/graph-id.js";
@@ -14,7 +14,7 @@ import { DEFAULT_SELECT, buildSelectParam } from "../utils/response-shaper.js";
 
 const logger = createLogger("tools:drive-list");
 
-function resolveDriveListUrl(drivePath: string, parsed: ListFilesParamsType): string {
+export function resolveDriveListUrl(drivePath: string, parsed: ListFilesParamsType): string {
   if (parsed.folder_id && parsed.path) {
     throw new ValidationError("folder_id and path are mutually exclusive. Provide only one.");
   }
@@ -22,8 +22,12 @@ function resolveDriveListUrl(drivePath: string, parsed: ListFilesParamsType): st
     return `${drivePath}/items/${encodeGraphId(parsed.folder_id)}/children`;
   }
   if (parsed.path) {
-    const cleanPath = parsed.path.startsWith("/") ? parsed.path : `/${parsed.path}`;
-    return `${drivePath}/root:${cleanPath}:/children`;
+    const normalized = normalizeDrivePath(parsed.path, parsed.site_id);
+    const trimmed = normalized.replace(/^\/+/, "").replace(/\/+$/, "");
+    if (trimmed === "") {
+      return `${drivePath}/root/children`;
+    }
+    return `${drivePath}/root:/${trimmed}:/children`;
   }
   return `${drivePath}/root/children`;
 }

@@ -5,7 +5,7 @@ import type { CreateFolderParamsType } from "../schemas/drive-write.js";
 import { CreateFolderParams } from "../schemas/drive-write.js";
 import type { ToolResult } from "../types/tools.js";
 import { checkConfirmation, formatPreview } from "../utils/confirmation.js";
-import { resolveDrivePath } from "../utils/drive-path.js";
+import { normalizeDrivePath, resolveDrivePath } from "../utils/drive-path.js";
 import { McpToolError, ValidationError, formatErrorForUser } from "../utils/errors.js";
 import { encodeGraphId } from "../utils/graph-id.js";
 import { idempotencyCache } from "../utils/idempotency.js";
@@ -23,9 +23,8 @@ function resolveParentUrl(drivePath: string, parsed: CreateFolderParamsType): st
     return `${drivePath}/items/${encodeGraphId(parsed.parent_id)}/children`;
   }
   if (parsed.parent_path) {
-    const cleanPath = parsed.parent_path.startsWith("/")
-      ? parsed.parent_path
-      : `/${parsed.parent_path}`;
+    const normalized = normalizeDrivePath(parsed.parent_path, parsed.site_id);
+    const cleanPath = normalized.startsWith("/") ? normalized : `/${normalized}`;
     return `${drivePath}/root:${cleanPath}:/children`;
   }
   return `${drivePath}/root/children`;

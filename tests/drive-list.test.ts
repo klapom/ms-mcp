@@ -2,6 +2,7 @@ import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
 import { beforeEach, describe, expect, it } from "vitest";
 import { ErrorMappingMiddleware } from "../src/middleware/error-mapping.js";
 import { GetRecentFilesParams, ListFilesParams } from "../src/schemas/files.js";
+import { resolveDriveListUrl } from "../src/tools/drive-list.js";
 
 function createTestGraphClient(): Client {
   return Client.initWithMiddleware({
@@ -105,6 +106,46 @@ describe("list_files", () => {
       >;
       const items = response.value as Array<Record<string, unknown>>;
       expect(items.length).toBe(1);
+    });
+  });
+
+  describe("resolveDriveListUrl", () => {
+    const drive = "/me/drive";
+
+    it("returns root/children when path is omitted", () => {
+      const parsed = ListFilesParams.parse({});
+      expect(resolveDriveListUrl(drive, parsed)).toBe("/me/drive/root/children");
+    });
+
+    it("returns root/children when path is '/'", () => {
+      const parsed = ListFilesParams.parse({ path: "/" });
+      expect(resolveDriveListUrl(drive, parsed)).toBe("/me/drive/root/children");
+    });
+
+    it("returns root/children when path is empty string (via schema bypass)", () => {
+      // Empty string is falsy; schema keeps it, builder falls back to root.
+      const parsed = { path: "" } as unknown as ReturnType<typeof ListFilesParams.parse>;
+      expect(resolveDriveListUrl(drive, parsed)).toBe("/me/drive/root/children");
+    });
+
+    it("builds /root:/<path>:/children with leading slash", () => {
+      const parsed = ListFilesParams.parse({ path: "/Reports" });
+      expect(resolveDriveListUrl(drive, parsed)).toBe("/me/drive/root:/Reports:/children");
+    });
+
+    it("builds /root:/<path>:/children without leading slash", () => {
+      const parsed = ListFilesParams.parse({ path: "Reports/Q1" });
+      expect(resolveDriveListUrl(drive, parsed)).toBe("/me/drive/root:/Reports/Q1:/children");
+    });
+
+    it("strips trailing slashes from path", () => {
+      const parsed = ListFilesParams.parse({ path: "/Brand/Logos/" });
+      expect(resolveDriveListUrl(drive, parsed)).toBe("/me/drive/root:/Brand/Logos:/children");
+    });
+
+    it("uses /items/<id>/children when folder_id is given", () => {
+      const parsed = ListFilesParams.parse({ folder_id: "01ABC" });
+      expect(resolveDriveListUrl(drive, parsed)).toBe("/me/drive/items/01ABC/children");
     });
   });
 

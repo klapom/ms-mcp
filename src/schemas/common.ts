@@ -4,7 +4,14 @@ import { z } from "zod";
  * Base parameters shared by ALL tools.
  */
 export const BaseParams = z.object({
-  user_id: z.string().optional().describe("User ID or UPN for delegated access. Default: /me"),
+  user_id: z
+    .string()
+    .optional()
+    .describe(
+      "UPN (e.g. 'alice@contoso.com') or Entra object ID of ANOTHER user to act on " +
+        "behalf of (delegated admin access). Omit this field entirely to act as the " +
+        "signed-in user. Do NOT pass '/me' or 'me' as a value — omit the field instead.",
+    ),
 });
 
 /**
