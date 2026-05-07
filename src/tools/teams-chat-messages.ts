@@ -10,7 +10,7 @@ import {
 } from "../schemas/teams.js";
 import type { ToolResult } from "../types/tools.js";
 import { checkConfirmation, formatPreview } from "../utils/confirmation.js";
-import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { formatErrorForUser, McpToolError } from "../utils/errors.js";
 import { encodeGraphId } from "../utils/graph-id.js";
 import { convertHtmlToText } from "../utils/html-convert.js";
 import { idempotencyCache } from "../utils/idempotency.js";

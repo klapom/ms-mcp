@@ -1,5 +1,5 @@
 import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
-import { http, HttpResponse } from "msw";
+import { HttpResponse, http } from "msw";
 import { beforeEach, describe, expect, it } from "vitest";
 import { ErrorMappingMiddleware } from "../src/middleware/error-mapping.js";
 import { resolveUserPath } from "../src/schemas/common.js";

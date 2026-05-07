@@ -6,7 +6,7 @@ import { CreateEventParams } from "../schemas/calendar-write.js";
 import { resolveUserPath } from "../schemas/common.js";
 import type { ToolResult } from "../types/tools.js";
 import { checkConfirmation, formatPreview } from "../utils/confirmation.js";
-import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { formatErrorForUser, McpToolError } from "../utils/errors.js";
 import { encodeGraphId } from "../utils/graph-id.js";
 import { idempotencyCache } from "../utils/idempotency.js";
 import { createLogger } from "../utils/logger.js";

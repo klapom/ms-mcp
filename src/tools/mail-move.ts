@@ -6,7 +6,7 @@ import type { MoveEmailParamsType } from "../schemas/mail.js";
 import { MoveEmailParams } from "../schemas/mail.js";
 import type { ToolResult } from "../types/tools.js";
 import { formatPreview } from "../utils/confirmation.js";
-import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { formatErrorForUser, McpToolError } from "../utils/errors.js";
 import { encodeGraphId } from "../utils/graph-id.js";
 import { idempotencyCache } from "../utils/idempotency.js";
 import { createLogger } from "../utils/logger.js";

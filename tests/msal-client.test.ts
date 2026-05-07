@@ -13,8 +13,17 @@ const mockPca = {
   })),
 };
 
+// vitest 4 rejects arrow-function mock implementations when the mock is invoked via `new`
+// (PublicClientApplication is constructed). Wrap in a class so the mock has a real prototype;
+// returning from the constructor lets us reuse the shared `mockPca` instance.
+class MockPCA {
+  constructor() {
+    // biome-ignore lint/correctness/noConstructorReturn: intentional — `new MockPCA()` must yield the shared mockPca.
+    return mockPca;
+  }
+}
 vi.mock("@azure/msal-node", () => ({
-  PublicClientApplication: vi.fn(() => mockPca),
+  PublicClientApplication: vi.fn().mockImplementation(MockPCA),
 }));
 
 // Suppress pino log output during tests

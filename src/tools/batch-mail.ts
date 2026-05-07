@@ -1,22 +1,22 @@
 import type { Client } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Config } from "../config.js";
-import {
-  BatchDeleteEmailsParams,
-  BatchFlagEmailsParams,
-  BatchMoveEmailsParams,
-} from "../schemas/batch-operations.js";
 import type {
   BatchDeleteEmailsParamsType,
   BatchFlagEmailsParamsType,
   BatchMoveEmailsParamsType,
 } from "../schemas/batch-operations.js";
+import {
+  BatchDeleteEmailsParams,
+  BatchFlagEmailsParams,
+  BatchMoveEmailsParams,
+} from "../schemas/batch-operations.js";
 import { resolveUserPath } from "../schemas/common.js";
 import type { ToolResult } from "../types/tools.js";
 import {
-  type GraphBatchRequest,
   executeBatch,
   formatBatchSummary,
+  type GraphBatchRequest,
   summarizeBatchResult,
 } from "../utils/batch.js";
 import { encodeGraphId } from "../utils/graph-id.js";

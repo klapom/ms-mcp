@@ -4,8 +4,8 @@ import { resolveUserPath } from "../src/schemas/common.js";
 import { ListMailFoldersParams } from "../src/schemas/mail.js";
 import { fetchPage } from "../src/utils/pagination.js";
 import {
-  DEFAULT_SELECT,
   buildSelectParam,
+  DEFAULT_SELECT,
   shapeListResponse,
 } from "../src/utils/response-shaper.js";
 

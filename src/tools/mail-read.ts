@@ -4,11 +4,11 @@ import type { Config } from "../config.js";
 import { resolveUserPath } from "../schemas/common.js";
 import { ReadEmailParams } from "../schemas/mail.js";
 import { extractAddress, extractAddressListFiltered } from "../utils/address-format.js";
-import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { formatErrorForUser, McpToolError } from "../utils/errors.js";
 import { encodeGraphId } from "../utils/graph-id.js";
 import { convertHtmlToText } from "../utils/html-convert.js";
 import { createLogger } from "../utils/logger.js";
-import { DEFAULT_SELECT, buildSelectParam, truncateBody } from "../utils/response-shaper.js";
+import { buildSelectParam, DEFAULT_SELECT, truncateBody } from "../utils/response-shaper.js";
 import { isRecordObject } from "../utils/type-guards.js";
 
 const logger = createLogger("tools:mail-read");

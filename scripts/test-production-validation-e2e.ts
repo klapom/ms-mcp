@@ -21,10 +21,10 @@
  * Contacts, Todo, OneNote, Presence, Users, Search) plus the caching middleware.
  */
 
-import { Client } from "@microsoft/microsoft-graph-client";
+import type { Client } from "@microsoft/microsoft-graph-client";
+import { getGraphClient } from "../src/auth/graph-client.js";
 import { MsalClient } from "../src/auth/msal-client.js";
 import { createCachePlugin } from "../src/auth/token-cache.js";
-import { getGraphClient } from "../src/auth/graph-client.js";
 import { loadConfig } from "../src/config.js";
 import { CacheManager } from "../src/utils/cache.js";
 import { createLogger } from "../src/utils/logger.js";
@@ -316,18 +316,16 @@ async function testSearch(client: Client): Promise<void> {
   const start = Date.now();
   try {
     logger.info("Testing Search module: search_all");
-    const response = await client
-      .api("/search/query")
-      .post({
-        requests: [
-          {
-            entityTypes: ["message"],
-            query: { queryString: "test" },
-            from: 0,
-            size: 1,
-          },
-        ],
-      });
+    const response = await client.api("/search/query").post({
+      requests: [
+        {
+          entityTypes: ["message"],
+          query: { queryString: "test" },
+          from: 0,
+          size: 1,
+        },
+      ],
+    });
     if (!response.value || !Array.isArray(response.value)) {
       throw new Error("Invalid response structure");
     }
@@ -408,9 +406,7 @@ function printResults(): void {
 
   console.log();
   console.log("=".repeat(80));
-  console.log(
-    `Summary: ${passed} passed, ${failed} failed, ${skipped} skipped (${total} total)`,
-  );
+  console.log(`Summary: ${passed} passed, ${failed} failed, ${skipped} skipped (${total} total)`);
   console.log("=".repeat(80));
   console.log();
 

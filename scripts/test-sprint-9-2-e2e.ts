@@ -38,6 +38,7 @@ try {
 } catch (error) {
   console.error("Warning: Could not load .env file");
 }
+
 import { getGraphClient } from "../src/auth/graph-client.js";
 import { MsalClient } from "../src/auth/msal-client.js";
 import { createCachePlugin } from "../src/auth/token-cache.js";

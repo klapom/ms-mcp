@@ -2,7 +2,7 @@ import type { Client } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Config } from "../config.js";
 import { ListTeamMembersParams } from "../schemas/teams-members.js";
-import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { formatErrorForUser, McpToolError } from "../utils/errors.js";
 import { encodeGraphId } from "../utils/graph-id.js";
 import { createLogger } from "../utils/logger.js";
 import { fetchPage } from "../utils/pagination.js";

@@ -1,11 +1,11 @@
 import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
-import { http, HttpResponse } from "msw";
+import { HttpResponse, http } from "msw";
 import { beforeEach, describe, expect, it } from "vitest";
 import { resolveUserPath } from "../src/schemas/common.js";
 import { SearchNotesParams } from "../src/schemas/onenote.js";
 import {
-  DEFAULT_SELECT,
   buildSelectParam,
+  DEFAULT_SELECT,
   shapeListResponse,
 } from "../src/utils/response-shaper.js";
 import { server as mswServer } from "./mocks/server.js";

@@ -7,12 +7,12 @@ import { resolveUserPath } from "../schemas/common.js";
 import type { ToolResult } from "../types/tools.js";
 import { formatDateTimeRange } from "../utils/calendar-format.js";
 import { formatPreview } from "../utils/confirmation.js";
-import { McpToolError, ValidationError, formatErrorForUser } from "../utils/errors.js";
+import { formatErrorForUser, McpToolError, ValidationError } from "../utils/errors.js";
 import { encodeGraphId } from "../utils/graph-id.js";
 import { idempotencyCache } from "../utils/idempotency.js";
 import { createLogger } from "../utils/logger.js";
 import { toAttendees } from "../utils/recipients.js";
-import { DEFAULT_SELECT, buildSelectParam } from "../utils/response-shaper.js";
+import { buildSelectParam, DEFAULT_SELECT } from "../utils/response-shaper.js";
 import { getUserTimezone } from "../utils/user-settings.js";
 
 const logger = createLogger("tools:calendar-update");

@@ -8,7 +8,7 @@
  * Usage: pnpm run docs:generate
  */
 
-import { readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname;

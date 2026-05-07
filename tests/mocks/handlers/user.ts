@@ -1,5 +1,5 @@
-import { http, type HttpHandler, HttpResponse } from "msw";
 import type { PathParams } from "msw";
+import { type HttpHandler, HttpResponse, http } from "msw";
 
 const GRAPH_BASE = "https://graph.microsoft.com/v1.0";
 

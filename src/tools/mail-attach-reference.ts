@@ -7,7 +7,7 @@ import { AttachReferenceParams } from "../schemas/file-upload.js";
 import type { ToolResult } from "../types/tools.js";
 import { formatPreview } from "../utils/confirmation.js";
 import { resolveDrivePath } from "../utils/drive-path.js";
-import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { formatErrorForUser, McpToolError } from "../utils/errors.js";
 import { formatFileSize } from "../utils/file-size.js";
 import { encodeGraphId } from "../utils/graph-id.js";
 import { idempotencyCache } from "../utils/idempotency.js";

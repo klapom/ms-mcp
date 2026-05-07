@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { ErrorMappingMiddleware } from "../src/middleware/error-mapping.js";
 import { resolveUserPath } from "../src/schemas/common.js";
 import { ReadEmailParams } from "../src/schemas/mail.js";
-import { DEFAULT_SELECT, buildSelectParam, truncateBody } from "../src/utils/response-shaper.js";
+import { buildSelectParam, DEFAULT_SELECT, truncateBody } from "../src/utils/response-shaper.js";
 
 // ---------------------------------------------------------------------------
 // Test helpers

@@ -11,9 +11,9 @@
  * subsequent POSTs to return the first response's payload.
  */
 
-import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
 import type { Middleware } from "@microsoft/microsoft-graph-client";
-import { http, HttpResponse } from "msw";
+import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
+import { HttpResponse, http } from "msw";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { CachingMiddleware } from "../src/middleware/caching-middleware.js";
 import { CacheManager } from "../src/utils/cache.js";

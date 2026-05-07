@@ -1,6 +1,6 @@
 import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { http, HttpResponse } from "msw";
+import { HttpResponse, http } from "msw";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Config } from "../src/config.js";
 import { SearchAllParams } from "../src/schemas/search-advanced.js";

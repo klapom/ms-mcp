@@ -10,7 +10,7 @@
  * - list_attachments + download_attachment registration (Sprint 2.3)
  */
 import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
-import { http, HttpResponse } from "msw";
+import { HttpResponse, http } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ErrorMappingMiddleware } from "../src/middleware/error-mapping.js";
 import { idempotencyCache } from "../src/utils/idempotency.js";

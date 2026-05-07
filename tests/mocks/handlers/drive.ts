@@ -1,4 +1,4 @@
-import { http, HttpResponse } from "msw";
+import { HttpResponse, http } from "msw";
 
 const GRAPH_BASE = "https://graph.microsoft.com/v1.0";
 
@@ -100,7 +100,7 @@ export const driveHandlers = [
   // for non-matching paths. MUST be placed AFTER all specific drive handlers
   // to avoid intercepting them.
   // NOTE: Using http.get with a callback URL resolver
-  http.get(/\/v1\.0\/me\/drive\/root[\/:].+/, ({ request }) => {
+  http.get(/\/v1\.0\/me\/drive\/root[/:].+/, ({ request }) => {
     const url = new URL(request.url);
     const path = url.pathname;
 
