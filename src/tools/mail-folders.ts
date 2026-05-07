@@ -4,11 +4,11 @@ import type { Config } from "../config.js";
 import { resolveUserPath } from "../schemas/common.js";
 import { ListMailFoldersParams } from "../schemas/mail.js";
 import { batchFetchSettled } from "../utils/batch.js";
-import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { formatErrorForUser, McpToolError } from "../utils/errors.js";
 import { encodeGraphId } from "../utils/graph-id.js";
 import { createLogger } from "../utils/logger.js";
 import { fetchPage } from "../utils/pagination.js";
-import { DEFAULT_SELECT, buildSelectParam, shapeListResponse } from "../utils/response-shaper.js";
+import { buildSelectParam, DEFAULT_SELECT, shapeListResponse } from "../utils/response-shaper.js";
 
 const logger = createLogger("tools:mail-folders");
 

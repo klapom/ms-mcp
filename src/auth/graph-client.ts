@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
 import type { Context, Middleware } from "@microsoft/microsoft-graph-client";
+import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
 import { LRUCache } from "lru-cache";
 import { CachingMiddleware } from "../middleware/caching-middleware.js";
 import { CircuitBreakerMiddleware } from "../middleware/circuit-breaker.js";

@@ -1,12 +1,12 @@
 import type { Client } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Config } from "../config.js";
-import { ShareCalendarParams } from "../schemas/calendar-sharing.js";
 import type { ShareCalendarParamsType } from "../schemas/calendar-sharing.js";
+import { ShareCalendarParams } from "../schemas/calendar-sharing.js";
 import { resolveUserPath } from "../schemas/common.js";
 import type { ToolResult } from "../types/tools.js";
 import { checkConfirmation, formatPreview } from "../utils/confirmation.js";
-import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { formatErrorForUser, McpToolError } from "../utils/errors.js";
 import { idempotencyCache } from "../utils/idempotency.js";
 import { createLogger } from "../utils/logger.js";
 

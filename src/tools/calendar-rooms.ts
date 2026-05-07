@@ -7,7 +7,7 @@ import {
   ListMeetingRoomsParams,
 } from "../schemas/calendar-rooms.js";
 import { resolveUserPath } from "../schemas/common.js";
-import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { formatErrorForUser, McpToolError } from "../utils/errors.js";
 import { createLogger } from "../utils/logger.js";
 import { fetchPage } from "../utils/pagination.js";
 import { buildSelectParam, shapeListResponse } from "../utils/response-shaper.js";

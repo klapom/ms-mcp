@@ -2,8 +2,8 @@
  * MSW Handlers for Presence Tools (Sprint 9.4)
  */
 
-import { http, HttpResponse } from "msw";
 import type { PathParams } from "msw";
+import { HttpResponse, http } from "msw";
 
 const GRAPH_BASE_URL = "https://graph.microsoft.com/v1.0";
 

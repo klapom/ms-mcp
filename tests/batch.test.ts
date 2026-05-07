@@ -1,11 +1,11 @@
 import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
 import { describe, expect, it } from "vitest";
 import {
-  type GraphBatchRequest,
-  type GraphBatchResult,
   buildBatchRequest,
   executeBatch,
   formatBatchSummary,
+  type GraphBatchRequest,
+  type GraphBatchResult,
   summarizeBatchResult,
 } from "../src/utils/batch.js";
 

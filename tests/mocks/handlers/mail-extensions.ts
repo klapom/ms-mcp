@@ -1,4 +1,4 @@
-import { http, HttpResponse } from "msw";
+import { HttpResponse, http } from "msw";
 
 const GRAPH_BASE_URL = "https://graph.microsoft.com/v1.0";
 

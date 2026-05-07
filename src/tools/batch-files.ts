@@ -1,13 +1,13 @@
 import type { Client } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Config } from "../config.js";
-import { BatchMoveFilesParams } from "../schemas/batch-operations.js";
 import type { BatchMoveFilesParamsType } from "../schemas/batch-operations.js";
+import { BatchMoveFilesParams } from "../schemas/batch-operations.js";
 import type { ToolResult } from "../types/tools.js";
 import {
-  type GraphBatchRequest,
   executeBatch,
   formatBatchSummary,
+  type GraphBatchRequest,
   summarizeBatchResult,
 } from "../utils/batch.js";
 import { encodeGraphId } from "../utils/graph-id.js";

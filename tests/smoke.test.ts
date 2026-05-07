@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ConfigSchema, loadConfig } from "../src/config.js";
-import { BaseParams, ListParams, WriteParams, resolveUserPath } from "../src/schemas/common.js";
+import { BaseParams, ListParams, resolveUserPath, WriteParams } from "../src/schemas/common.js";
 
 describe("smoke tests", () => {
   describe("config", () => {

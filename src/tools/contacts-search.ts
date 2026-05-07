@@ -3,9 +3,9 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Config } from "../config.js";
 import { resolveUserPath } from "../schemas/common.js";
 import { SearchContactsParams } from "../schemas/contacts.js";
-import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { formatErrorForUser, McpToolError } from "../utils/errors.js";
 import { createLogger } from "../utils/logger.js";
-import { DEFAULT_SELECT, buildSelectParam, shapeListResponse } from "../utils/response-shaper.js";
+import { buildSelectParam, DEFAULT_SELECT, shapeListResponse } from "../utils/response-shaper.js";
 import { isRecordObject } from "../utils/type-guards.js";
 
 const logger = createLogger("tools:contacts-search");

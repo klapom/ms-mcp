@@ -11,6 +11,7 @@ vi.mock("node:fs/promises", () => ({
 }));
 
 vi.mock("../src/auth/msal-client.js", () => ({
+  // vitest 4 requires `function` (or class) for mocks invoked via `new`.
   MsalClient: vi.fn(() => ({
     getAccessToken: mockGetAccessToken,
     getAccessTokenSilentOnly: mockGetAccessTokenSilentOnly,

@@ -3,11 +3,11 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Config } from "../config.js";
 import { resolveUserPath } from "../schemas/common.js";
 import { ListChannelsParams, ListTeamsParams } from "../schemas/teams.js";
-import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { formatErrorForUser, McpToolError } from "../utils/errors.js";
 import { encodeGraphId } from "../utils/graph-id.js";
 import { createLogger } from "../utils/logger.js";
 import { fetchPage } from "../utils/pagination.js";
-import { DEFAULT_SELECT, buildSelectParam } from "../utils/response-shaper.js";
+import { buildSelectParam, DEFAULT_SELECT } from "../utils/response-shaper.js";
 
 const logger = createLogger("tools:teams-list");
 

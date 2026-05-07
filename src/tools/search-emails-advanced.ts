@@ -3,7 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Config } from "../config.js";
 import type { AdvancedSearchEmailsParamsType } from "../schemas/search-advanced.js";
 import { AdvancedSearchEmailsParams } from "../schemas/search-advanced.js";
-import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { formatErrorForUser, McpToolError } from "../utils/errors.js";
 import { sanitizeKqlQuery } from "../utils/kql-builder.js";
 import { createLogger } from "../utils/logger.js";
 import { isRecordObject } from "../utils/type-guards.js";

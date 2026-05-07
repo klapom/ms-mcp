@@ -25,7 +25,8 @@ vi.mock("@azure/msal-node-extensions", () => ({
   FilePersistence: {
     create: vi.fn().mockResolvedValue(mockPersistence),
   },
-  PersistenceCachePlugin: vi.fn().mockReturnValue(mockPlugin),
+  // vitest 4 requires `function` (or class) for mocks invoked via `new`.
+  PersistenceCachePlugin: vi.fn(() => mockPlugin),
 }));
 
 // Suppress pino log output during tests

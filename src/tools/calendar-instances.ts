@@ -4,7 +4,7 @@ import type { Config } from "../config.js";
 import { ListEventInstancesParams } from "../schemas/calendar-recurrence.js";
 import { resolveUserPath } from "../schemas/common.js";
 import { formatDateTimeRange } from "../utils/calendar-format.js";
-import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { formatErrorForUser, McpToolError } from "../utils/errors.js";
 import { encodeGraphId } from "../utils/graph-id.js";
 import { createLogger } from "../utils/logger.js";
 import { fetchPage } from "../utils/pagination.js";

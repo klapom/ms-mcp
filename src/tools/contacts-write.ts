@@ -14,11 +14,11 @@ import {
 } from "../schemas/contacts.js";
 import type { ToolResult } from "../types/tools.js";
 import { checkConfirmation, formatPreview } from "../utils/confirmation.js";
-import { McpToolError, ValidationError, formatErrorForUser } from "../utils/errors.js";
+import { formatErrorForUser, McpToolError, ValidationError } from "../utils/errors.js";
 import { encodeGraphId } from "../utils/graph-id.js";
 import { idempotencyCache } from "../utils/idempotency.js";
 import { createLogger } from "../utils/logger.js";
-import { DEFAULT_SELECT, buildSelectParam } from "../utils/response-shaper.js";
+import { buildSelectParam, DEFAULT_SELECT } from "../utils/response-shaper.js";
 import { isRecordObject } from "../utils/type-guards.js";
 
 const logger = createLogger("tools:contacts-write");

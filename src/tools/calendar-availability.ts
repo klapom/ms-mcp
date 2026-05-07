@@ -3,7 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Config } from "../config.js";
 import { CheckAvailabilityParams } from "../schemas/calendar-write.js";
 import { resolveUserPath } from "../schemas/common.js";
-import { McpToolError, formatErrorForUser } from "../utils/errors.js";
+import { formatErrorForUser, McpToolError } from "../utils/errors.js";
 import { createLogger } from "../utils/logger.js";
 import { isRecordObject } from "../utils/type-guards.js";
 import { getUserTimezone } from "../utils/user-settings.js";

@@ -14,6 +14,8 @@ const mockPca = {
 };
 
 vi.mock("@azure/msal-node", () => ({
+  // vitest 4 requires `function` (or class) for mocks invoked via `new`,
+  // so the arrow-form `() => mockPca` no longer works here.
   PublicClientApplication: vi.fn(() => mockPca),
 }));
 
