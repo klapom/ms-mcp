@@ -21,12 +21,19 @@ const mockPlugin = {
   afterCacheAccess: vi.fn(),
 };
 
+// vitest 4 rejects arrow-function mock implementations when invoked via `new` —
+// PersistenceCachePlugin is constructed. Wrap in a class so the mock has a real prototype.
+class MockPersistenceCachePlugin {
+  constructor() {
+    // biome-ignore lint/correctness/noConstructorReturn: intentional — `new PersistenceCachePlugin()` must yield the shared mockPlugin.
+    return mockPlugin;
+  }
+}
 vi.mock("@azure/msal-node-extensions", () => ({
   FilePersistence: {
     create: vi.fn().mockResolvedValue(mockPersistence),
   },
-  // vitest 4 requires `function` (or class) for mocks invoked via `new`.
-  PersistenceCachePlugin: vi.fn(() => mockPlugin),
+  PersistenceCachePlugin: vi.fn().mockImplementation(MockPersistenceCachePlugin),
 }));
 
 // Suppress pino log output during tests

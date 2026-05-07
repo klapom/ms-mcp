@@ -1,17 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock all middleware and logger to avoid real dependencies.
-// vitest 4 requires `function` (or class) for mocks invoked via `new`.
+// vitest 4 rejects arrow-function mock implementations when invoked via `new` — wrap in
+// classes so the mocks have real prototypes.
+class MockMiddleware {
+  constructor() {
+    // biome-ignore lint/correctness/noConstructorReturn: intentional — fresh setNext/execute per `new` call.
+    return { setNext: vi.fn(), execute: vi.fn() };
+  }
+}
 vi.mock("../src/middleware/logging.js", () => ({
-  LoggingMiddleware: vi.fn(() => ({ setNext: vi.fn(), execute: vi.fn() })),
+  LoggingMiddleware: vi.fn().mockImplementation(MockMiddleware),
 }));
 
 vi.mock("../src/middleware/retry.js", () => ({
-  RetryMiddleware: vi.fn(() => ({ setNext: vi.fn(), execute: vi.fn() })),
+  RetryMiddleware: vi.fn().mockImplementation(MockMiddleware),
 }));
 
 vi.mock("../src/middleware/error-mapping.js", () => ({
-  ErrorMappingMiddleware: vi.fn(() => ({ setNext: vi.fn(), execute: vi.fn() })),
+  ErrorMappingMiddleware: vi.fn().mockImplementation(MockMiddleware),
 }));
 
 vi.mock("../src/utils/logger.js", () => ({

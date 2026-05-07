@@ -10,13 +10,20 @@ vi.mock("node:fs/promises", () => ({
   unlink: (...args: unknown[]) => mockUnlink(...args),
 }));
 
+// vitest 4 rejects arrow-function mock implementations when invoked via `new` (MsalClient
+// is constructed). Wrap in a class so the mock has a real prototype.
+class MockMsalClient {
+  constructor() {
+    // biome-ignore lint/correctness/noConstructorReturn: intentional — `new MsalClient()` must yield the shared instance.
+    return {
+      getAccessToken: mockGetAccessToken,
+      getAccessTokenSilentOnly: mockGetAccessTokenSilentOnly,
+      logout: mockLogout,
+    };
+  }
+}
 vi.mock("../src/auth/msal-client.js", () => ({
-  // vitest 4 requires `function` (or class) for mocks invoked via `new`.
-  MsalClient: vi.fn(() => ({
-    getAccessToken: mockGetAccessToken,
-    getAccessTokenSilentOnly: mockGetAccessTokenSilentOnly,
-    logout: mockLogout,
-  })),
+  MsalClient: vi.fn().mockImplementation(MockMsalClient),
 }));
 
 vi.mock("../src/auth/token-cache.js", () => ({
