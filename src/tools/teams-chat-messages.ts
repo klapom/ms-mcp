@@ -1,9 +1,13 @@
-import type { Client } from "@microsoft/microsoft-graph-client";
+import { type Client, ResponseType } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Config } from "../config.js";
 import { resolveUserPath } from "../schemas/common.js";
 import type { SendChatMessageParamsType } from "../schemas/teams.js";
-import { ListChatMessagesParams, SendChatMessageParams } from "../schemas/teams.js";
+import {
+  GetChatMessageHostedContentParams,
+  ListChatMessagesParams,
+  SendChatMessageParams,
+} from "../schemas/teams.js";
 import type { ToolResult } from "../types/tools.js";
 import { checkConfirmation, formatPreview } from "../utils/confirmation.js";
 import { McpToolError, formatErrorForUser } from "../utils/errors.js";
@@ -22,7 +26,37 @@ function formatMessage(item: Record<string, unknown>): string {
   const created = String(item.createdDateTime ?? "");
   const from = extractSender(item.from);
   const body = extractBody(item.body);
-  return `[${created}] ${from}\n${body}\n  ID: ${id}`;
+  const attachments = formatAttachments(item);
+  const lines = [`[${created}] ${from}`, body, `  ID: ${id}`];
+  if (attachments) lines.push(attachments);
+  return lines.join("\n");
+}
+
+function formatAttachments(item: Record<string, unknown>): string | null {
+  const parts: string[] = [];
+
+  // Inline images / hosted contents (e.g. screenshots pasted into chat).
+  // Graph rejects $expand=hostedContents on /chats messages, so we extract
+  // the IDs from <img src=".../hostedContents/{id}/$value"> tags in the body.
+  // Format: hosted:image:{id} — nanoclaw teams.ts parses this. Mime is
+  // unknown until download (sniffed from magic bytes there).
+  for (const hid of extractHostedContentIds(item.body)) {
+    parts.push(`hosted:image:${hid}`);
+  }
+
+  // File attachments (sharePoint links, files etc.) — surface metadata only.
+  const att = item.attachments;
+  if (Array.isArray(att)) {
+    for (const a of att) {
+      if (!a || typeof a !== "object") continue;
+      const ar = a as Record<string, unknown>;
+      const name = String(ar.name ?? "unknown");
+      const ctype = String(ar.contentType ?? "");
+      parts.push(`file:${ctype}:${name}`);
+    }
+  }
+
+  return parts.length > 0 ? `  Attachments: ${parts.join(", ")}` : null;
 }
 
 function extractSender(from: unknown): string {
@@ -48,6 +82,50 @@ function extractBody(body: unknown): string {
       : content;
   }
   return "";
+}
+
+/**
+ * Extract hostedContents IDs from chat-message body HTML.
+ * Inline images appear as <img src=".../hostedContents/{id}/$value"> tags.
+ * The id segment is URL-encoded base64 — we keep it as-is for the download call.
+ */
+function extractHostedContentIds(body: unknown): string[] {
+  if (!body || typeof body !== "object") return [];
+  const b = body as Record<string, unknown>;
+  if (String(b.contentType ?? "").toLowerCase() !== "html") return [];
+  const html = String(b.content ?? "");
+  const ids: string[] = [];
+  const re = /hostedContents\/([^/"\s)]+)\/\$value/g;
+  for (const match of html.matchAll(re)) {
+    ids.push(match[1]);
+  }
+  return ids;
+}
+
+function sniffImageMime(buf: Buffer): string | null {
+  if (buf.length >= 8 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) {
+    return "image/png";
+  }
+  if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) {
+    return "image/jpeg";
+  }
+  if (buf.length >= 6 && buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46) {
+    return "image/gif";
+  }
+  if (
+    buf.length >= 12 &&
+    buf[0] === 0x52 &&
+    buf[1] === 0x49 &&
+    buf[2] === 0x46 &&
+    buf[3] === 0x46 &&
+    buf[8] === 0x57 &&
+    buf[9] === 0x45 &&
+    buf[10] === 0x42 &&
+    buf[11] === 0x50
+  ) {
+    return "image/webp";
+  }
+  return null;
 }
 
 function buildSendPreview(parsed: SendChatMessageParamsType): ToolResult | null {
@@ -142,6 +220,63 @@ export function registerTeamsChatMessageTools(
           logger.warn(
             { tool: "list_chat_messages", status: error.httpStatus, code: error.code },
             "list_chat_messages failed",
+          );
+          return {
+            content: [{ type: "text" as const, text: formatErrorForUser(error) }],
+            isError: true,
+          };
+        }
+        throw error;
+      }
+    },
+  );
+
+  server.tool(
+    "get_chat_message_hosted_content",
+    "Download a hosted content (e.g. inline image) from a Teams chat message. Returns base64-encoded bytes plus content type. Use the IDs surfaced by list_chat_messages under 'Attachments: hosted:...'.",
+    GetChatMessageHostedContentParams.shape,
+    async (params) => {
+      const startTime = Date.now();
+      try {
+        const parsed = GetChatMessageHostedContentParams.parse(params);
+        const userPath = resolveUserPath(parsed.user_id);
+        const chatId = encodeGraphId(parsed.chat_id);
+        const messageId = encodeGraphId(parsed.message_id);
+        const hcId = encodeGraphId(parsed.hosted_content_id);
+        const url = `${userPath}/chats/${chatId}/messages/${messageId}/hostedContents/${hcId}/$value`;
+
+        const response = (await graphClient
+          .api(url)
+          .responseType(ResponseType.ARRAYBUFFER)
+          .get()) as ArrayBuffer;
+
+        const buf = Buffer.from(response);
+        const base64 = buf.toString("base64");
+        // Graph doesn't return content-type with $value reliably — guess from PNG/JPEG magic bytes.
+        const mime = sniffImageMime(buf) ?? "application/octet-stream";
+
+        logger.info(
+          {
+            tool: "get_chat_message_hosted_content",
+            bytes: buf.length,
+            duration_ms: Date.now() - startTime,
+          },
+          "get_chat_message_hosted_content completed",
+        );
+
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({ mime, base64, bytes: buf.length }),
+            },
+          ],
+        };
+      } catch (error) {
+        if (error instanceof McpToolError) {
+          logger.warn(
+            { tool: "get_chat_message_hosted_content", status: error.httpStatus, code: error.code },
+            "get_chat_message_hosted_content failed",
           );
           return {
             content: [{ type: "text" as const, text: formatErrorForUser(error) }],

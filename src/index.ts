@@ -1,5 +1,9 @@
+import { randomUUID } from "node:crypto";
+import { createServer } from "node:http";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import express from "express";
 import { type GraphClientDeps, getGraphClient } from "./auth/graph-client.js";
 import { MsalClient } from "./auth/msal-client.js";
 import { createCachePlugin } from "./auth/token-cache.js";
@@ -268,12 +272,89 @@ async function main() {
 
   const graphClient = getGraphClient(authDeps, cache);
 
-  for (const register of registrations) {
-    register(server, graphClient, config, authDeps);
-  }
+  const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : undefined;
+  const authToken = process.env.AUTH_TOKEN || undefined;
 
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
+  if (port) {
+    // HTTP mode: Express + stateful session management (equivalent to Python StreamableHTTPSessionManager)
+    const sessions = new Map<string, StreamableHTTPServerTransport>();
+    const app = express();
+    app.use(express.json());
+
+    app.get("/health", (_req, res) => {
+      res.json({ status: "ok", sessions: sessions.size });
+    });
+
+    const isAuthorized = (req: express.Request): boolean => {
+      if (!authToken) return true;
+      return req.headers.authorization === `Bearer ${authToken}`;
+    };
+
+    const handleDelete = async (sessionId: string | undefined): Promise<void> => {
+      if (!sessionId) return;
+      const t = sessions.get(sessionId);
+      if (!t) return;
+      await t.close();
+      sessions.delete(sessionId);
+    };
+
+    const createTransport = async (): Promise<StreamableHTTPServerTransport> => {
+      const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: () => randomUUID(),
+        onsessioninitialized: (id) => {
+          sessions.set(id, transport);
+          logger.info({ sessionId: id }, "MCP session opened");
+        },
+      });
+      transport.onclose = () => {
+        const id = transport.sessionId;
+        if (id) {
+          sessions.delete(id);
+          logger.info({ sessionId: id }, "MCP session closed");
+        }
+      };
+      const sessionServer = new McpServer({ name: "pommer-m365-mcp", version: VERSION });
+      for (const register of registrations) {
+        register(sessionServer, graphClient, config, authDeps);
+      }
+      await sessionServer.connect(transport);
+      return transport;
+    };
+
+    app.all("/mcp", async (req, res) => {
+      if (!isAuthorized(req)) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+
+      const sessionId = req.headers["mcp-session-id"] as string | undefined;
+
+      if (req.method === "DELETE") {
+        await handleDelete(sessionId);
+        res.status(200).end();
+        return;
+      }
+
+      const existing = sessionId ? sessions.get(sessionId) : undefined;
+      const transport = existing ?? (await createTransport());
+      await transport.handleRequest(req, res, req.body);
+    });
+
+    const httpServer = createServer(app);
+    httpServer.listen(port, "0.0.0.0", () => {
+      logger.info({ port }, "ms-mcp HTTP server listening");
+    });
+
+    process.on("SIGTERM", () => shutdown("SIGTERM"));
+    process.on("SIGINT", () => shutdown("SIGINT"));
+  } else {
+    // Stdio mode (default — for Claude Desktop subprocess)
+    for (const register of registrations) {
+      register(server, graphClient, config, authDeps);
+    }
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+  }
   logger.info(
     {
       version: VERSION,

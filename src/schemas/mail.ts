@@ -57,7 +57,14 @@ export const ListMailFoldersParams = ListParams.extend({
   include_children: z
     .boolean()
     .default(false)
-    .describe("If true, also lists subfolders (1 level deep) via $expand=childFolders"),
+    .describe("If true, also lists subfolders (1 level deep) for each top-level folder"),
+  parent_folder_id: z
+    .string()
+    .optional()
+    .describe(
+      "If set, lists only the direct subfolders of this folder instead of top-level folders. " +
+        "Use the folder ID from a previous list_mail_folders call, or a well-known name: inbox, sentitems, drafts, deleteditems, junkemail, archive.",
+    ),
 });
 
 export type ListMailFoldersParamsType = z.infer<typeof ListMailFoldersParams>;

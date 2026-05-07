@@ -95,6 +95,23 @@ export const ListChatMessagesParams = ListParams.extend({
 export type ListChatMessagesParamsType = z.infer<typeof ListChatMessagesParams>;
 
 // ---------------------------------------------------------------------------
+// get_chat_message_hosted_content
+// ---------------------------------------------------------------------------
+
+export const GetChatMessageHostedContentParams = z.object({
+  user_id: z.string().optional().describe("Optional user id (defaults to /me)."),
+  chat_id: z.string().min(1).describe("The ID of the chat."),
+  message_id: z.string().min(1).describe("The ID of the message containing the hosted content."),
+  hosted_content_id: z
+    .string()
+    .min(1)
+    .describe("The ID of the hosted content (e.g. inline image)."),
+});
+export type GetChatMessageHostedContentParamsType = z.infer<
+  typeof GetChatMessageHostedContentParams
+>;
+
+// ---------------------------------------------------------------------------
 // send_chat_message
 // ---------------------------------------------------------------------------
 

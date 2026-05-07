@@ -19,13 +19,20 @@ export function registerMailFolderTools(
 ): void {
   server.tool(
     "list_mail_folders",
-    "List all mail folders in the mailbox. Returns folder name, item counts, and unread counts. Well-known folder names (inbox, sentitems, drafts, deleteditems, junkemail, outbox, archive) can be used as folder IDs in other mail tools. Use include_children=true to also list subfolders (1 level deep).",
+    "List mail folders. Without parent_folder_id: lists all top-level folders. " +
+      "With parent_folder_id: lists direct subfolders of that folder (use this to explore nested folders like Inbox subfolders). " +
+      "Well-known names for parent_folder_id: inbox, sentitems, drafts, deleteditems, junkemail, archive. " +
+      "Use include_children=true (only without parent_folder_id) to expand one level of subfolders for each top-level folder.",
     ListMailFoldersParams.shape,
     async (params) => {
       try {
         const parsed = ListMailFoldersParams.parse(params);
         const userPath = resolveUserPath(parsed.user_id);
-        const url = `${userPath}/mailFolders`;
+
+        // If parent_folder_id is given, directly list that folder's children
+        const url = parsed.parent_folder_id
+          ? `${userPath}/mailFolders/${encodeGraphId(parsed.parent_folder_id)}/childFolders`
+          : `${userPath}/mailFolders`;
 
         const page = await fetchPage<Record<string, unknown>>(graphClient, url, {
           top: parsed.top ?? config.limits.maxItems,
@@ -33,10 +40,10 @@ export function registerMailFolderTools(
           select: buildSelectParam(DEFAULT_SELECT.mailFolder),
         });
 
-        // If include_children is true, fetch child folders for each folder
+        // include_children only applies when listing top-level folders
         let items = page.items;
         let failedCount = 0;
-        if (parsed.include_children) {
+        if (!parsed.parent_folder_id && parsed.include_children) {
           const result = await expandChildFolders(graphClient, userPath, items);
           items = result.expanded;
           failedCount = result.failedCount;
@@ -56,7 +63,11 @@ export function registerMailFolderTools(
         const text = lines.join("\n");
 
         logger.info(
-          { tool: "list_mail_folders", folderCount: shaped.length },
+          {
+            tool: "list_mail_folders",
+            folderCount: shaped.length,
+            parentFolderId: parsed.parent_folder_id,
+          },
           "list_mail_folders completed",
         );
 
@@ -86,12 +97,15 @@ async function expandChildFolders(
   );
 
   // Fetch all child folders in parallel with graceful error handling
+  // Use top=100 to ensure ALL child folders are fetched in one request —
+  // the default Graph API page size for childFolders is 10, which caused
+  // subfolders beyond the first 10 to silently disappear.
   const { results, failedCount } = await batchFetchSettled(
     foldersWithChildren.map((folder) =>
       fetchPage<Record<string, unknown>>(
         client,
         `${userPath}/mailFolders/${encodeGraphId(folder.id as string)}/childFolders`,
-        { select: buildSelectParam(DEFAULT_SELECT.mailFolder) },
+        { select: buildSelectParam(DEFAULT_SELECT.mailFolder), top: 100 },
       ).then((page) => ({
         parentId: folder.id as string,
         parentName: folder.displayName,
