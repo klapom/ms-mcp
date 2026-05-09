@@ -124,6 +124,15 @@ export const SendEmailParams = WriteParams.extend({
     .boolean()
     .default(true)
     .describe("Save email to Sent Items (default: true)"),
+  headers: z
+    .record(z.string(), z.string())
+    .optional()
+    .refine((h) => h === undefined || Object.keys(h).every((name) => name.startsWith("X-")), {
+      message: "All header names must start with 'X-' per RFC 5322",
+    })
+    .describe(
+      'Custom internet message headers (e.g. {"X-Pommer-Agent-Hops": "1"}). Header names must start with \'X-\' per RFC 5322.',
+    ),
 });
 
 export type SendEmailParamsType = z.infer<typeof SendEmailParams>;

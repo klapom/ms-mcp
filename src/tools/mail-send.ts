@@ -32,6 +32,10 @@ function computeDuplicateHash(to: string[], subject: string, body: string): stri
 }
 
 function buildSendPreview(parsed: SendEmailParamsType): ToolResult | null {
+  const headerKeys =
+    parsed.headers && Object.keys(parsed.headers).length > 0
+      ? Object.keys(parsed.headers).join(", ")
+      : undefined;
   const preview = checkConfirmation(
     "destructive",
     parsed.confirm,
@@ -44,6 +48,7 @@ function buildSendPreview(parsed: SendEmailParamsType): ToolResult | null {
       Format: parsed.body_type,
       Importance: parsed.importance,
       "Save to sent items": parsed.save_to_sent_items ? "Yes" : "No",
+      "Custom headers": headerKeys,
     }),
   );
   if (preview) {
@@ -60,7 +65,8 @@ function checkDuplicate(to: string[], subject: string, body: string): string {
   return isDuplicate ? "\n⚠ Possible duplicate detected: A similar email was sent recently." : "";
 }
 
-function buildGraphRequestBody(parsed: SendEmailParamsType): Record<string, unknown> {
+/** Exposed for testing only. */
+export function buildGraphRequestBody(parsed: SendEmailParamsType): Record<string, unknown> {
   const messageBody: Record<string, unknown> = {
     subject: parsed.subject,
     body: {
@@ -75,6 +81,12 @@ function buildGraphRequestBody(parsed: SendEmailParamsType): Record<string, unkn
   }
   if (parsed.bcc && parsed.bcc.length > 0) {
     messageBody.bccRecipients = toRecipients(parsed.bcc);
+  }
+  if (parsed.headers && Object.keys(parsed.headers).length > 0) {
+    messageBody.internetMessageHeaders = Object.entries(parsed.headers).map(([name, value]) => ({
+      name,
+      value,
+    }));
   }
   return { message: messageBody, saveToSentItems: parsed.save_to_sent_items };
 }

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ErrorMappingMiddleware } from "../src/middleware/error-mapping.js";
 import { resolveUserPath } from "../src/schemas/common.js";
 import { SendEmailParams } from "../src/schemas/mail.js";
+import { buildGraphRequestBody } from "../src/tools/mail-send.js";
 import { idempotencyCache } from "../src/utils/idempotency.js";
 import { toRecipients } from "../src/utils/recipients.js";
 import { server as mswServer } from "./mocks/server.js";
@@ -456,6 +457,183 @@ describe("send_email", () => {
       expect(msg.bccRecipients).toEqual([{ emailAddress: { address: "bcc@example.com" } }]);
       expect(msg.importance).toBe("high");
       expect(capturedBody?.saveToSentItems).toBe(false);
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Custom headers — schema validation
+  // -----------------------------------------------------------------------
+  describe("custom headers — schema", () => {
+    it("should accept valid X-prefixed headers", () => {
+      const result = SendEmailParams.safeParse({
+        to: ["a@b.com"],
+        subject: "Test",
+        body: "Hello",
+        headers: { "X-Pommer-Agent-Hops": "1", "X-Custom-Tag": "foo" },
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.headers).toEqual({ "X-Pommer-Agent-Hops": "1", "X-Custom-Tag": "foo" });
+      }
+    });
+
+    it("should reject headers without X- prefix", () => {
+      const result = SendEmailParams.safeParse({
+        to: ["a@b.com"],
+        subject: "Test",
+        body: "Hello",
+        headers: { "Content-Type": "text/plain" },
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain("X-");
+      }
+    });
+
+    it("should reject mixed valid/invalid header names", () => {
+      const result = SendEmailParams.safeParse({
+        to: ["a@b.com"],
+        subject: "Test",
+        body: "Hello",
+        headers: { "X-Valid": "ok", NoPrefix: "bad" },
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("should accept undefined headers (field is optional)", () => {
+      const result = SendEmailParams.safeParse({
+        to: ["a@b.com"],
+        subject: "Test",
+        body: "Hello",
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.headers).toBeUndefined();
+      }
+    });
+
+    it("should roundtrip headers through schema parse", () => {
+      const input = {
+        to: ["a@b.com"],
+        subject: "Roundtrip",
+        body: "Body",
+        headers: { "X-Pommer-Agent-Hops": "3" },
+      };
+      const parsed = SendEmailParams.parse(input);
+      expect(parsed.headers).toEqual({ "X-Pommer-Agent-Hops": "3" });
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Custom headers — buildGraphRequestBody unit tests
+  // -----------------------------------------------------------------------
+  describe("custom headers — buildGraphRequestBody", () => {
+    const baseParams = SendEmailParams.parse({
+      to: ["a@b.com"],
+      subject: "Test",
+      body: "Hello",
+      confirm: true,
+    });
+
+    it("should produce internetMessageHeaders array with correct shape", () => {
+      const params = SendEmailParams.parse({
+        to: ["a@b.com"],
+        subject: "Test",
+        body: "Hello",
+        confirm: true,
+        headers: { "X-Pommer-Agent-Hops": "1", "X-Origin": "agent" },
+      });
+      const body = buildGraphRequestBody(params);
+      const msg = body.message as Record<string, unknown>;
+      expect(msg.internetMessageHeaders).toEqual([
+        { name: "X-Pommer-Agent-Hops", value: "1" },
+        { name: "X-Origin", value: "agent" },
+      ]);
+    });
+
+    it("should not include internetMessageHeaders when headers is undefined", () => {
+      const body = buildGraphRequestBody(baseParams);
+      const msg = body.message as Record<string, unknown>;
+      expect(Object.hasOwn(msg, "internetMessageHeaders")).toBe(false);
+    });
+
+    it("should not include internetMessageHeaders when headers is empty object", () => {
+      const params = { ...baseParams, headers: {} };
+      const body = buildGraphRequestBody(params);
+      const msg = body.message as Record<string, unknown>;
+      expect(Object.hasOwn(msg, "internetMessageHeaders")).toBe(false);
+    });
+
+    it("should preserve all other message fields when headers are present", () => {
+      const params = SendEmailParams.parse({
+        to: ["a@b.com"],
+        subject: "Test",
+        body: "Hello",
+        confirm: true,
+        importance: "high",
+        headers: { "X-Pommer-Agent-Hops": "2" },
+      });
+      const body = buildGraphRequestBody(params);
+      const msg = body.message as Record<string, unknown>;
+      expect(msg.subject).toBe("Test");
+      expect(msg.importance).toBe("high");
+      expect(msg.internetMessageHeaders).toHaveLength(1);
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Custom headers — integration (MSW capture via buildGraphRequestBody)
+  // -----------------------------------------------------------------------
+  describe("custom headers — Graph API integration", () => {
+    let client: Client;
+    let capturedBody: Record<string, unknown> | null;
+
+    beforeEach(() => {
+      client = Client.initWithMiddleware({
+        middleware: new HTTPMessageHandler(),
+        defaultVersion: "v1.0",
+      });
+      capturedBody = null;
+
+      mswServer.use(
+        http.post("https://graph.microsoft.com/v1.0/me/sendMail", async ({ request }) => {
+          capturedBody = (await request.json()) as Record<string, unknown>;
+          return new HttpResponse(null, { status: 202 });
+        }),
+      );
+    });
+
+    it("should send internetMessageHeaders to Graph API when headers provided", async () => {
+      const params = SendEmailParams.parse({
+        to: ["to@example.com"],
+        subject: "Headers Test",
+        body: "Hello",
+        confirm: true,
+        headers: { "X-Pommer-Agent-Hops": "1" },
+      });
+      const requestBody = buildGraphRequestBody(params);
+
+      await client.api("/me/sendMail").post(requestBody);
+
+      expect(capturedBody).not.toBeNull();
+      const msg = capturedBody?.message as Record<string, unknown>;
+      expect(msg.internetMessageHeaders).toEqual([{ name: "X-Pommer-Agent-Hops", value: "1" }]);
+    });
+
+    it("should not send internetMessageHeaders when headers omitted", async () => {
+      const params = SendEmailParams.parse({
+        to: ["to@example.com"],
+        subject: "No Headers",
+        body: "Hello",
+        confirm: true,
+      });
+      const requestBody = buildGraphRequestBody(params);
+
+      await client.api("/me/sendMail").post(requestBody);
+
+      expect(capturedBody).not.toBeNull();
+      const msg = capturedBody?.message as Record<string, unknown>;
+      expect(Object.hasOwn(msg, "internetMessageHeaders")).toBe(false);
     });
   });
 });
