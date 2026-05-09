@@ -24,7 +24,9 @@ export class AuthTokenError extends Error {
 const DEFAULT_SCOPES = [
   "User.Read",
   "Mail.ReadWrite",
+  "Mail.ReadWrite.Shared", // Sovereign-S2: persona shared-mailbox read access
   "Mail.Send",
+  "Mail.Send.Shared", // Sovereign-S2: send-as / send-on-behalf for personas
   "Calendars.ReadWrite",
   "Calendars.ReadWrite.Shared", // Phase 8.3: share_calendar
   "Place.Read.All", // Phase 8.3: list_rooms (was missing — 403 without this)
