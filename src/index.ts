@@ -6,7 +6,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import express from "express";
 import { GatewayJwtVerifier } from "./auth/gateway-jwt.js";
 import { type GraphClientDeps, getGraphClient } from "./auth/graph-client.js";
-import { createAuthMiddleware } from "./auth/http-auth-middleware.js";
+import { createAuthMiddleware, isBearerAuthorized } from "./auth/http-auth-middleware.js";
 import { MsalClient } from "./auth/msal-client.js";
 import { withPersonaCapabilityGate } from "./auth/persona-pinning.js";
 import { createCachePlugin } from "./auth/token-cache.js";
@@ -279,6 +279,7 @@ async function main() {
 
   const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : undefined;
   const authToken = config.gateway.authToken || undefined;
+  const bootAuthToken = config.gateway.bootAuthToken || undefined;
   const jwtMode = config.gateway.jwtMode;
 
   if (port) {
@@ -304,13 +305,21 @@ async function main() {
     const authMiddleware = createAuthMiddleware({
       mode: jwtMode,
       authToken,
+      bootAuthToken,
       verifier: jwtVerifier,
       logger,
     });
 
+    // Legacy gate — the sole access control in `off`/`shadow` mode (see
+    // authMiddleware's docstring). Accepts either the operator token or the
+    // boot token (so the gateway's boot-time `tools/list` enumeration can pass
+    // with only the low-privilege boot token, never the operator token).
+    // When NEITHER token is configured, the gate stays fully open — today's
+    // pre-existing "no AUTH_TOKEN set" behavior — but as soon as either token
+    // is configured, only a matching bearer authorizes.
     const isAuthorized = (req: express.Request): boolean => {
-      if (!authToken) return true;
-      return req.headers.authorization === `Bearer ${authToken}`;
+      if (!authToken && !bootAuthToken) return true;
+      return isBearerAuthorized(req.headers.authorization, [authToken, bootAuthToken]);
     };
 
     const handleDelete = async (sessionId: string | undefined): Promise<void> => {

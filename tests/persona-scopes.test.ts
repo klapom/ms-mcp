@@ -2,6 +2,7 @@ import { fileURLToPath } from "node:url";
 import type { Client } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { BOOT_PERSONA_KEY } from "../src/auth/http-auth-middleware.js";
 import {
   enforceToolCapability,
   findToolsMissingCapability,
@@ -278,6 +279,20 @@ describe("enforceToolCapability", () => {
 
   it("unknown persona is denied for any gated tool", () => {
     expect(() => enforceToolCapability("list_files", id("mallory"))).toThrow(/not authorized/);
+  });
+
+  it("the boot identity (__boot__) is denied for any gated tool — deliberately absent from persona-scopes.json", () => {
+    // BOOT_PERSONA_KEY is a real, distinct identity (unlike __operator__ it is
+    // NOT special-cased anywhere in persona-pinning.ts), so it falls through
+    // to the same fail-closed "unknown persona" 403 as any other key with no
+    // scope-table entry. This is what makes the boot token safe: it can
+    // authenticate (via BOOT_AUTH_TOKEN) but can never pass a capability gate.
+    expect(() => enforceToolCapability("send_email", id(BOOT_PERSONA_KEY))).toThrow(
+      /not authorized/,
+    );
+    expect(() => enforceToolCapability("list_files", id(BOOT_PERSONA_KEY))).toThrow(
+      /not authorized/,
+    );
   });
 });
 

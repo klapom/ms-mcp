@@ -31,6 +31,12 @@ const ConfigSchema = z
         // Operator bearer token for direct/local HTTP access. Absent unless set
         // in the environment; never defaulted.
         authToken: z.string().optional(),
+        // Dedicated, deliberately powerless boot bearer token for the
+        // gateway's boot-time tool-catalog enumeration (`tools/list`, no
+        // persona context). Absent unless set in the environment; never
+        // defaulted, and its absence never widens access — see
+        // `BOOT_PERSONA_KEY` in `auth/http-auth-middleware.ts`.
+        bootAuthToken: z.string().optional(),
         // Gateway base URL for JWT issuer match + JWKS fetch (`<issuer>/jwks.json`).
         issuer: z.string().optional(),
         jwtAudience: z.string().default("pommer-m365-mcp"),
@@ -84,6 +90,7 @@ export function loadConfig(): Config {
     },
     gateway: {
       authToken: process.env.AUTH_TOKEN,
+      bootAuthToken: process.env.BOOT_AUTH_TOKEN,
       issuer: process.env.GATEWAY_ISSUER,
       jwtAudience: process.env.GATEWAY_JWT_AUDIENCE ?? "pommer-m365-mcp",
       jwtMode: process.env.GATEWAY_JWT_MODE ?? "off",

@@ -14,17 +14,23 @@ import express from "express";
 import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
 import type { VerifyResult } from "../src/auth/gateway-jwt.js";
-import { createAuthMiddleware, type JwtVerifierLike } from "../src/auth/http-auth-middleware.js";
+import {
+  createAuthMiddleware,
+  isBearerAuthorized,
+  type JwtVerifierLike,
+} from "../src/auth/http-auth-middleware.js";
 import { getCallerIdentity } from "../src/auth/request-identity.js";
 
 const GATEWAY_HEADER = "X-Pommer-Gateway-Jwt";
 const OPERATOR_TOKEN = "operator-secret-token";
+const BOOT_TOKEN = "boot-secret-token";
 
 type Mode = "off" | "shadow" | "enforce";
 
 interface HarnessOptions {
   mode: Mode;
   authToken?: string;
+  bootAuthToken?: string;
   verify?: JwtVerifierLike["verify"];
   /** Optional delay (ms) inside the downstream probe before reading identity. */
   probeDelayMs?: number;
@@ -53,6 +59,7 @@ function makeHarness(opts: HarnessOptions): Harness {
   const middleware = createAuthMiddleware({
     mode: opts.mode,
     authToken: opts.authToken,
+    bootAuthToken: opts.bootAuthToken,
     verifier,
     logger,
   });
@@ -60,9 +67,12 @@ function makeHarness(opts: HarnessOptions): Harness {
   // Spy standing in for the real MCP transport handler.
   const downstream = vi.fn();
 
+  // Mirrors src/index.ts's `isAuthorized`: open when NEITHER token is
+  // configured (today's pre-existing "no AUTH_TOKEN" behavior); otherwise
+  // either configured token authorizes, via constant-time comparison.
   const isAuthorized = (req: express.Request): boolean => {
-    if (!opts.authToken) return true;
-    return req.headers.authorization === `Bearer ${opts.authToken}`;
+    if (!opts.authToken && !opts.bootAuthToken) return true;
+    return isBearerAuthorized(req.headers.authorization, [opts.authToken, opts.bootAuthToken]);
   };
 
   const app = express();
@@ -216,6 +226,118 @@ describe("enforce mode", () => {
     expect(res.status).toBe(200);
     expect(h.downstream).toHaveBeenCalledWith("DELETE");
     expect(res.body.identity).toEqual({ personaKey: "__operator__", sub: "__operator__" });
+  });
+});
+
+describe("boot bearer token", () => {
+  it("enforce: correct boot bearer → 200, identity is __boot__ (not __operator__)", async () => {
+    const h = makeHarness({ mode: "enforce", bootAuthToken: BOOT_TOKEN });
+    const res = await request(h.app)
+      .post("/mcp")
+      .set("Authorization", `Bearer ${BOOT_TOKEN}`)
+      .send({ jsonrpc: "2.0", method: "tools/list", id: 1 });
+
+    expect(res.status).toBe(200);
+    expect(h.downstream).toHaveBeenCalledTimes(1);
+    expect(res.body.identity).toEqual({ personaKey: "__boot__", sub: "__boot__" });
+  });
+
+  it("off: a tools/list-shaped request succeeds with ONLY the boot token — no operator token, no JWT", async () => {
+    const h = makeHarness({ mode: "off", bootAuthToken: BOOT_TOKEN });
+    const res = await request(h.app)
+      .post("/mcp")
+      .set("Authorization", `Bearer ${BOOT_TOKEN}`)
+      .send({ jsonrpc: "2.0", method: "tools/list", id: 1 });
+
+    expect(res.status).toBe(200);
+    expect(h.downstream).toHaveBeenCalledTimes(1);
+    // off never binds any identity.
+    expect(res.body.identity).toBeNull();
+  });
+
+  it("shadow: a tools/list-shaped request succeeds with ONLY the boot token, with no identity bound", async () => {
+    const h = makeHarness({ mode: "shadow", bootAuthToken: BOOT_TOKEN });
+    const res = await request(h.app)
+      .post("/mcp")
+      .set("Authorization", `Bearer ${BOOT_TOKEN}`)
+      .send({ jsonrpc: "2.0", method: "tools/list", id: 1 });
+
+    expect(res.status).toBe(200);
+    expect(h.downstream).toHaveBeenCalledTimes(1);
+    // shadow never binds any identity — same contract as the operator path.
+    expect(res.body.identity).toBeNull();
+  });
+
+  it("the boot token does NOT yield the operator identity, and the operator token does NOT yield the boot identity", async () => {
+    const h = makeHarness({
+      mode: "enforce",
+      authToken: OPERATOR_TOKEN,
+      bootAuthToken: BOOT_TOKEN,
+    });
+
+    const asBoot = await request(h.app)
+      .post("/mcp")
+      .set("Authorization", `Bearer ${BOOT_TOKEN}`)
+      .send({ jsonrpc: "2.0", method: "tools/list", id: 1 });
+    expect(asBoot.status).toBe(200);
+    expect(asBoot.body.identity).toEqual({ personaKey: "__boot__", sub: "__boot__" });
+
+    const asOperator = await request(h.app)
+      .post("/mcp")
+      .set("Authorization", `Bearer ${OPERATOR_TOKEN}`)
+      .send({ jsonrpc: "2.0", method: "tools/list", id: 2 });
+    expect(asOperator.status).toBe(200);
+    expect(asOperator.body.identity).toEqual({ personaKey: "__operator__", sub: "__operator__" });
+  });
+
+  it("operator bearer behavior is completely unchanged by the boot token's presence", async () => {
+    const h = makeHarness({
+      mode: "enforce",
+      authToken: OPERATOR_TOKEN,
+      bootAuthToken: BOOT_TOKEN,
+    });
+    const res = await request(h.app)
+      .post("/mcp")
+      .set("Authorization", `Bearer ${OPERATOR_TOKEN}`)
+      .send({ jsonrpc: "2.0", method: "ping", id: 1 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.identity).toEqual({ personaKey: "__operator__", sub: "__operator__" });
+  });
+
+  it("enforce: a WRONG boot token (right shape, wrong value) falls through to the JWT path → 401 with no JWT", async () => {
+    const h = makeHarness({ mode: "enforce", bootAuthToken: BOOT_TOKEN });
+    const wrong = "x".repeat(BOOT_TOKEN.length);
+    expect(wrong).not.toBe(BOOT_TOKEN);
+    const res = await request(h.app)
+      .post("/mcp")
+      .set("Authorization", `Bearer ${wrong}`)
+      .send({ jsonrpc: "2.0", method: "tools/list", id: 1 });
+
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual({
+      jsonrpc: "2.0",
+      error: { code: -32000, message: expect.stringContaining("Unauthorized") },
+      id: null,
+    });
+    expect(h.downstream).not.toHaveBeenCalled();
+  });
+
+  it("BOOT_AUTH_TOKEN unset: the boot-bearer path never matches ANY presented value — fails closed, not open", async () => {
+    // No bootAuthToken configured. Presenting literally any bearer (including
+    // what would elsewhere be a plausible boot token) must NOT authenticate —
+    // absence must disable the check, never widen access.
+    const h = makeHarness({ mode: "enforce" });
+    const attempts = ["", "anything", BOOT_TOKEN, "undefined", "null"];
+
+    for (const presented of attempts) {
+      const res = await request(h.app)
+        .post("/mcp")
+        .set("Authorization", `Bearer ${presented}`)
+        .send({ jsonrpc: "2.0", method: "tools/list", id: 1 });
+      expect(res.status).toBe(401);
+    }
+    expect(h.downstream).not.toHaveBeenCalled();
   });
 });
 
@@ -448,5 +570,45 @@ describe("AsyncLocalStorage isolation between concurrent requests", () => {
     expect(resB.status).toBe(200);
     expect(resA.body.identity).toEqual({ personaKey: "alice", sub: "pat:alice" });
     expect(resB.body.identity).toEqual({ personaKey: "bob", sub: "pat:bob" });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// isBearerAuthorized — the extracted, directly-testable core of index.ts's
+// legacy `isAuthorized` gate (the sole access control in off/shadow mode).
+// ---------------------------------------------------------------------------
+
+describe("isBearerAuthorized", () => {
+  it("accepts a bearer matching the FIRST candidate token", () => {
+    expect(isBearerAuthorized(`Bearer ${OPERATOR_TOKEN}`, [OPERATOR_TOKEN, BOOT_TOKEN])).toBe(true);
+  });
+
+  it("accepts a bearer matching the SECOND candidate token", () => {
+    expect(isBearerAuthorized(`Bearer ${BOOT_TOKEN}`, [OPERATOR_TOKEN, BOOT_TOKEN])).toBe(true);
+  });
+
+  it("rejects a bearer matching neither candidate", () => {
+    expect(isBearerAuthorized("Bearer nope", [OPERATOR_TOKEN, BOOT_TOKEN])).toBe(false);
+  });
+
+  it("rejects a missing Authorization header", () => {
+    expect(isBearerAuthorized(undefined, [OPERATOR_TOKEN, BOOT_TOKEN])).toBe(false);
+  });
+
+  it("rejects a non-Bearer Authorization header", () => {
+    expect(isBearerAuthorized(`Basic ${OPERATOR_TOKEN}`, [OPERATOR_TOKEN, BOOT_TOKEN])).toBe(false);
+  });
+
+  it("an absent/undefined candidate never matches anything, including an empty presented token", () => {
+    // Confirms the fail-closed shape required of BOOT_AUTH_TOKEN when unset:
+    // undefined in the candidate list must never become "matches everything".
+    expect(isBearerAuthorized("Bearer ", [undefined, undefined])).toBe(false);
+    expect(isBearerAuthorized("Bearer anything", [OPERATOR_TOKEN, undefined])).toBe(false);
+  });
+
+  it("checks every candidate (no short-circuit) — both a match and a non-match candidate can coexist", () => {
+    // Presented token matches the second candidate only; the first candidate
+    // (a definite non-match) must not affect the outcome.
+    expect(isBearerAuthorized(`Bearer ${BOOT_TOKEN}`, ["definitely-wrong", BOOT_TOKEN])).toBe(true);
   });
 });

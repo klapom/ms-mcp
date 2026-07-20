@@ -2,10 +2,12 @@
  * HTTP request-authentication middleware (Unit B4).
  *
  * Sits in front of the `/mcp` route(s) and, depending on `GATEWAY_JWT_MODE`,
- * authenticates each request via either the operator bearer token (`AUTH_TOKEN`)
- * or a gateway-minted upstream JWT (`X-Pommer-Gateway-Jwt`, verified by
- * {@link GatewayJwtVerifier}). On success the resolved caller identity is bound
- * for the downstream handler through {@link runWithIdentity}.
+ * authenticates each request via the operator bearer token (`AUTH_TOKEN`), the
+ * dedicated low-privilege boot bearer token (`BOOT_AUTH_TOKEN`, see
+ * {@link BOOT_PERSONA_KEY}), or a gateway-minted upstream JWT
+ * (`X-Pommer-Gateway-Jwt`, verified by {@link GatewayJwtVerifier}). On success
+ * the resolved caller identity is bound for the downstream handler through
+ * {@link runWithIdentity}.
  *
  * Mode semantics:
  *  - `off`     — true no-op: `next()` immediately, behavior unchanged (the
@@ -31,6 +33,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import type { NextFunction, RequestHandler, Response } from "express";
 import type { VerifyResult } from "./gateway-jwt.js";
+import type { CallerIdentity } from "./request-identity.js";
 import { runWithIdentity } from "./request-identity.js";
 
 /** The header the gateway stamps its minted upstream JWT into (see `mcp-gateway`). */
@@ -39,6 +42,19 @@ export const GATEWAY_JWT_HEADER = "x-pommer-gateway-jwt";
 /** Identity assigned to a request authenticated with the operator bearer token. */
 export const OPERATOR_PERSONA_KEY = "__operator__";
 export const OPERATOR_SUB = "__operator__";
+
+/**
+ * Identity assigned to a request authenticated with the dedicated boot bearer
+ * token (`BOOT_AUTH_TOKEN`). Deliberately powerless: unlike
+ * {@link OPERATOR_PERSONA_KEY}, `__boot__` has no entry in
+ * `config/persona-scopes.json`, so `persona-pinning.ts`'s fail-closed default
+ * denies every `tools/call` made under this identity in `enforce` mode — it
+ * exists solely so `mcp-gateway`'s boot-time tool-catalog enumeration
+ * (`tools/list`, no persona context) can authenticate without being handed the
+ * operator token's unrestricted bypass.
+ */
+export const BOOT_PERSONA_KEY = "__boot__";
+export const BOOT_SUB = "__boot__";
 
 /** JSON-RPC generic server-error code used by the MCP transport for its own errors. */
 const JSONRPC_SERVER_ERROR = -32000;
@@ -57,8 +73,15 @@ export interface WarnLogger {
 
 export interface AuthMiddlewareOptions {
   mode: GatewayJwtMode;
-  /** Operator bearer token; when absent, bearer auth is disabled. */
+  /** Operator bearer token; when absent, operator bearer auth is disabled. */
   authToken?: string;
+  /**
+   * Boot bearer token (`BOOT_AUTH_TOKEN`) — a separate, deliberately powerless
+   * credential for `mcp-gateway`'s boot-time tool-catalog enumeration. When
+   * absent, the boot-bearer path never matches (fail-closed: unset means
+   * "this credential is disabled", never "any caller passes").
+   */
+  bootAuthToken?: string;
   /** Gateway JWT verifier; required unless `mode` is `off`. */
   verifier?: JwtVerifierLike;
   logger?: WarnLogger;
@@ -81,14 +104,41 @@ function jsonRpcError(message: string): {
  * length check guards the (cryptographically negligible) collision case without
  * short-circuiting on length before the constant-time step.
  */
-function constantTimeEqual(a: string, b: string): boolean {
+export function constantTimeEqual(a: string, b: string): boolean {
   const ah = createHash("sha256").update(a).digest();
   const bh = createHash("sha256").update(b).digest();
   return timingSafeEqual(ah, bh) && a.length === b.length;
 }
 
+/**
+ * Legacy bearer-token authorization check used by the `/mcp` route's
+ * pre-middleware `isAuthorized` gate (`src/index.ts`) — the sole access
+ * control in `off`/`shadow` mode. Accepts any of `tokens` as a valid bearer,
+ * via constant-time comparison against each configured (non-empty) candidate;
+ * an absent/empty candidate never matches anything (fail-closed — an unset
+ * token disables only *that* credential, it never widens access). Every
+ * candidate is checked, never short-circuited, so which candidate (if any)
+ * matched is not observable via timing.
+ */
+export function isBearerAuthorized(
+  authorizationHeader: string | undefined,
+  tokens: ReadonlyArray<string | undefined>,
+): boolean {
+  if (typeof authorizationHeader !== "string" || !authorizationHeader.startsWith("Bearer ")) {
+    return false;
+  }
+  const presented = authorizationHeader.slice("Bearer ".length);
+  let authorized = false;
+  for (const token of tokens) {
+    if (token && constantTimeEqual(presented, token)) {
+      authorized = true;
+    }
+  }
+  return authorized;
+}
+
 export function createAuthMiddleware(options: AuthMiddlewareOptions): RequestHandler {
-  const { mode, authToken, verifier, logger } = options;
+  const { mode, authToken, bootAuthToken, verifier, logger } = options;
 
   if (mode !== "off" && !verifier) {
     throw new Error(
@@ -100,15 +150,16 @@ export function createAuthMiddleware(options: AuthMiddlewareOptions): RequestHan
     logger?.warn({ reason }, "gateway_jwt.shadow_reject");
   };
 
-  // Proceed as the operator after a matching bearer token. In `shadow` nothing
-  // is bound (the legacy AUTH_TOKEN gate in the route is the real access
-  // control, exactly as in `off`); only `enforce` binds the operator identity.
-  const enterAsOperator = (next: NextFunction): void => {
+  // Proceed as a fixed synthetic identity after a matching bearer token
+  // (operator or boot). In `shadow` nothing is bound (the legacy AUTH_TOKEN
+  // gate in the route is the real access control, exactly as in `off`); only
+  // `enforce` binds the identity.
+  const enterAs = (identity: CallerIdentity, next: NextFunction): void => {
     if (mode === "shadow") {
       next();
       return;
     }
-    runWithIdentity({ personaKey: OPERATOR_PERSONA_KEY, sub: OPERATOR_SUB }, () => next());
+    runWithIdentity(identity, () => next());
   };
 
   // Handle a settled verification. In `enforce` a bad/unavailable outcome blocks
@@ -171,13 +222,25 @@ export function createAuthMiddleware(options: AuthMiddlewareOptions): RequestHan
     if (authToken && typeof authz === "string" && authz.startsWith("Bearer ")) {
       const presented = authz.slice("Bearer ".length);
       if (constantTimeEqual(presented, authToken)) {
-        enterAsOperator(next);
+        enterAs({ personaKey: OPERATOR_PERSONA_KEY, sub: OPERATOR_SUB }, next);
+        return;
+      }
+      // Wrong bearer: fall through (to the boot check, then the JWT path,
+      // which will 401 if no JWT).
+    }
+
+    // 2) Boot bearer token — a genuinely separate credential from the operator
+    // token: presenting it never yields the operator identity, and vice versa.
+    if (bootAuthToken && typeof authz === "string" && authz.startsWith("Bearer ")) {
+      const presented = authz.slice("Bearer ".length);
+      if (constantTimeEqual(presented, bootAuthToken)) {
+        enterAs({ personaKey: BOOT_PERSONA_KEY, sub: BOOT_SUB }, next);
         return;
       }
       // Wrong bearer: fall through to the JWT path (which will 401 if no JWT).
     }
 
-    // 2) Gateway-minted upstream JWT.
+    // 3) Gateway-minted upstream JWT.
     const rawJwt = req.headers[GATEWAY_JWT_HEADER];
     const jwt = Array.isArray(rawJwt) ? rawJwt[0] : rawJwt;
 
