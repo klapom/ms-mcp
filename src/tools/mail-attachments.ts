@@ -73,7 +73,7 @@ async function handleListAttachments(
   return { content: [{ type: "text", text: lines.join("\n") }] };
 }
 
-interface AttachmentMetadata {
+export interface AttachmentMetadata {
   "@odata.type": string;
   name: string;
   contentType: string;
@@ -147,14 +147,30 @@ function buildDownloadResult(full: FileAttachmentFull, warning: string | null): 
   return { content: [{ type: "text", text: parts.join("\n") }] };
 }
 
-async function handleDownloadAttachment(
+export interface DownloadAttachmentTarget {
+  message_id: string;
+  attachment_id: string;
+  user_id?: string;
+}
+
+export type FetchAttachmentContentResult =
+  | { ok: true; meta: AttachmentMetadata; buffer: Buffer }
+  | { ok: false; result: ToolResult };
+
+/**
+ * Fetch an attachment's raw bytes. Does a metadata-only GET (type + size gates),
+ * then reads the content from Graph's `/$value` endpoint, which returns the raw
+ * binary directly (no base64/JSON envelope, so no base64 size ceiling). Exported
+ * for reuse by tools that need the bytes (e.g. upload-to-OneDrive).
+ */
+export async function fetchAttachmentContent(
   graphClient: Client,
-  parsed: DownloadAttachmentParamsType,
+  params: DownloadAttachmentTarget,
   getAccessToken?: () => Promise<string>,
-): Promise<ToolResult> {
+): Promise<FetchAttachmentContentResult> {
   const startTime = Date.now();
-  const userPath = resolveUserPath(parsed.user_id);
-  const apiPath = `${userPath}/messages/${encodeGraphId(parsed.message_id)}/attachments/${encodeGraphId(parsed.attachment_id)}`;
+  const userPath = resolveUserPath(params.user_id);
+  const apiPath = `${userPath}/messages/${encodeGraphId(params.message_id)}/attachments/${encodeGraphId(params.attachment_id)}`;
 
   // Step 1: Metadata-only GET (no contentBytes — Graph SDK v3 omits it)
   const meta = (await graphClient
@@ -164,63 +180,84 @@ async function handleDownloadAttachment(
 
   // Type check
   const unsupported = checkUnsupportedType(meta["@odata.type"]);
-  if (unsupported) return unsupported;
+  if (unsupported) return { ok: false, result: unsupported };
 
-  // Size check: >10MB → abort
+  // Size check: >10MB → abort (before any content fetch)
   if (meta.size > SIZE_ABORT_THRESHOLD) {
     logger.warn(
       { tool: "download_attachment", sizeBytes: meta.size, duration_ms: Date.now() - startTime },
       "download_attachment aborted: file too large",
     );
     return {
-      content: [
-        {
-          type: "text",
-          text: `Attachment too large: ${formatFileSize(meta.size)} (max 10 MB). Download aborted.`,
-        },
-      ],
-      isError: true,
+      ok: false,
+      result: {
+        content: [
+          {
+            type: "text",
+            text: `Attachment too large: ${formatFileSize(meta.size)} (max 10 MB). Download aborted.`,
+          },
+        ],
+        isError: true,
+      },
     };
   }
 
-  // Size warning: >4MB
-  const warning =
-    meta.size > SIZE_WARNING_THRESHOLD ? `This attachment is ${formatFileSize(meta.size)}.` : null;
-
-  // Step 2: Download contentBytes via native fetch.
-  // Graph SDK v3 strips contentBytes from JSON responses. Bypass the SDK entirely
-  // and use native fetch with the auth token to get the full JSON.
-  let contentBytes = "";
+  // Download raw bytes via native fetch to the `/$value` endpoint.
+  // Graph SDK v3 strips contentBytes from JSON responses, and `/$value` returns
+  // the raw binary directly (Content-Type = attachment's own mime type). Bypass
+  // the SDK and use native fetch with the auth token.
+  let buffer = Buffer.alloc(0);
 
   if (getAccessToken) {
     try {
       const token = await getAccessToken();
-      const url = `https://graph.microsoft.com/v1.0${apiPath}`;
+      const url = `https://graph.microsoft.com/v1.0${apiPath}/$value`;
       const resp = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (resp.ok) {
-        const json = (await resp.json()) as Record<string, unknown>;
-        contentBytes = (json.contentBytes as string) ?? "";
+        buffer = Buffer.from(await resp.arrayBuffer());
       } else {
         logger.warn({ status: resp.status }, "Native fetch for attachment failed");
       }
     } catch (err) {
-      logger.warn({ err }, "Native fetch for contentBytes failed");
+      logger.warn({ err }, "Native fetch for $value content failed");
     }
   }
 
-  if (!contentBytes) {
+  if (buffer.length === 0) {
     return {
-      content: [
-        {
-          type: "text",
-          text: `Could not download "${meta.name}" (${formatFileSize(meta.size)}). The Graph API did not return the file content.`,
-        },
-      ],
-      isError: true,
+      ok: false,
+      result: {
+        content: [
+          {
+            type: "text",
+            text: `Could not download "${meta.name}" (${formatFileSize(meta.size)}). The Graph API did not return the file content.`,
+          },
+        ],
+        isError: true,
+      },
     };
   }
+
+  return { ok: true, meta, buffer };
+}
+
+export async function handleDownloadAttachment(
+  graphClient: Client,
+  parsed: DownloadAttachmentParamsType,
+  getAccessToken?: () => Promise<string>,
+): Promise<ToolResult> {
+  const startTime = Date.now();
+
+  const fetched = await fetchAttachmentContent(graphClient, parsed, getAccessToken);
+  if (!fetched.ok) return fetched.result;
+
+  const { meta, buffer } = fetched;
+
+  // Size warning: >4MB
+  const warning =
+    meta.size > SIZE_WARNING_THRESHOLD ? `This attachment is ${formatFileSize(meta.size)}.` : null;
 
   const full: FileAttachmentFull = {
     "@odata.type": meta["@odata.type"],
@@ -228,17 +265,16 @@ async function handleDownloadAttachment(
     contentType: meta.contentType,
     size: meta.size,
     isInline: meta.isInline,
-    contentBytes,
+    contentBytes: buffer.toString("base64"),
   };
 
-  const endTime = Date.now();
   logger.info(
     {
       tool: "download_attachment",
       contentType: meta.contentType,
       sizeBytes: meta.size,
       status: 200,
-      duration_ms: endTime - startTime,
+      duration_ms: Date.now() - startTime,
     },
     "download_attachment completed",
   );

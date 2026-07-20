@@ -6,6 +6,8 @@
 
 import type { Client } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { pinUserId } from "../auth/persona-pinning.js";
+import { getCallerIdentity } from "../auth/request-identity.js";
 import type { Config } from "../config.js";
 import {
   GetMyPresenceParams,
@@ -176,6 +178,12 @@ async function handleSetStatusMessage(
   if (parsed.expires_at) {
     requestBody.statusMessage.expiresAt = parsed.expires_at;
   }
+
+  // A presence write always acts as the caller's own mailbox (`/me`). Unlike the
+  // read-only presence lookups (get_presence / get_my_presence), it must NOT be
+  // exempt from pinning: a persona may only set ITS OWN status, so reject an
+  // attempt to target another mailbox. pinUserId is a no-op under off/operator.
+  pinUserId(parsed.user_id, getCallerIdentity());
 
   // Execute
   await graphClient.api("/me/presence/setStatusMessage").post(requestBody);

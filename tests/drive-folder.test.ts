@@ -1,7 +1,38 @@
 import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
-import { beforeEach, describe, expect, it } from "vitest";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Config } from "../src/config.js";
 import { ErrorMappingMiddleware } from "../src/middleware/error-mapping.js";
 import { CreateFolderParams } from "../src/schemas/drive-write.js";
+import { registerDriveFolderTools } from "../src/tools/drive-folder.js";
+import type { ToolResult } from "../src/types/tools.js";
+
+const testConfig: Config = {
+  limits: { maxItems: 100, maxBodyLength: 50000 },
+  auth: { clientId: "test-client", tenantId: "test-tenant" },
+  logging: { level: "silent" },
+  cache: { tokenCachePath: "/tmp/test-cache.json" },
+};
+
+type ToolHandler = (params: Record<string, unknown>) => Promise<ToolResult>;
+
+/** Spy Graph client whose `.api()` records calls but never hits the network. */
+function createSpyGraphClient() {
+  const post = vi.fn().mockResolvedValue({ id: "id-1", name: "Folder", webUrl: "https://web" });
+  const api = vi.fn().mockReturnValue({ post });
+  return { client: { api } as unknown as Client, api, post };
+}
+
+/** Minimal MCP server that captures registered tool handlers by name. */
+function createCapturingServer() {
+  const handlers = new Map<string, ToolHandler>();
+  const server = {
+    tool: (name: string, _desc: string, _shape: unknown, handler: ToolHandler) => {
+      handlers.set(name, handler);
+    },
+  } as unknown as McpServer;
+  return { server, handlers };
+}
 
 function createTestGraphClient(): Client {
   return Client.initWithMiddleware({
@@ -89,6 +120,52 @@ describe("create_folder", () => {
           "@microsoft.graph.conflictBehavior": "fail",
         }),
       ).rejects.toThrow();
+    });
+  });
+
+  describe("path validation (parent_path)", () => {
+    function getHandler(client: Client): ToolHandler {
+      const { server, handlers } = createCapturingServer();
+      registerDriveFolderTools(server, client, testConfig);
+      const handler = handlers.get("create_folder");
+      if (!handler) throw new Error("create_folder not registered");
+      return handler;
+    }
+
+    it("rejects a '..' traversal parent_path before any Graph call", async () => {
+      const { client, api } = createSpyGraphClient();
+      const result = await getHandler(client)({
+        name: "Sub",
+        parent_path: "/a/../b",
+        confirm: true,
+      });
+
+      expect(result.isError).toBe(true);
+      expect(api).not.toHaveBeenCalled();
+    });
+
+    it("rejects a path-addressing ':' in parent_path before any Graph call", async () => {
+      const { client, api } = createSpyGraphClient();
+      const result = await getHandler(client)({
+        name: "Sub",
+        parent_path: "/a:b",
+        confirm: true,
+      });
+
+      expect(result.isError).toBe(true);
+      expect(api).not.toHaveBeenCalled();
+    });
+
+    it("allows a safe parent_path through to the Graph call", async () => {
+      const { client, api } = createSpyGraphClient();
+      const result = await getHandler(client)({
+        name: "Sub",
+        parent_path: "/Reports/2026",
+        confirm: true,
+      });
+
+      expect(result.isError).toBeUndefined();
+      expect(api).toHaveBeenCalledTimes(1);
     });
   });
 });

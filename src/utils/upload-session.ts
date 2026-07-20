@@ -1,4 +1,5 @@
 import type { Client } from "@microsoft/microsoft-graph-client";
+import { assertSafeFileName } from "./drive-path.js";
 import { createLogger } from "./logger.js";
 
 const logger = createLogger("utils:upload-session");
@@ -46,6 +47,8 @@ export async function createUploadSession(
   fileName: string,
   conflictBehavior: "fail" | "replace" | "rename",
 ): Promise<UploadSessionResponse> {
+  assertSafeFileName(fileName);
+
   const basePath = folderId ? `${drivePath}/items/${folderId}` : `${drivePath}/root`;
   const url = `${basePath}:/${fileName}:/createUploadSession`;
 
@@ -66,7 +69,10 @@ export async function createUploadSession(
 
   const response = (await graphClient.api(url).post(requestBody)) as UploadSessionResponse;
 
-  logger.info({ fileName, uploadUrl: response.uploadUrl }, "Upload session created");
+  logger.info(
+    { fileName, expirationDateTime: response.expirationDateTime },
+    "Upload session created",
+  );
 
   return response;
 }

@@ -5,7 +5,7 @@ import type { UploadLargeFileParamsType } from "../schemas/file-upload.js";
 import { UploadLargeFileParams } from "../schemas/file-upload.js";
 import type { ToolResult } from "../types/tools.js";
 import { formatPreview } from "../utils/confirmation.js";
-import { resolveDrivePath } from "../utils/drive-path.js";
+import { assertSafeFileName, resolveDrivePath } from "../utils/drive-path.js";
 import { formatErrorForUser, McpToolError } from "../utils/errors.js";
 import { formatFileSize } from "../utils/file-size.js";
 import { encodeGraphId } from "../utils/graph-id.js";
@@ -38,6 +38,8 @@ async function executeUpload(
   parsed: UploadLargeFileParamsType,
   startTime: number,
 ): Promise<ToolResult> {
+  assertSafeFileName(parsed.file_name);
+
   const buffer = Buffer.from(parsed.content_bytes, "base64");
   const totalSize = buffer.length;
 
@@ -65,7 +67,7 @@ async function executeUpload(
       fileName: parsed.file_name,
       sizeBytes: totalSize,
       chunkCount: chunks.length,
-      uploadUrl: session.uploadUrl,
+      expirationDateTime: session.expirationDateTime,
     },
     "Upload session created",
   );

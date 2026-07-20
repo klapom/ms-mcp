@@ -1,5 +1,7 @@
 import type { Client } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { assertSiteAccessAllowed } from "../auth/persona-pinning.js";
+import { getCallerIdentity } from "../auth/request-identity.js";
 import type { Config } from "../config.js";
 import type { GetSiteParamsType } from "../schemas/sharepoint.js";
 import { GetSiteParams, ListSiteDrivesParams, SearchSitesParams } from "../schemas/sharepoint.js";
@@ -102,6 +104,9 @@ export function registerSharePointSiteTools(
     async (params) => {
       try {
         const parsed = GetSiteParams.parse(params);
+        // Only a by-ID lookup can be checked against the site allow-list (which
+        // holds site IDs); a no-op when addressed by hostname + site_path.
+        assertSiteAccessAllowed(parsed.site_id, undefined, getCallerIdentity());
         const url = resolveSiteUrl(parsed);
 
         const site = (await graphClient
@@ -146,6 +151,7 @@ export function registerSharePointSiteTools(
     async (params) => {
       try {
         const parsed = ListSiteDrivesParams.parse(params);
+        assertSiteAccessAllowed(parsed.site_id, undefined, getCallerIdentity());
         const url = `/sites/${encodeGraphId(parsed.site_id)}/drives`;
 
         const page = await fetchPage<Record<string, unknown>>(graphClient, url, {

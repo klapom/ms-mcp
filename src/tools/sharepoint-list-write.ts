@@ -1,5 +1,7 @@
 import type { Client } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { assertSiteAccessAllowed } from "../auth/persona-pinning.js";
+import { getCallerIdentity } from "../auth/request-identity.js";
 import type { Config } from "../config.js";
 import type {
   CreateListItemParamsType,
@@ -159,6 +161,7 @@ export function registerSharePointListWriteTools(
       const startTime = Date.now();
       try {
         const parsed = CreateListItemParams.parse(params);
+        assertSiteAccessAllowed(parsed.site_id, undefined, getCallerIdentity());
 
         const previewResult = buildCreatePreview(parsed);
         if (previewResult) return previewResult;
@@ -208,6 +211,7 @@ export function registerSharePointListWriteTools(
       const startTime = Date.now();
       try {
         const parsed = UpdateListItemParams.parse(params);
+        assertSiteAccessAllowed(parsed.site_id, undefined, getCallerIdentity());
 
         const previewResult = buildUpdatePreview(parsed);
         if (previewResult) return previewResult;
@@ -257,6 +261,7 @@ export function registerSharePointListWriteTools(
       const startTime = Date.now();
       try {
         const parsed = DeleteListItemParams.parse(params);
+        assertSiteAccessAllowed(parsed.site_id, undefined, getCallerIdentity());
 
         const previewResult = buildDeletePreview(parsed);
         if (previewResult) return previewResult;

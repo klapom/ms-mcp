@@ -4,8 +4,11 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express from "express";
+import { GatewayJwtVerifier } from "./auth/gateway-jwt.js";
 import { type GraphClientDeps, getGraphClient } from "./auth/graph-client.js";
+import { createAuthMiddleware } from "./auth/http-auth-middleware.js";
 import { MsalClient } from "./auth/msal-client.js";
+import { withPersonaCapabilityGate } from "./auth/persona-pinning.js";
 import { createCachePlugin } from "./auth/token-cache.js";
 import { type Config, loadConfig } from "./config.js";
 import { logMemoryStatus } from "./middleware/memory-monitor.js";
@@ -43,6 +46,7 @@ import { registerFilesDeltaTools } from "./tools/files-delta.js";
 import { registerMailTools } from "./tools/mail.js";
 import { registerMailAttachItemTools } from "./tools/mail-attach-item.js";
 import { registerMailAttachReferenceTools } from "./tools/mail-attach-reference.js";
+import { registerMailAttachmentToDriveTools } from "./tools/mail-attachment-to-drive.js";
 import { registerMailAttachmentTools } from "./tools/mail-attachments.js";
 import { registerMailDeleteTools } from "./tools/mail-delete.js";
 import { registerMailDraftTools } from "./tools/mail-drafts.js";
@@ -164,6 +168,7 @@ const MODULE_GROUPS: Record<string, ToolRegistrationFn[]> = {
     registerDriveDownloadTools,
     registerDriveUploadTools,
     registerDriveUploadLargeTools,
+    registerMailAttachmentToDriveTools,
     registerDriveFolderTools,
     registerDriveMoveTools,
     registerDriveCopyTools,
@@ -273,7 +278,8 @@ async function main() {
   const graphClient = getGraphClient(authDeps, cache);
 
   const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : undefined;
-  const authToken = process.env.AUTH_TOKEN || undefined;
+  const authToken = config.gateway.authToken || undefined;
+  const jwtMode = config.gateway.jwtMode;
 
   if (port) {
     // HTTP mode: Express + stateful session management (equivalent to Python StreamableHTTPSessionManager)
@@ -283,6 +289,23 @@ async function main() {
 
     app.get("/health", (_req, res) => {
       res.json({ status: "ok", sessions: sessions.size });
+    });
+
+    // Gateway JWT verifier — only constructed when auth is actually enabled.
+    // Config load already guarantees `issuer` is present when mode !== "off".
+    const jwtVerifier =
+      jwtMode === "off" || !config.gateway.issuer
+        ? undefined
+        : new GatewayJwtVerifier({
+            issuer: config.gateway.issuer,
+            audience: config.gateway.jwtAudience,
+          });
+
+    const authMiddleware = createAuthMiddleware({
+      mode: jwtMode,
+      authToken,
+      verifier: jwtVerifier,
+      logger,
     });
 
     const isAuthorized = (req: express.Request): boolean => {
@@ -314,15 +337,23 @@ async function main() {
         }
       };
       const sessionServer = new McpServer({ name: "pommer-m365-mcp", version: VERSION });
+      // Register through the capability gate so every tool handler is checked
+      // (send-as / drive) before it runs; the underlying server is connected.
+      const gatedSessionServer = withPersonaCapabilityGate(sessionServer);
       for (const register of registrations) {
-        register(sessionServer, graphClient, config, authDeps);
+        register(gatedSessionServer, graphClient, config, authDeps);
       }
       await sessionServer.connect(transport);
       return transport;
     };
 
-    app.all("/mcp", async (req, res) => {
-      if (!isAuthorized(req)) {
+    app.all("/mcp", authMiddleware, async (req, res) => {
+      // The legacy operator-token gate is the real access control in both `off`
+      // and `shadow` mode: shadow binds no identity and never blocks (pure
+      // observability), so without this gate flipping to shadow would strip the
+      // only auth check protecting the server. Only in `enforce` does the new
+      // JWT middleware become the sole gate and this legacy check steps aside.
+      if (jwtMode !== "enforce" && !isAuthorized(req)) {
         res.status(401).json({ error: "Unauthorized" });
         return;
       }
@@ -349,8 +380,9 @@ async function main() {
     process.on("SIGINT", () => shutdown("SIGINT"));
   } else {
     // Stdio mode (default — for Claude Desktop subprocess)
+    const gatedServer = withPersonaCapabilityGate(server);
     for (const register of registrations) {
-      register(server, graphClient, config, authDeps);
+      register(gatedServer, graphClient, config, authDeps);
     }
     const transport = new StdioServerTransport();
     await server.connect(transport);

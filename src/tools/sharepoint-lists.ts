@@ -1,5 +1,7 @@
 import type { Client } from "@microsoft/microsoft-graph-client";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { assertSiteAccessAllowed } from "../auth/persona-pinning.js";
+import { getCallerIdentity } from "../auth/request-identity.js";
 import type { Config } from "../config.js";
 import { ListListItemsParams, ListSiteListsParams } from "../schemas/sharepoint.js";
 import { formatErrorForUser, McpToolError } from "../utils/errors.js";
@@ -41,6 +43,7 @@ export function registerSharePointListTools(
     async (params) => {
       try {
         const parsed = ListSiteListsParams.parse(params);
+        assertSiteAccessAllowed(parsed.site_id, undefined, getCallerIdentity());
         const siteId = encodeGraphId(parsed.site_id);
         const url = `/sites/${siteId}/lists`;
 
@@ -94,6 +97,7 @@ export function registerSharePointListTools(
     async (params) => {
       try {
         const parsed = ListListItemsParams.parse(params);
+        assertSiteAccessAllowed(parsed.site_id, undefined, getCallerIdentity());
         const siteId = encodeGraphId(parsed.site_id);
         const listId = encodeGraphId(parsed.list_id);
         const url = `/sites/${siteId}/lists/${listId}/items`;

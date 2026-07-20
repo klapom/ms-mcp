@@ -1,0 +1,19 @@
+{
+  "helga": { "mailboxes": ["klaus.pommer@pommerconsulting.de"], "sendAs": true, "drive": "write", "sites": [] },
+  "bjoern": { "mailboxes": ["klaus.pommer@pommerconsulting.de"], "sendAs": true, "drive": "write", "sites": [] },
+  "lead-hunter": { "mailboxes": ["klaus.pommer@pommerconsulting.de"], "sendAs": true, "drive": "write", "sites": [] },
+  "meeting-summarizer": { "mailboxes": ["klaus.pommer@pommerconsulting.de"], "sendAs": true, "drive": "write", "sites": [] },
+  "ot-expert": { "mailboxes": ["klaus.pommer@pommerconsulting.de"], "sendAs": true, "drive": "write", "sites": [] },
+  "ferdinand": { "mailboxes": ["klaus.pommer@pommerconsulting.de"], "sendAs": false, "drive": "write", "sites": [] },
+  "conny": { "mailboxes": ["klaus.pommer@pommerconsulting.de"], "sendAs": false, "drive": "read", "sites": [] },
+  "brand-guard": { "mailboxes": [], "sendAs": false, "drive": "none", "sites": [] },
+  "cora": { "mailboxes": [], "sendAs": false, "drive": "none", "sites": [] },
+  "doku-generator": { "mailboxes": [], "sendAs": false, "drive": "none", "sites": [] },
+  "eike": { "mailboxes": [], "sendAs": false, "drive": "none", "sites": [] },
+  "larissa": { "mailboxes": [], "sendAs": false, "drive": "none", "sites": [] },
+  "mira": { "mailboxes": [], "sendAs": false, "drive": "none", "sites": [] },
+  "prisca": { "mailboxes": [], "sendAs": false, "drive": "none", "sites": [] },
+  "skill-smith": { "mailboxes": [], "sendAs": false, "drive": "none", "sites": [] },
+  "ulli": { "mailboxes": [], "sendAs": false, "drive": "none", "sites": [] },
+  "valerie": { "mailboxes": [], "sendAs": false, "drive": "none", "sites": [] }
+}

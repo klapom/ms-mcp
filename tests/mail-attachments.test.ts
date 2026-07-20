@@ -1,8 +1,9 @@
 import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ErrorMappingMiddleware } from "../src/middleware/error-mapping.js";
 import { resolveUserPath } from "../src/schemas/common.js";
 import { DownloadAttachmentParams, ListAttachmentsParams } from "../src/schemas/mail.js";
+import { fetchAttachmentContent, handleDownloadAttachment } from "../src/tools/mail-attachments.js";
 import { formatFileSize, isTextContent } from "../src/utils/file-size.js";
 
 // ---------------------------------------------------------------------------
@@ -371,5 +372,214 @@ describe("download_attachment", () => {
         expect(e).toHaveProperty("code", "NotFoundError");
       }
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// fetchAttachmentContent — unit tests for the extracted fetcher
+// ---------------------------------------------------------------------------
+
+/**
+ * Minimal fake Graph client whose metadata GET resolves to `meta`. The metadata
+ * step in fetchAttachmentContent only uses `.api(path).select(...).get()`.
+ */
+function fakeGraphClient(meta: Record<string, unknown>): Client {
+  return {
+    api: () => ({
+      select: () => ({
+        get: async () => meta,
+      }),
+    }),
+  } as unknown as Client;
+}
+
+const VALUE_URL_SUFFIX = "/$value";
+
+describe("fetchAttachmentContent", () => {
+  const token = "test-token";
+  const getAccessToken = async () => token;
+  let fetchSpy: ReturnType<typeof vi.spyOn>;
+
+  afterEach(() => {
+    fetchSpy?.mockRestore();
+  });
+
+  function mockValueFetch(response: Response): ReturnType<typeof vi.spyOn> {
+    fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(response) as ReturnType<
+      typeof vi.spyOn
+    >;
+    return fetchSpy;
+  }
+
+  function valueCalls(): unknown[][] {
+    if (!fetchSpy) return [];
+    return fetchSpy.mock.calls.filter((c) => String(c[0]).endsWith(VALUE_URL_SUFFIX));
+  }
+
+  it("returns unsupported-type error for an itemAttachment and never fetches content", async () => {
+    mockValueFetch(new Response(Buffer.from("nope"), { status: 200 }));
+    const client = fakeGraphClient({
+      "@odata.type": "#microsoft.graph.itemAttachment",
+      name: "Forwarded.eml",
+      contentType: "message/rfc822",
+      size: 1024,
+    });
+
+    const result = await fetchAttachmentContent(
+      client,
+      { message_id: "msg-001", attachment_id: "aid-item" },
+      getAccessToken,
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.result.isError).toBe(true);
+      expect(result.result.content[0].text).toContain("Item Attachment");
+    }
+    expect(valueCalls()).toHaveLength(0);
+  });
+
+  it("aborts on >10MB metadata and never attempts the /$value fetch", async () => {
+    mockValueFetch(new Response(Buffer.from("should-not-be-read"), { status: 200 }));
+    const client = fakeGraphClient({
+      "@odata.type": "#microsoft.graph.fileAttachment",
+      name: "Enormous.bin",
+      contentType: "application/octet-stream",
+      size: 11 * 1024 * 1024, // 11 MB
+    });
+
+    const result = await fetchAttachmentContent(
+      client,
+      { message_id: "msg-001", attachment_id: "aid-huge" },
+      getAccessToken,
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.result.isError).toBe(true);
+      expect(result.result.content[0].text).toContain("too large");
+    }
+    expect(valueCalls()).toHaveLength(0);
+  });
+
+  it("fetches the /$value endpoint and returns the exact raw bytes", async () => {
+    const rawBytes = Buffer.from([0x00, 0x01, 0x02, 0xff, 0xfe, 0x7f, 0x80]);
+    const spy = mockValueFetch(new Response(rawBytes, { status: 200 }));
+    const client = fakeGraphClient({
+      "@odata.type": "#microsoft.graph.fileAttachment",
+      name: "binary.dat",
+      contentType: "application/octet-stream",
+      size: rawBytes.length,
+    });
+
+    const result = await fetchAttachmentContent(
+      client,
+      { message_id: "msg-001", attachment_id: "aid-bin" },
+      getAccessToken,
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(Buffer.isBuffer(result.buffer)).toBe(true);
+      expect(result.buffer.equals(rawBytes)).toBe(true);
+    }
+
+    // The behavior change under test: fetch goes to the /$value path with the bearer token.
+    expect(valueCalls()).toHaveLength(1);
+    const [url, init] = spy.mock.calls[0] as [string, RequestInit];
+    expect(url).toMatch(/\/\$value$/);
+    expect((init.headers as Record<string, string>).Authorization).toBe(`Bearer ${token}`);
+  });
+
+  it("returns the could-not-download error on a non-ok /$value response", async () => {
+    mockValueFetch(new Response(null, { status: 500 }));
+    const client = fakeGraphClient({
+      "@odata.type": "#microsoft.graph.fileAttachment",
+      name: "Dokument.pdf",
+      contentType: "application/pdf",
+      size: 245760,
+    });
+
+    const result = await fetchAttachmentContent(
+      client,
+      { message_id: "msg-001", attachment_id: "aid-pdf" },
+      getAccessToken,
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.result.isError).toBe(true);
+      expect(result.result.content[0].text).toContain("Could not download");
+    }
+    expect(valueCalls()).toHaveLength(1);
+  });
+
+  it("treats an empty (zero-length) /$value body as could-not-download", async () => {
+    mockValueFetch(new Response(Buffer.alloc(0), { status: 200 }));
+    const client = fakeGraphClient({
+      "@odata.type": "#microsoft.graph.fileAttachment",
+      name: "empty.bin",
+      contentType: "application/octet-stream",
+      size: 0,
+    });
+
+    const result = await fetchAttachmentContent(
+      client,
+      { message_id: "msg-001", attachment_id: "aid-zero" },
+      getAccessToken,
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.result.content[0].text).toContain("Could not download");
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// handleDownloadAttachment — round-trip through the thin wrapper
+// ---------------------------------------------------------------------------
+
+describe("handleDownloadAttachment round-trip", () => {
+  const getAccessToken = async () => "test-token";
+  let fetchSpy: ReturnType<typeof vi.spyOn>;
+
+  afterEach(() => {
+    fetchSpy?.mockRestore();
+  });
+
+  function fakeGraphClientRT(meta: Record<string, unknown>): Client {
+    return {
+      api: () => ({ select: () => ({ get: async () => meta }) }),
+    } as unknown as Client;
+  }
+
+  it("base64-encodes the raw /$value bytes losslessly in the tool result", async () => {
+    const rawBytes = Buffer.from([0xde, 0xad, 0xbe, 0xef, 0x00, 0x10, 0x7f, 0x80, 0xff]);
+    fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(rawBytes, { status: 200 })) as ReturnType<typeof vi.spyOn>;
+
+    const client = fakeGraphClientRT({
+      "@odata.type": "#microsoft.graph.fileAttachment",
+      name: "image.png",
+      contentType: "image/png",
+      size: rawBytes.length,
+    });
+
+    const result = await handleDownloadAttachment(
+      client,
+      { message_id: "msg-001", attachment_id: "aid-bin" },
+      getAccessToken,
+    );
+
+    expect(result.isError).toBeFalsy();
+    const text = result.content[0].text;
+    // Binary content is emitted as a labeled base64 block; extract and decode it.
+    const marker = "Base64-encoded content (image/png):\n";
+    const idx = text.indexOf(marker);
+    expect(idx).toBeGreaterThanOrEqual(0);
+    const base64 = text.slice(idx + marker.length).trim();
+    expect(Buffer.from(base64, "base64").equals(rawBytes)).toBe(true);
   });
 });

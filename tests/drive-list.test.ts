@@ -1,8 +1,37 @@
 import { Client, HTTPMessageHandler } from "@microsoft/microsoft-graph-client";
-import { beforeEach, describe, expect, it } from "vitest";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Config } from "../src/config.js";
 import { ErrorMappingMiddleware } from "../src/middleware/error-mapping.js";
 import { GetRecentFilesParams, ListFilesParams } from "../src/schemas/files.js";
-import { resolveDriveListUrl } from "../src/tools/drive-list.js";
+import { registerDriveListTools, resolveDriveListUrl } from "../src/tools/drive-list.js";
+import type { ToolResult } from "../src/types/tools.js";
+
+const testConfig: Config = {
+  limits: { maxItems: 100, maxBodyLength: 50000 },
+  auth: { clientId: "test-client", tenantId: "test-tenant" },
+  logging: { level: "silent" },
+  cache: { tokenCachePath: "/tmp/test-cache.json" },
+};
+
+type ToolHandler = (params: Record<string, unknown>) => Promise<ToolResult>;
+
+/** Spy Graph client whose `.api()` records calls but never hits the network. */
+function createSpyGraphClient() {
+  const api = vi.fn();
+  return { client: { api } as unknown as Client, api };
+}
+
+/** Minimal MCP server that captures registered tool handlers by name. */
+function createCapturingServer() {
+  const handlers = new Map<string, ToolHandler>();
+  const server = {
+    tool: (name: string, _desc: string, _shape: unknown, handler: ToolHandler) => {
+      handlers.set(name, handler);
+    },
+  } as unknown as McpServer;
+  return { server, handlers };
+}
 
 function createTestGraphClient(): Client {
   return Client.initWithMiddleware({
@@ -146,6 +175,35 @@ describe("list_files", () => {
     it("uses /items/<id>/children when folder_id is given", () => {
       const parsed = ListFilesParams.parse({ folder_id: "01ABC" });
       expect(resolveDriveListUrl(drive, parsed)).toBe("/me/drive/items/01ABC/children");
+    });
+  });
+
+  describe("path validation (path)", () => {
+    // Safe-path URL building is already covered by the resolveDriveListUrl block
+    // above; these assert the traversal/injection guard now rejects unsafe paths
+    // at the handler before any Graph call (folded in via normalizeDrivePath).
+    function getHandler(client: Client): ToolHandler {
+      const { server, handlers } = createCapturingServer();
+      registerDriveListTools(server, client, testConfig);
+      const handler = handlers.get("list_files");
+      if (!handler) throw new Error("list_files not registered");
+      return handler;
+    }
+
+    it("rejects a '..' traversal path before any Graph call", async () => {
+      const { client, api } = createSpyGraphClient();
+      const result = await getHandler(client)({ path: "/a/../b" });
+
+      expect(result.isError).toBe(true);
+      expect(api).not.toHaveBeenCalled();
+    });
+
+    it("rejects a path-addressing ':' before any Graph call", async () => {
+      const { client, api } = createSpyGraphClient();
+      const result = await getHandler(client)({ path: "/a:b" });
+
+      expect(result.isError).toBe(true);
+      expect(api).not.toHaveBeenCalled();
     });
   });
 
