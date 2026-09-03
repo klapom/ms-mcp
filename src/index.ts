@@ -12,6 +12,7 @@ import { withPersonaCapabilityGate } from "./auth/persona-pinning.js";
 import { createCachePlugin } from "./auth/token-cache.js";
 import { type Config, loadConfig } from "./config.js";
 import { logMemoryStatus } from "./middleware/memory-monitor.js";
+import { ensureUtf8ResponseCharset } from "./middleware/response-charset.js";
 import { registerBatchCalendarTools } from "./tools/batch-calendar.js";
 import { registerBatchFilesTools } from "./tools/batch-files.js";
 import { registerBatchMailTools } from "./tools/batch-mail.js";
@@ -287,6 +288,11 @@ async function main() {
     const sessions = new Map<string, StreamableHTTPServerTransport>();
     const app = express();
     app.use(express.json());
+    // Works around @modelcontextprotocol/sdk sending bare `application/json` /
+    // `text/event-stream` Content-Type headers (no charset), which RFC-2616-conformant
+    // HTTP clients decode as Latin-1, mojibaking any non-ASCII tool argument. See
+    // ensureUtf8ResponseCharset()'s doc comment for the full root-cause trace.
+    app.use(ensureUtf8ResponseCharset());
 
     app.get("/health", (_req, res) => {
       res.json({ status: "ok", sessions: sessions.size });

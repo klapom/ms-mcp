@@ -8,6 +8,7 @@ import { ErrorMappingMiddleware } from "../middleware/error-mapping.js";
 import { LoggingMiddleware } from "../middleware/logging.js";
 import { RequestCoalescingMiddleware } from "../middleware/request-coalescing.js";
 import { RetryMiddleware } from "../middleware/retry.js";
+import { Utf8ContentTypeMiddleware } from "../middleware/utf8-content-type.js";
 import type { CacheManager } from "../utils/cache.js";
 import { createLogger } from "../utils/logger.js";
 
@@ -70,7 +71,7 @@ class AuthMiddleware implements Middleware {
 /**
  * Builds the middleware chain used by the Graph client.
  *
- * Order: Logging -> RequestCoalescing -> Caching (optional) -> CircuitBreaker -> Retry -> ErrorMapping -> Auth -> HTTPMessageHandler
+ * Order: Logging -> RequestCoalescing -> Caching (optional) -> CircuitBreaker -> Retry -> ErrorMapping -> Utf8ContentType -> Auth -> HTTPMessageHandler
  *
  * - LoggingMiddleware records structured request/response metadata.
  * - RequestCoalescingMiddleware deduplicates identical concurrent GET requests.
@@ -78,6 +79,8 @@ class AuthMiddleware implements Middleware {
  * - CircuitBreakerMiddleware prevents repeated failures to the same endpoint.
  * - RetryMiddleware handles transient 429 / 5xx failures with exponential backoff.
  * - ErrorMappingMiddleware converts HTTP error responses to typed errors.
+ * - Utf8ContentTypeMiddleware declares charset=utf-8 on JSON request bodies (works around
+ *   Graph mojibaking non-ASCII text when the SDK's default bare "application/json" is used).
  * - AuthMiddleware attaches the Bearer token.
  * - HTTPMessageHandler performs the actual network fetch.
  *
@@ -90,10 +93,11 @@ function buildMiddlewareChain(deps: GraphClientDeps, cache?: CacheManager): Midd
   const circuitBreakerMiddleware = new CircuitBreakerMiddleware();
   const retryMiddleware = new RetryMiddleware();
   const errorMappingMiddleware = new ErrorMappingMiddleware();
+  const utf8ContentTypeMiddleware = new Utf8ContentTypeMiddleware();
   const authMiddleware = new AuthMiddleware(deps);
   const httpMessageHandler = new HTTPMessageHandler();
 
-  // Build chain: Logging -> Coalescing -> Caching? -> CircuitBreaker -> Retry -> ErrorMapping -> Auth -> HTTP
+  // Build chain: Logging -> Coalescing -> Caching? -> CircuitBreaker -> Retry -> ErrorMapping -> Utf8ContentType -> Auth -> HTTP
   loggingMiddleware.setNext(coalescingMiddleware);
 
   if (cache) {
@@ -106,7 +110,8 @@ function buildMiddlewareChain(deps: GraphClientDeps, cache?: CacheManager): Midd
 
   circuitBreakerMiddleware.setNext(retryMiddleware);
   retryMiddleware.setNext(errorMappingMiddleware);
-  errorMappingMiddleware.setNext(authMiddleware);
+  errorMappingMiddleware.setNext(utf8ContentTypeMiddleware);
+  utf8ContentTypeMiddleware.setNext(authMiddleware);
   authMiddleware.setNext(httpMessageHandler);
 
   return loggingMiddleware;
@@ -115,7 +120,7 @@ function buildMiddlewareChain(deps: GraphClientDeps, cache?: CacheManager): Midd
 /**
  * Creates a Microsoft Graph API client with a full middleware chain.
  *
- * Middleware order: Logging -> Coalescing -> Caching (optional) -> CircuitBreaker -> Retry -> ErrorMapping -> Auth -> HTTP
+ * Middleware order: Logging -> Coalescing -> Caching (optional) -> CircuitBreaker -> Retry -> ErrorMapping -> Utf8ContentType -> Auth -> HTTP
  *
  * @param deps - Authentication dependencies
  * @param cache - Optional cache manager for response caching
