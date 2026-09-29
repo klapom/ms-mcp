@@ -1,5 +1,6 @@
 import type { Client } from "@microsoft/microsoft-graph-client";
-import { createLogger } from "../utils/logger.js";
+import { ValidationError } from "./errors.js";
+import { createLogger } from "./logger.js";
 
 const log = createLogger("pagination");
 
@@ -7,7 +8,65 @@ export interface PaginatedResponse<T> {
   items: T[];
   totalCount?: number;
   nextLink?: string;
+  /**
+   * Opaque `$skiptoken` value taken from `@odata.nextLink` (undefined when the
+   * link is missing or does not use `$skiptoken`).
+   */
+  nextSkipToken?: string;
   hasMore: boolean;
+}
+
+/**
+ * Allowed shape of an opaque page token. Deliberately excludes ':' and '&' / '?'
+ * / '#', so a URL (or an extra query parameter) can never be smuggled in.
+ */
+const PAGE_TOKEN_REGEX = /^[A-Za-z0-9._~%=+/-]{1,4096}$/;
+
+/**
+ * Validates a caller-supplied page token (and its exclusivity with `skip`).
+ * The token is only ever appended as `$skiptoken` to a request that is rebuilt
+ * from the current parameters - it is never used as (part of) a URL.
+ */
+export function assertValidPageToken(pageToken: string | undefined, skip?: number): void {
+  if (pageToken === undefined) return;
+  if (skip !== undefined) {
+    throw new ValidationError("page_token and skip are mutually exclusive. Provide only one.");
+  }
+  if (!PAGE_TOKEN_REGEX.test(pageToken) || pageToken.includes("//")) {
+    throw new ValidationError(
+      "page_token is invalid. Pass the opaque token exactly as returned by the previous page " +
+        "(not a URL).",
+    );
+  }
+}
+
+/**
+ * Extracts the raw (still URL-encoded, so it round-trips byte-exact) value of
+ * `$skiptoken` from an `@odata.nextLink`. Returns undefined if absent/unparsable.
+ */
+export function extractSkipToken(nextLink: string | undefined): string | undefined {
+  if (nextLink === undefined) return undefined;
+  let search: string;
+  try {
+    search = new URL(nextLink).search;
+  } catch {
+    return undefined;
+  }
+  for (const part of search.replace(/^\?/, "").split("&")) {
+    const idx = part.indexOf("=");
+    if (idx < 0) continue;
+    let key: string;
+    try {
+      key = decodeURIComponent(part.slice(0, idx));
+    } catch {
+      continue;
+    }
+    if (key.toLowerCase() === "$skiptoken") {
+      const value = part.slice(idx + 1);
+      return value === "" ? undefined : value;
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -35,6 +94,8 @@ export async function fetchPage<T>(
   params?: {
     top?: number;
     skip?: number;
+    /** Opaque `$skiptoken` from a previous page's nextSkipToken (validated by the caller). */
+    skipToken?: string;
     select?: string;
     filter?: string;
     orderby?: string;
@@ -60,6 +121,9 @@ export async function fetchPage<T>(
   if (params?.skip !== undefined) {
     request = request.skip(params.skip);
   }
+  if (params?.skipToken !== undefined) {
+    request = request.query({ $skiptoken: params.skipToken });
+  }
   if (params?.select) {
     request = request.select(params.select);
   }
@@ -78,6 +142,7 @@ export async function fetchPage<T>(
       items: [],
       totalCount: undefined,
       nextLink: undefined,
+      nextSkipToken: undefined,
       hasMore: false,
     };
   }
@@ -94,6 +159,7 @@ export async function fetchPage<T>(
     items,
     totalCount,
     nextLink,
+    nextSkipToken: extractSkipToken(nextLink),
     hasMore: nextLink !== undefined,
   };
 }
@@ -150,4 +216,35 @@ export async function* paginate<T>(
 
     nextUrl = extractNextLink(response);
   }
+}
+
+/**
+ * Pagination hint for token-paged (OneDrive) lists. Graph returns no total
+ * count for these endpoints, so none is invented.
+ */
+export function formatTokenPageHint(
+  count: number,
+  nextSkipToken: string | undefined,
+  hasMore: boolean,
+): string {
+  if (nextSkipToken !== undefined) {
+    return `\nShowing ${count} items. More available - next page: page_token: "${nextSkipToken}".`;
+  }
+  if (hasMore) {
+    return `\nShowing ${count} items. More available, but Graph returned no $skiptoken for this list, so it cannot be paged further with this tool.`;
+  }
+  return `\nShowing ${count} items (complete).`;
+}
+
+/**
+ * Appends a page_token hint to Graph's "$skip is not supported" error. The Graph
+ * client may wrap middleware errors (so no instanceof check) - match on the message.
+ */
+export function withPageTokenHint(error: unknown): unknown {
+  if (!(error instanceof Error) || /page_token/.test(error.message)) return error;
+  if (!/\$skip is not supported/.test(error.message)) return error;
+  const details = error.message.replace(/^Validation failed:\s*/, "");
+  return new ValidationError(
+    `${details} OneDrive lists cannot use skip - use page_token (opaque, from the previous page's hint).`,
+  );
 }

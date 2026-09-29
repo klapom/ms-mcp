@@ -74,8 +74,9 @@ describe("list_files", () => {
       expect(result.skip).toBe(5);
     });
 
-    it("should reject top > 100", () => {
-      const result = ListFilesParams.safeParse({ top: 101 });
+    it("should accept top up to 200 and reject top > 200 (drive tools, page_token era)", () => {
+      expect(ListFilesParams.safeParse({ top: 200 }).success).toBe(true);
+      const result = ListFilesParams.safeParse({ top: 201 });
       expect(result.success).toBe(false);
     });
   });

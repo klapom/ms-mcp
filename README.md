@@ -166,7 +166,7 @@ pnpm test
 
 ### Reliability
 - **Multi-Tenant Support:** Optional `user_id` parameter on all tools for delegated access
-- **Pagination:** All list operations support standard pagination (`top`, `skip`)
+- **Pagination:** List operations support `top` and `skip`; the OneDrive lists (`list_files`, `get_recent_files`, `search_files`) use an opaque `page_token` instead (Graph has no `$skip` there) and allow `top` up to 200
 - **Error Mapping:** Graph API errors mapped to user-friendly MCP error responses
 - **Structured Logging:** All Graph calls logged via pino for observability (no sensitive data)
 

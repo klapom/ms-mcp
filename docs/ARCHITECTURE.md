@@ -147,7 +147,7 @@ Every tool implements these five core patterns to ensure consistency and safety:
 - Pass `$select` query parameter to all list/get endpoints
 - Truncate body fields (email bodies, event descriptions) to max length
 - Limit result items per page (e.g., 25 items max)
-- Add pagination hint: `"Showing X of Y results. Use skip: Z for next page."`
+- Add pagination hint: `"Showing X of Y results. Use skip: Z for next page."` (OneDrive lists differ: `fetchPage` returns `nextSkipToken` from `@odata.nextLink`, hint is `next page: page_token: "<token>"`; the request is always rebuilt from the current params, the token is only appended as `$skiptoken`)
 
 **Example:**
 ```typescript
@@ -426,7 +426,7 @@ Add to `claude_desktop_config.json`:
   - Per-resource TTL configuration (default: 5 minutes for lists, 10 minutes for details)
   - Cache metrics available for observability and tuning
 - **Context Budget:** DEFAULT_SELECT limits fields per entity type, responses truncated to 500-1000 chars per body field
-- **Pagination:** All list operations paginate with `$top=25` by default, provide `skip` for subsequent pages
+- **Pagination:** All list operations paginate with `$top=25` by default, provide `skip` for subsequent pages (OneDrive lists: opaque `page_token`, `top` up to 200)
 - **Token Cache:** Persistent file cache reduces Device Code Flow prompts on restarts
 - **Auth Error Handling:** Clear error messages for scope changes, revoked consent, and invalid tokens (AuthTokenError)
 - **Error Mapping:** Single middleware layer catches all errors, no per-tool error handling duplication
