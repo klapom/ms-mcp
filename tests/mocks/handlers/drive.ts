@@ -69,10 +69,73 @@ const sharedItem = {
 };
 
 // ---------------------------------------------------------------------------
+// Paging fixtures: 250 items behind opaque $skiptoken (like Graph: no $skip)
+// ---------------------------------------------------------------------------
+
+export const PAGED_TOTAL = 250;
+export const PAGED_FOLDER_ID = "folder-250";
+
+/** Every request URL the paged handlers saw (for target-path assertions). */
+export const pagedRequestLog: string[] = [];
+
+const pagedItems = Array.from({ length: PAGED_TOTAL }, (_, i) => ({
+  id: `paged-${String(i).padStart(3, "0")}`,
+  name: `invoice-${String(i).padStart(3, "0")}.pdf`,
+  size: 1000 + i,
+  lastModifiedDateTime: "2026-02-10T14:30:00Z",
+  webUrl: `https://onedrive.example.com/invoice-${i}.pdf`,
+  file: { mimeType: "application/pdf" },
+}));
+
+/** Token format mimics Graph: base64-ish with '=' padding. Offset is encoded inside. */
+const tokenFor = (offset: number) => `T0ZGU0VU${offset}==`;
+
+function pagedResponse(request: Request) {
+  const url = new URL(request.url);
+  pagedRequestLog.push(url.pathname + url.search);
+  if (url.searchParams.has("$skip")) {
+    return HttpResponse.json(
+      {
+        error: {
+          code: "invalidRequest",
+          message:
+            "$skip is not supported on this API. Only URLs returned by the API can be used to page.",
+        },
+      },
+      { status: 400 },
+    );
+  }
+  const top = Number(url.searchParams.get("$top") ?? "200");
+  // Raw query: '+' must stay '+' (URLSearchParams would turn it into a space)
+  const rawToken = /[?&]\$skiptoken=([^&]*)/.exec(url.search)?.[1];
+  const offset = rawToken ? Number(/T0ZGU0VU(\d+)==/.exec(rawToken)?.[1]) : 0;
+  const value = pagedItems.slice(offset, offset + top);
+  const next = offset + top;
+  const body: Record<string, unknown> = { value };
+  if (next < PAGED_TOTAL) {
+    body["@odata.nextLink"] =
+      `${GRAPH_BASE}${url.pathname.replace("/v1.0", "")}?$top=${top}&$skiptoken=${tokenFor(next)}`;
+  }
+  return HttpResponse.json(body);
+}
+
+// ---------------------------------------------------------------------------
 // Handlers
 // ---------------------------------------------------------------------------
 
 export const driveHandlers = [
+  // ---- paged fixtures (must precede the generic handlers below) ----
+  http.get(`${GRAPH_BASE}/me/drive/items/${PAGED_FOLDER_ID}/children`, ({ request }) =>
+    pagedResponse(request),
+  ),
+  http.get(`${GRAPH_BASE}/me/drive/recent`, ({ request }) => {
+    if (new URL(request.url).searchParams.has("$top")) return pagedResponse(request);
+    return undefined;
+  }),
+  http.get(/\/v1\.0\/me\/drive\/root\/search\(q='paged'\)/, ({ request }) =>
+    pagedResponse(request),
+  ),
+
   // ---- list_files: root children ----
   http.get(`${GRAPH_BASE}/me/drive/root/children`, () => {
     return HttpResponse.json({

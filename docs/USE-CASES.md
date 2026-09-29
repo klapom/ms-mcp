@@ -567,7 +567,7 @@ Notes: Q1 service review and proposal for expanded services.
 ### Safety Features
 - **Destructive confirmation:** Write operations (`send_email`, `create_event`, `upload_file`, etc.) require `confirm=true`
 - **Idempotency keys:** Preventing duplicate sends, posts, or uploads via `idempotency_key` parameter
-- **Pagination:** Large result sets support `top` and `skip` for safe iteration
+- **Pagination:** Large result sets support `top` and `skip` for safe iteration; OneDrive lists (`list_files`, `get_recent_files`, `search_files`) page via the opaque `page_token` from the "next page" hint (Graph rejects `$skip` there) with `top` up to 200
 - **Rate limiting:** Batch operations should respect Microsoft Graph API rate limits
 
 ### Observability

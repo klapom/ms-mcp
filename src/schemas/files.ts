@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BaseParams, ListParams } from "./common.js";
+import { BaseParams } from "./common.js";
 
 const driveLocationFields = {
   site_id: z
@@ -14,11 +14,42 @@ const driveLocationFields = {
     .describe("Drive ID within a SharePoint site. Use with site_id."),
 };
 
+/**
+ * Paging fields shared by the OneDrive list tools. Graph does not support `$skip`
+ * on driveItem children / search / recent - only opaque `$skiptoken` paging.
+ * `top` may go up to 200 here (Graph maximum for children); ListParams stays at 100.
+ */
+const drivePagingFields = {
+  top: z
+    .number()
+    .int()
+    .positive()
+    .max(200)
+    .optional()
+    .describe("Maximum number of results per page (default: 25, max: 200)"),
+  skip: z
+    .number()
+    .int()
+    .nonnegative()
+    .optional()
+    .describe("Not supported by OneDrive endpoints - use page_token instead."),
+  page_token: z
+    .string()
+    .min(1)
+    .max(4096)
+    .optional()
+    .describe(
+      "Opaque token from the previous page's 'next page: page_token' hint. " +
+        "Pass it unchanged, together with the same other parameters. Mutually exclusive with skip.",
+    ),
+};
+
 // ---------------------------------------------------------------------------
 // list_files
 // ---------------------------------------------------------------------------
 
-export const ListFilesParams = ListParams.extend({
+export const ListFilesParams = BaseParams.extend({
+  ...drivePagingFields,
   ...driveLocationFields,
   folder_id: z
     .string()
@@ -39,7 +70,8 @@ export type ListFilesParamsType = z.infer<typeof ListFilesParams>;
 // search_files
 // ---------------------------------------------------------------------------
 
-export const SearchFilesParams = ListParams.extend({
+export const SearchFilesParams = BaseParams.extend({
+  ...drivePagingFields,
   ...driveLocationFields,
   query: z
     .string()
@@ -79,5 +111,5 @@ export type DownloadFileParamsType = z.infer<typeof DownloadFileParams>;
 // get_recent_files
 // ---------------------------------------------------------------------------
 
-export const GetRecentFilesParams = ListParams;
+export const GetRecentFilesParams = BaseParams.extend(drivePagingFields);
 export type GetRecentFilesParamsType = z.infer<typeof GetRecentFilesParams>;

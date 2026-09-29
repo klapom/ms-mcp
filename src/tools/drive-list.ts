@@ -9,7 +9,12 @@ import { formatErrorForUser, McpToolError, ValidationError } from "../utils/erro
 import { formatFileSize } from "../utils/file-size.js";
 import { encodeGraphId } from "../utils/graph-id.js";
 import { createLogger } from "../utils/logger.js";
-import { fetchPage } from "../utils/pagination.js";
+import {
+  assertValidPageToken,
+  fetchPage,
+  formatTokenPageHint,
+  withPageTokenHint,
+} from "../utils/pagination.js";
 import { buildSelectParam, DEFAULT_SELECT } from "../utils/response-shaper.js";
 
 const logger = createLogger("tools:drive-list");
@@ -52,17 +57,19 @@ export function registerDriveListTools(
 ): void {
   server.tool(
     "list_files",
-    "List files and folders in OneDrive. Use folder_id OR path (not both) to target a specific folder, or omit both for root. Returns name, size, type, and modification date.",
+    "List files and folders in OneDrive. Use folder_id OR path (not both) to target a specific folder, or omit both for root. Returns name, size, type, and modification date. top up to 200 per page (default 25). For more items, pass the page_token from the previous page's 'next page' hint (with the same other parameters); skip is not supported.",
     ListFilesParams.shape,
     async (params) => {
       try {
         const parsed = ListFilesParams.parse(params);
+        assertValidPageToken(parsed.page_token, parsed.skip);
         const drivePath = resolveDrivePath(parsed.user_id, parsed.site_id, parsed.drive_id);
         const url = resolveDriveListUrl(drivePath, parsed);
 
         const page = await fetchPage<Record<string, unknown>>(graphClient, url, {
           top: parsed.top ?? config.limits.maxItems,
           skip: parsed.skip,
+          skipToken: parsed.page_token,
           select: buildSelectParam(DEFAULT_SELECT.file),
           orderby: "name asc",
         });
@@ -72,16 +79,13 @@ export function registerDriveListTools(
         }
 
         const lines = page.items.map((item) => formatDriveItem(item));
-        const total = page.totalCount ?? page.items.length;
-        const hint =
-          page.items.length < total
-            ? `\nShowing ${page.items.length} of ${total} items. Use skip: ${page.items.length} for the next page.`
-            : `\nShowing ${page.items.length} of ${total} items.`;
+        const hint = formatTokenPageHint(page.items.length, page.nextSkipToken, page.hasMore);
 
         logger.info({ tool: "list_files", count: page.items.length }, "list_files completed");
 
         return { content: [{ type: "text", text: lines.join("\n\n") + hint }] };
-      } catch (error) {
+      } catch (rawError) {
+        const error = withPageTokenHint(rawError);
         if (error instanceof McpToolError) {
           logger.warn(
             { tool: "list_files", status: error.httpStatus, code: error.code },
@@ -99,17 +103,19 @@ export function registerDriveListTools(
 
   server.tool(
     "get_recent_files",
-    "Get recently accessed files from OneDrive. Returns the same format as list_files.",
+    "Get recently accessed files from OneDrive. Returns the same format as list_files. top up to 200; page with page_token from the 'next page' hint (skip is not supported).",
     GetRecentFilesParams.shape,
     async (params) => {
       try {
         const parsed = GetRecentFilesParams.parse(params) as GetRecentFilesParamsType;
+        assertValidPageToken(parsed.page_token, parsed.skip);
         const userPath = resolveUserPath(parsed.user_id);
         const url = `${userPath}/drive/recent`;
 
         const page = await fetchPage<Record<string, unknown>>(graphClient, url, {
           top: parsed.top ?? config.limits.maxItems,
           skip: parsed.skip,
+          skipToken: parsed.page_token,
           select: buildSelectParam(DEFAULT_SELECT.file),
         });
 
@@ -118,11 +124,7 @@ export function registerDriveListTools(
         }
 
         const lines = page.items.map((item) => formatDriveItem(item));
-        const total = page.totalCount ?? page.items.length;
-        const hint =
-          page.items.length < total
-            ? `\nShowing ${page.items.length} of ${total} items. Use skip: ${page.items.length} for the next page.`
-            : `\nShowing ${page.items.length} of ${total} items.`;
+        const hint = formatTokenPageHint(page.items.length, page.nextSkipToken, page.hasMore);
 
         logger.info(
           { tool: "get_recent_files", count: page.items.length },
@@ -130,7 +132,8 @@ export function registerDriveListTools(
         );
 
         return { content: [{ type: "text", text: lines.join("\n\n") + hint }] };
-      } catch (error) {
+      } catch (rawError) {
+        const error = withPageTokenHint(rawError);
         if (error instanceof McpToolError) {
           logger.warn(
             { tool: "get_recent_files", status: error.httpStatus, code: error.code },

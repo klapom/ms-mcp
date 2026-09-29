@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - OneDrive paging via `page_token`
+- `list_files`, `get_recent_files`, `search_files`: opaque `page_token` parameter (Graph `$skiptoken`, taken from `@odata.nextLink`); `top` up to 200 (was 100). Explicit `top` is not capped by `MAX_ITEMS` (which only sets the default of 25).
+- `fetchPage` accepts `skipToken` and returns `nextSkipToken`. The token is validated (`^[A-Za-z0-9._~%=+/-]{1,4096}$`, no URLs) and only appended as `$skiptoken` to a request rebuilt from the current parameters, so persona pinning cannot be bypassed.
+- Usage: page 1 without token; repeat the call with the same parameters plus `page_token` from the "next page" hint until it says "(complete)".
+
+### Changed
+- BEHAVIOUR: Drive list output no longer says "Use skip: N" (Graph rejects `$skip` on driveItem children/search/recent) and no longer prints a fabricated "of N" total. `page_token` and `skip` are mutually exclusive; `skip` still reaches Graph (error) but the error now points to `page_token`.
+
 ### Added - Production Readiness (v1.0.0 Conditions)
 - Config upper bounds: maxItems .max(100), maxBodyLength .max(10000)
 - Enhanced startup log with version, tool count (108), and config summary
