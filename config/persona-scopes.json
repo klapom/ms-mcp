@@ -4,7 +4,7 @@
   "lead-hunter": { "mailboxes": ["klaus.pommer@pommerconsulting.de"], "sendAs": true, "drive": "write", "sites": [] },
   "meeting-summarizer": { "mailboxes": ["klaus.pommer@pommerconsulting.de"], "sendAs": true, "drive": "write", "sites": [] },
   "ot-expert": { "mailboxes": ["klaus.pommer@pommerconsulting.de"], "sendAs": true, "drive": "write", "sites": [] },
-  "ferdinand": { "mailboxes": ["klaus.pommer@pommerconsulting.de"], "sendAs": false, "drive": "write", "sites": [] },
+  "ferdinand": { "mailboxes": ["klaus.pommer@pommerconsulting.de", "ulla.vogel@pommerconsulting.de"], "sendAs": false, "drive": "write", "sites": [] },
   "conny": { "mailboxes": ["klaus.pommer@pommerconsulting.de"], "sendAs": false, "drive": "read", "sites": [] },
   "brand-guard": { "mailboxes": [], "sendAs": false, "drive": "none", "sites": [] },
   "cora": { "mailboxes": [], "sendAs": false, "drive": "none", "sites": [] },

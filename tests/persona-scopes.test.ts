@@ -43,6 +43,7 @@ import { resolveDrivePath } from "../src/utils/drive-path.js";
 import { AuthError } from "../src/utils/errors.js";
 
 const KLAUS = "klaus.pommer@pommerconsulting.de";
+const ULLA = "ulla.vogel@pommerconsulting.de";
 const SUKI = "suki-mailbox@pommerconsulting.de";
 const SCOPES_FILE = fileURLToPath(new URL("../config/persona-scopes.json", import.meta.url));
 
@@ -111,7 +112,12 @@ describe("persona-scopes loader + getPersonaScope", () => {
   it("the shipped config file loads and matches the decided matrix", () => {
     const map = loadPersonaScopesFromFile(SCOPES_FILE);
     expect(map.helga).toEqual({ mailboxes: [KLAUS], sendAs: true, drive: "write", sites: [] });
-    expect(map.ferdinand).toEqual({ mailboxes: [KLAUS], sendAs: false, drive: "write", sites: [] });
+    expect(map.ferdinand).toEqual({
+      mailboxes: [KLAUS, ULLA],
+      sendAs: false,
+      drive: "write",
+      sites: [],
+    });
     expect(map.conny).toEqual({ mailboxes: [KLAUS], sendAs: false, drive: "read", sites: [] });
     expect(map.cora).toEqual({ mailboxes: [], sendAs: false, drive: "none", sites: [] });
   });
@@ -148,6 +154,17 @@ describe("pinUserId", () => {
   it("matching mailbox is allowed, case-insensitively", () => {
     expect(pinUserId(KLAUS, id("ferdinand"))).toBe(KLAUS);
     expect(pinUserId("Klaus.Pommer@PommerConsulting.de", id("ferdinand"))).toBe(KLAUS);
+  });
+
+  it("ferdinand may also act as Ulla's automation mailbox (rechnung@ alias), default stays klaus", () => {
+    expect(pinUserId(ULLA, id("ferdinand"))).toBe(ULLA);
+    expect(pinUserId("Ulla.Vogel@PommerConsulting.de", id("ferdinand"))).toBe(ULLA);
+    expect(pinUserId(undefined, id("ferdinand"))).toBe(KLAUS);
+  });
+
+  it("other personas still cannot reach Ulla's mailbox", () => {
+    expect(() => pinUserId(ULLA, id("conny"))).toThrow(AuthError);
+    expect(() => pinUserId(ULLA, id("helga"))).toThrow(AuthError);
   });
 
   it("non-allowed mailbox → 403", () => {
