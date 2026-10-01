@@ -287,7 +287,9 @@ async function main() {
     // HTTP mode: Express + stateful session management (equivalent to Python StreamableHTTPSessionManager)
     const sessions = new Map<string, StreamableHTTPServerTransport>();
     const app = express();
-    app.use(express.json());
+    // Express' Default-Limit (100 kB) lehnte Uploads ab ~70 kB Dateigroesse mit 413 ab
+    // (upload_file/upload_large_file tragen den Inhalt base64 im Request). 4-MB-Datei = ~5,4 MB.
+    app.use(express.json({ limit: process.env.HTTP_BODY_LIMIT ?? "12mb" }));
     // Works around @modelcontextprotocol/sdk sending bare `application/json` /
     // `text/event-stream` Content-Type headers (no charset), which RFC-2616-conformant
     // HTTP clients decode as Latin-1, mojibaking any non-ASCII tool argument. See
