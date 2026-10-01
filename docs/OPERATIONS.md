@@ -45,6 +45,7 @@ pnpm build && node dist/index.js
 - `TOKEN_CACHE_PATH` — Token cache file path, default: `~/.ms-mcp/token-cache.json`
 - `MAX_ITEMS` — Max items per list response, default: `25`
 - `MAX_BODY_LENGTH` — Max body length in responses, default: `500`
+- `HTTP_BODY_LIMIT` — Max size of an incoming HTTP request body (Express), default: `12mb`. The Express default of 100 kB rejected uploads above ~70 kB (base64 in the request) with `413 Payload Too Large`.
 
 ---
 
