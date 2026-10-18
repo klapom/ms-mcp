@@ -16,6 +16,32 @@ describe("getTtlForResource", () => {
     });
   });
 
+  describe("drive listings (issue #36)", () => {
+    it("uses the short driveListing TTL for children/recent/search", () => {
+      const ttl = CACHE_TTL_MS.driveListing;
+      expect(ttl).toBeLessThanOrEqual(30 * 1000);
+      expect(
+        getTtlForResource(
+          "/users/klaus.pommer%40pommerconsulting.de/drive/root:/02. X/03. Dokumente/Belege/2026_10:/children?$top=200",
+        ),
+      ).toBe(ttl);
+      expect(getTtlForResource("/me/drive/items/ABC/children")).toBe(ttl);
+      expect(getTtlForResource("/me/drive/recent")).toBe(ttl);
+      expect(getTtlForResource("/me/drive/root/search(q='rechnung')")).toBe(ttl);
+      expect(getTtlForResource("/sites/s1/drive/root/children")).toBe(ttl);
+    });
+
+    it("is not hijacked by resource words inside the folder path", () => {
+      expect(getTtlForResource("/me/drive/root:/Teams/Calendar/Sites:/children")).toBe(
+        CACHE_TTL_MS.driveListing,
+      );
+    });
+
+    it("keeps the long default for other drive reads (item metadata)", () => {
+      expect(getTtlForResource("/me/drive/items/ABC")).toBe(CACHE_TTL_MS.default);
+    });
+  });
+
   describe("calendars", () => {
     it("should return calendars TTL for calendar endpoints", () => {
       expect(getTtlForResource("/me/calendar")).toBe(CACHE_TTL_MS.calendars);
