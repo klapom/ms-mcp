@@ -36,6 +36,13 @@ export const CACHE_TTL_MS = {
   /** Contact folders (rarely changes) */
   contactFolders: 60 * 60 * 1000, // 1 hour
 
+  /**
+   * Drive listings (children/recent/search). Short on purpose: files are also written by services
+   * that bypass ms-mcp (drive-relay-mcp uploads), so write-invalidation never fires for them. With the
+   * 10-minute default a freshly uploaded file stayed invisible in list_files for up to 10 minutes.
+   */
+  driveListing: 15 * 1000, // 15 seconds
+
   /** Default for all other resources */
   default: 10 * 60 * 1000, // 10 minutes
 } as const;
@@ -52,6 +59,15 @@ export const MAX_CACHE_SIZE = 500;
  * @returns TTL in milliseconds
  */
 export function getTtlForResource(url: string): number {
+  // Drive listings first: a folder/file NAME in the path ("Teams", "Calendar", ...) must not
+  // select another resource's TTL.
+  if (
+    url.includes("/drive") &&
+    (url.includes("/children") || url.includes("/recent") || url.includes("/search("))
+  ) {
+    return CACHE_TTL_MS.driveListing;
+  }
+
   // User profile
   if (url.includes("/me/profile") || (url.includes("/users/") && url.includes("/profile"))) {
     return CACHE_TTL_MS.userProfile;
