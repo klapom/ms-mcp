@@ -57,6 +57,26 @@ function extractUrl(context: Context): string {
 }
 
 /**
+ * True when the caller asked for a fresh read via `Cache-Control: no-cache`
+ * (e.g. a safety check right before a write must not see a stale entry).
+ */
+function hasNoCacheHeader(context: Context): boolean {
+  const req = context.request;
+  const headers =
+    typeof req !== "string" && req && "headers" in req ? req.headers : context.options?.headers;
+  if (!headers) {
+    return false;
+  }
+  const value =
+    headers instanceof Headers
+      ? headers.get("Cache-Control")
+      : Array.isArray(headers)
+        ? headers.find(([name]) => name.toLowerCase() === "cache-control")?.[1]
+        : Object.entries(headers).find(([name]) => name.toLowerCase() === "cache-control")?.[1];
+  return typeof value === "string" && value.toLowerCase().includes("no-cache");
+}
+
+/**
  * Build cache key from request context
  * Format: {method}:{path}:{userId}
  *
@@ -108,10 +128,11 @@ function invalidateRelatedCaches(cache: CacheManager, context: Context): void {
 
     case "PATCH": {
       // PATCH updates an existing resource
-      // Invalidate the detail endpoint only
-      // e.g., PATCH /me/events/123 → invalidate GET:/me/events/123:*
-      const detailPattern = `GET:${resourcePath}:${userId}`;
-      cache.invalidate(detailPattern);
+      // Invalidate the detail endpoint only, including its query variants —
+      // tools read with $select, so their keys carry a query string.
+      // e.g., PATCH /me/events/123 → invalidate GET:/me/events/123:* and GET:/me/events/123?*:*
+      cache.invalidate(`GET:${resourcePath}:${userId}`);
+      cache.invalidate(`GET:${resourcePath}?*:${userId}`);
       break;
     }
 
@@ -158,8 +179,8 @@ export class CachingMiddleware implements Middleware {
     const url = extractUrl(context);
     const cacheKey = buildCacheKey(context);
 
-    // For GET requests, check cache first
-    if (method === "GET") {
+    // For GET requests, check cache first (unless the caller demands a fresh read)
+    if (method === "GET" && !hasNoCacheHeader(context)) {
       const cached = this.cache.get(cacheKey);
       if (cached) {
         // Cache hit - reconstruct Response from cached JSON

@@ -54,7 +54,7 @@ export function registerMailDeleteTools(
 ): void {
   server.tool(
     "delete_email",
-    "Permanently delete an email message. This action cannot be undone - the message is deleted permanently, not moved to Deleted Items.",
+    "Permanently delete an email message. This action cannot be undone - the message is deleted permanently, not moved to Deleted Items. To remove a superseded draft reversibly, use delete_draft instead.",
     DeleteEmailParams.shape,
     async (params) => {
       try {

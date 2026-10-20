@@ -50,6 +50,7 @@ import { registerMailAttachReferenceTools } from "./tools/mail-attach-reference.
 import { registerMailAttachmentToDriveTools } from "./tools/mail-attachment-to-drive.js";
 import { registerMailAttachmentTools } from "./tools/mail-attachments.js";
 import { registerMailDeleteTools } from "./tools/mail-delete.js";
+import { registerMailDraftUpdateTools } from "./tools/mail-draft-update.js";
 import { registerMailDraftTools } from "./tools/mail-drafts.js";
 import { registerMailFlagTools } from "./tools/mail-flag.js";
 import { registerMailFolderCreateTools } from "./tools/mail-folder-create.js";
@@ -139,6 +140,7 @@ const MODULE_GROUPS: Record<string, ToolRegistrationFn[]> = {
     registerMailAttachReferenceTools,
     registerMailDeleteTools,
     registerMailDraftTools,
+    registerMailDraftUpdateTools,
     registerMailFolderCreateTools,
     registerMailFlagTools,
     registerMailRulesListTools,

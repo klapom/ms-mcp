@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Draft editing (#38)
+- `update_draft`: partial `PATCH` of an existing draft (subject, body, to/cc/bcc, importance). Recipient lists replace the whole list (`[]` clears); display names are kept. Preview shows current vs new values and `lastModifiedDateTime`, never echoes body content. Refuses non-drafts; the confirmed path re-checks `isDraft` bypassing the response cache.
+- `delete_draft`: moves a draft to Deleted Items (reversible, returns the new message ID and a restore hint). `delete_email` is unchanged (permanent).
+- Tool descriptions of `create_draft`/`send_draft`/`delete_email` point to the new tools so clients stop creating duplicate drafts.
+
+### Changed - Mail body house style
+- BEHAVIOUR: `send_email`, `create_draft` and `update_draft` always send the body as HTML in Aptos 11pt black (`src/utils/mail-html.ts`, same font stack as new Outlook). `body_type` now describes the input: `text` is HTML-escaped with line breaks kept as `<br>`, `html` is wrapped as-is (inside `<body>` for full documents). `reply_email`/`forward_email` comments are unchanged.
+
+### Fixed
+- Response cache: a `PATCH` now also invalidates `$select`/query variants of the detail resource (previously reads with `$select` returned stale data for up to the TTL after an update). GET requests with `Cache-Control: no-cache` bypass the cache.
+- `send_draft` / `add_attachment`: idempotency keys were looked up under `create_draft` but stored under the tool's own name — a repeated call sent/attached twice, and a key reused from `create_draft` silently skipped the send.
+
 ### Added - OneDrive paging via `page_token`
 - `list_files`, `get_recent_files`, `search_files`: opaque `page_token` parameter (Graph `$skiptoken`, taken from `@odata.nextLink`); `top` up to 200 (was 100). Explicit `top` is not capped by `MAX_ITEMS` (which only sets the default of 25).
 - `fetchPage` accepts `skipToken` and returns `nextSkipToken`. The token is validated (`^[A-Za-z0-9._~%=+/-]{1,4096}$`, no URLs) and only appended as `$skiptoken` to a request rebuilt from the current parameters, so persona pinning cannot be bypassed.

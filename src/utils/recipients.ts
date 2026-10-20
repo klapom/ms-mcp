@@ -5,6 +5,18 @@ export function toRecipients(emails: string[]): Array<{ emailAddress: { address:
   return emails.map((address) => ({ emailAddress: { address } }));
 }
 
+/**
+ * Converts recipient inputs to the Graph API recipient format, keeping display names.
+ */
+export function toNamedRecipients(
+  recipients: Array<{ address: string; name?: string }>,
+): Array<{ emailAddress: { address: string; name?: string } }> {
+  return recipients.map((r) => ({
+    emailAddress:
+      r.name === undefined ? { address: r.address } : { address: r.address, name: r.name },
+  }));
+}
+
 interface AttendeeInput {
   email: string;
   name?: string;

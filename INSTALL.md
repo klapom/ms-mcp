@@ -85,7 +85,7 @@ Füge hinzu:
 
 Du solltest sehen:
 - ✅ ms-mcp: Connected
-- 108 Tools verfügbar
+- 113 Tools verfügbar
 
 ### 7. Testen
 
@@ -96,14 +96,14 @@ Frage in Claude Desktop:
 
 ---
 
-## Verfügbare Tools (108)
+## Verfügbare Tools (113)
 
 ### Mail (17 Tools)
 - list_emails, read_email, search_emails
 - send_email, reply_email, forward_email
 - move_email, delete_email
 - list_attachments, download_attachment
-- create_draft, send_draft, add_attachment
+- create_draft, update_draft, delete_draft, send_draft, add_attachment
 - list_mail_folders, create_mail_folder
 - flag_email, list_mail_rules
 

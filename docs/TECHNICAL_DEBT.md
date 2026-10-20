@@ -95,3 +95,39 @@ Dieses Dokument sammelt Beobachtungen aus der laufenden Implementierung:
 - **Vorschlag:** Extract shared `createBatchToolHandler()` in `src/utils/batch.ts`
 - **Decision:** NICHT fixen — nur 2 weitere tools, Abstraktion komplexer als Duplikation
 - **Risiko:** Keins — bei mehr Batch-Tools würde Refactoring sinnvoll
+
+### Graph-Fehler erreichen den `instanceof McpToolError`-Zweig der Tools nie
+- **Quelle:** Issue #38 (2026-10-20), gemessen per Probe-Test
+- **Status:** Der Graph-SDK verpackt den von `ErrorMappingMiddleware` geworfenen `NotFoundError`/`ValidationError` in einen `GraphError` (`GraphErrorHandler.constructError`: nur `message` und `name`→`code` bleiben). `error instanceof McpToolError` ist dafür `false` (Probe: `GraphError|Error|false`). Fast alle Tools fangen nur `McpToolError` → Graph-Fehler werden re-thrown, das MCP-SDK liefert die rohe Message, das `logger.warn` der Tools feuert nicht. `formatErrorForUser()` greift damit nur für lokal geworfene Fehler.
+- **Vorschlag:** Gemeinsamen `handleToolError()` (wie in `mail-draft-update.ts`, behandelt `GraphError`) nach `src/utils/errors.ts` ziehen und in allen Tools nutzen; dabei `code` (Klassenname) wieder auf die McpToolError-Typen abbilden.
+- **Nicht verifiziert:** wie der MCP-SDK geworfene Fehler im Detail an den Client meldet (Text/`isError`).
+- **Risiko:** Mittel — Fehler sind sichtbar, aber uneinheitlich formatiert und nicht im Tool-Log.
+
+### Cache-Invalidierung bei POST-Actions (`/move`, `/send`) und bei fehlgeschlagenen Writes
+- **Quelle:** Issue #38 Critic
+- **Status:** `POST /messages/{id}/move` invalidiert nur `GET:.../move` — Detail- und Ordner-Listen (z. B. Drafts) bleiben bis zur TTL gecacht. Wirft ein Write (4xx), läuft gar keine Invalidierung (Exception vor `invalidateRelatedCaches`). `update_draft`/`delete_draft` umgehen das für ihren Draft-Check per `Cache-Control: no-cache`; `send_draft` nicht.
+- **Vorschlag:** Für `POST .../{id}/<action>` den Eltern-Pfad `.../{id}` (+ `?*`) und die Collection invalidieren; Invalidierung in `finally`.
+
+### Draft-Schemas: `create_draft` ohne `.email()` und ohne Empfängernamen
+- **Quelle:** Issue #38 Critic
+- **Status:** `CreateDraftParams` validiert Adressen nur mit `.min(1)`; `buildDraftBody` nutzt `toRecipients()` und verwirft `name`. `update_draft` nutzt bereits `RecipientInput` (`.email()`) + `toNamedRecipients()`.
+- **Vorschlag:** `create_draft` auf `RecipientInput`/`toNamedRecipients` umstellen (Verhaltensänderung bei ungültigen Adressen → als BEHAVIOUR im CHANGELOG).
+
+### `update_draft`: keine Konfliktprüfung bei gleichzeitiger Bearbeitung in Outlook
+- **Quelle:** Issue #38 Critic
+- **Status:** `body` überschreibt Änderungen, die der User parallel in Outlook gemacht hat. Preview zeigt `lastModifiedDateTime`, aber kein `If-Match`/ETag.
+- **Nicht verifiziert:** ob Graph `If-Match` auf `PATCH /messages/{id}` unterstützt.
+
+### `delete_email` „permanently deleted" ist laut Graph-Doku nicht belegt
+- **Quelle:** Issue #38 Critic (learn.microsoft.com message-delete / message-permanentdelete)
+- **Status:** `DELETE /messages/{id}` ist vermutlich ein Soft-Delete nach Recoverable Items; echtes Purgen wäre `permanentDelete`. Tool-Beschreibung evtl. falsch.
+- **Vorschlag:** Per E2E klären und Beschreibung korrigieren.
+
+### Persona `ferdinand` hat auf `ulla.vogel@` auch Schreibrechte
+- **Quelle:** Issue #38 Critic (Bezug Commit 4b0bfd7)
+- **Status:** Mailbox-Pinning kennt keine Read/Write-Trennung — ferdinand kann dort `delete_email`, `update_draft`, `delete_draft` ausführen, obwohl nur Lesen gewollt war.
+- **Vorschlag:** Separat entscheiden (Klaus).
+
+### Doc-Generator schneidet Tool-Beschreibungen ab
+- **Quelle:** Issue #38 (`pnpm docs:generate`)
+- **Status:** `scripts/generate-docs.ts` liest nur das erste String-Literal bis zum ersten `'` — Beschreibungen mit Apostroph (`read_email`) oder `+`-Verkettung (`list_mail_folders`) landen gekürzt in `docs/TOOLS.md`.

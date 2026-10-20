@@ -118,7 +118,9 @@ export const SendEmailParams = WriteParams.extend({
   body_type: z
     .enum(["text", "html"])
     .default("text")
-    .describe("Body format: 'text' for plain text, 'html' for HTML"),
+    .describe(
+      "Format of the body you pass: 'text' (line breaks kept) or 'html'. The mail is always sent as HTML in Aptos 11pt black",
+    ),
   importance: z.enum(["low", "normal", "high"]).default("normal").describe("Email importance"),
   save_to_sent_items: z
     .boolean()
