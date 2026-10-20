@@ -171,7 +171,7 @@ export function registerCalendarUpdateTools(
 ): void {
   server.tool(
     "update_event",
-    "Update an existing calendar event. Requires confirm=true to actually update — without it, fetches the current event and returns a preview with current vs new values. At least one updatable field must be provided. Use idempotency_key to prevent duplicate updates.",
+    "Change, modify, edit, rename, move or reschedule an EXISTING calendar event. This is the correct tool to alter any field (subject/title, time, location, attendees, etc.) of an event that already exists — do NOT create a new event to change one. Look the event up first (e.g. list_events / get_calendar_view) to get its event_id, then call this. Requires confirm=true to actually update — without it, fetches the current event and returns a preview with current vs new values. At least one updatable field must be provided. Use idempotency_key to prevent duplicate updates.",
     UpdateEventParams.shape,
     async (params) => {
       const startTime = Date.now();

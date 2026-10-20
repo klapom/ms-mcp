@@ -117,7 +117,7 @@ export function registerCalendarCreateTools(
 ): void {
   server.tool(
     "create_event",
-    "Create a new calendar event. Requires confirm=true to actually create — without it, returns a preview. Supports subject, start/end (with timezone), location, body, attendees, online meeting, importance, sensitivity, show_as, categories, and reminder. Use calendar_id for a specific calendar. Use idempotency_key to prevent duplicate creates.",
+    "Create a brand-new calendar event that does not exist yet. To change, rename, move or reschedule an event that ALREADY exists, use update_event instead — do not create a duplicate. Requires confirm=true to actually create — without it, returns a preview. Supports subject, start/end (with timezone), location, body, attendees, online meeting, importance, sensitivity, show_as, categories, and reminder. Use calendar_id for a specific calendar. Use idempotency_key to prevent duplicate creates.",
     CreateEventParams.shape,
     async (params) => {
       const startTime = Date.now();
