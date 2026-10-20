@@ -10,6 +10,7 @@ import { checkConfirmation, formatPreview } from "../utils/confirmation.js";
 import { formatErrorForUser, McpToolError } from "../utils/errors.js";
 import { idempotencyCache } from "../utils/idempotency.js";
 import { createLogger } from "../utils/logger.js";
+import { toStyledHtmlBody } from "../utils/mail-html.js";
 import { toRecipients } from "../utils/recipients.js";
 
 const logger = createLogger("tools:mail-send");
@@ -69,10 +70,7 @@ function checkDuplicate(to: string[], subject: string, body: string): string {
 export function buildGraphRequestBody(parsed: SendEmailParamsType): Record<string, unknown> {
   const messageBody: Record<string, unknown> = {
     subject: parsed.subject,
-    body: {
-      contentType: parsed.body_type === "html" ? "HTML" : "Text",
-      content: parsed.body,
-    },
+    body: toStyledHtmlBody(parsed.body, parsed.body_type),
     toRecipients: toRecipients(parsed.to),
     importance: parsed.importance,
   };
@@ -133,7 +131,7 @@ export function registerMailSendTools(
 ): void {
   server.tool(
     "send_email",
-    "Send a new email. Requires confirm=true to actually send — without it, returns a preview. Supports To, CC, BCC, subject, body (text or HTML), importance, and save_to_sent_items. Use idempotency_key to prevent duplicate sends.",
+    "Send a new email. Requires confirm=true to actually send — without it, returns a preview. Supports To, CC, BCC, subject, body (text or HTML), importance, and save_to_sent_items. The body is always sent as HTML in Aptos 11pt black; plain-text input keeps its line breaks. Use idempotency_key to prevent duplicate sends.",
     SendEmailParams.shape,
     async (params) => {
       const startTime = Date.now();

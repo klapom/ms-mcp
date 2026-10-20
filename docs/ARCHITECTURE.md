@@ -19,14 +19,14 @@ The server is organized into six distinct layers, each responsible for a specifi
   - Loads configuration via `loadConfig()` (env: `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`)
   - Initializes authentication via `createDefaultAuthDeps()` (creates MSAL client with persistent token cache)
   - Implements fail-fast: checks for cached token before starting MCP server (exits with instructions if not authenticated)
-  - Registers 108 tools from all domain modules (Mail, Calendar, OneDrive/SharePoint, Teams, SharePoint Lists, Contacts, To Do, OneNote, Presence, User & Directory, Advanced Features)
+  - Registers 113 tools from all domain modules (Mail, Calendar, OneDrive/SharePoint, Teams, SharePoint Lists, Contacts, To Do, OneNote, Presence, User & Directory, Advanced Features)
   - Establishes stdio transport for MCP JSON-RPC communication
 
 ### 2. Tool Layer (`src/tools/`)
 
 - **Responsibility:** Domain-specific request handlers organized by domain module
-- **Module Organization (108 tools across 11 modules):**
-  - **Mail** (20 tools): `mail.ts`, `mail-read.ts`, `mail-search.ts`, `mail-folders.ts`, `mail-send.ts`, `mail-reply.ts`, `mail-forward.ts`, `mail-move.ts`, `mail-attachments.ts`, `mail-delete.ts`, `mail-drafts.ts`, `mail-folder-create.ts`, `mail-flag.ts`, `mail-rules-list.ts`, `mail-attach-item.ts`, `mail-attach-reference.ts`
+- **Module Organization (113 tools across 11 modules):**
+  - **Mail** (22 tools): `mail.ts`, `mail-read.ts`, `mail-search.ts`, `mail-folders.ts`, `mail-send.ts`, `mail-reply.ts`, `mail-forward.ts`, `mail-move.ts`, `mail-attachments.ts`, `mail-delete.ts`, `mail-drafts.ts`, `mail-draft-update.ts`, `mail-folder-create.ts`, `mail-flag.ts`, `mail-rules-list.ts`, `mail-attach-item.ts`, `mail-attach-reference.ts`
   - **Calendar** (9 tools): `calendar-list.ts`, `calendar-events.ts`, `calendar-view.ts`, `calendar-create.ts`, `calendar-update.ts`, `calendar-delete.ts`, `calendar-respond.ts`, `calendar-availability.ts`
   - **OneDrive/SharePoint** (12 tools): `drive-list.ts`, `drive-search.ts`, `drive-metadata.ts`, `drive-download.ts`, `drive-upload.ts`, `drive-upload-large.ts`, `drive-folder.ts`, `drive-move.ts`, `drive-copy.ts`, `drive-copy-status.ts`, `drive-share.ts` (supports SharePoint via `site_id`/`drive_id`)
   - **Teams** (8 tools): `teams-list.ts`, `teams-messages.ts`, `teams-send.ts`, `teams-chats.ts`, `teams-chat-messages.ts`

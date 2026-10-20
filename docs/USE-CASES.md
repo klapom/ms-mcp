@@ -143,12 +143,16 @@ This document describes practical, real-world scenarios showing how Claude can h
 
 **Tools Used:**
 1. `create_draft` — Create draft email in Drafts folder
-2. `add_attachment` — Add file attachments to draft (up to 3 MB)
-3. `send_draft` — Send the finalized draft
+2. `update_draft` — Change subject, body, recipients or importance of the existing draft (no duplicate drafts)
+3. `add_attachment` — Add file attachments to draft (up to 3 MB)
+4. `send_draft` — Send the finalized draft
+5. `delete_draft` — Discard a superseded draft (moved to Deleted Items, reversible)
 
 **Common Scenarios:**
 - `"Create a draft email for my approval workflow"` → `create_draft`
 - `"Add the presentation.pptx to the draft email"` → `add_attachment`
+- `"Move the start time in the agenda draft one hour later"` → `update_draft`
+- `"Throw away the old draft"` → `delete_draft`
 - `"Send all my draft emails"` → `list_emails` (drafts folder) + `send_draft` (bulk)
 
 ---
@@ -827,7 +831,7 @@ Status: ✓ Created successfully
 
 ## Current Tool Inventory (108 Tools, Sprint 9.4 Complete)
 
-**Mail (20 tools):** list_emails, search_emails, read_email, list_mail_folders, send_email, reply_email, forward_email, move_email, list_attachments, download_attachment, delete_email, create_draft, send_draft, add_attachment, flag_email, create_mail_folder, list_mail_rules, attach_item, attach_reference
+**Mail (22 tools):** list_emails, search_emails, read_email, list_mail_folders, send_email, reply_email, forward_email, move_email, list_attachments, download_attachment, delete_email, create_draft, update_draft, delete_draft, send_draft, add_attachment, flag_email, create_mail_folder, list_mail_rules, attach_item, attach_reference
 
 **Calendar (9 tools):** list_calendars, list_events, get_event, get_calendar_view, create_event, update_event, delete_event, respond_to_event, check_availability
 

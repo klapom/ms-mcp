@@ -14,7 +14,12 @@ export const DeleteEmailParams = WriteParams.extend({
 export const CreateDraftParams = WriteParams.extend({
   subject: z.string().optional().describe("Email subject"),
   body: z.string().optional().describe("Email body content"),
-  body_type: z.enum(["text", "html"]).default("text").describe("Body content type"),
+  body_type: z
+    .enum(["text", "html"])
+    .default("text")
+    .describe(
+      "Format of the body you pass: 'text' (line breaks kept) or 'html'. The draft is always saved as HTML in Aptos 11pt black",
+    ),
   to: z
     .array(
       z.object({
@@ -52,6 +57,59 @@ export const CreateDraftParams = WriteParams.extend({
 export const SendDraftParams = WriteParams.extend({
   message_id: z.string().min(1).describe("Draft message ID to send"),
 });
+
+/**
+ * Recipient with a validated address and an optional display name.
+ */
+const RecipientInput = z.object({
+  address: z.string().email().max(320),
+  name: z.string().optional(),
+});
+
+/**
+ * Schema for updating an existing draft email (PATCH, partial).
+ */
+export const UpdateDraftParams = WriteParams.extend({
+  message_id: z.string().min(1).describe("Draft message ID to update"),
+  subject: z.string().optional().describe("New subject (empty string clears it)"),
+  body: z
+    .string()
+    .optional()
+    .describe("New body content. REPLACES the entire current body (including signature)"),
+  body_type: z
+    .enum(["text", "html"])
+    .optional()
+    .describe(
+      "Format of the new body you pass: 'text' (default, line breaks kept) or 'html'. Always saved as HTML in Aptos 11pt black. Only valid together with body",
+    ),
+  to: z
+    .array(RecipientInput)
+    .max(500)
+    .optional()
+    .describe("REPLACES the whole To list. Pass [] to clear, omit to keep"),
+  cc: z
+    .array(RecipientInput)
+    .max(500)
+    .optional()
+    .describe("REPLACES the whole CC list. Pass [] to clear, omit to keep"),
+  bcc: z
+    .array(RecipientInput)
+    .max(500)
+    .optional()
+    .describe("REPLACES the whole BCC list. Pass [] to clear, omit to keep"),
+  importance: z.enum(["low", "normal", "high"]).optional().describe("New message importance"),
+});
+
+export type UpdateDraftParamsType = z.infer<typeof UpdateDraftParams>;
+
+/**
+ * Schema for deleting a draft reversibly (move to Deleted Items).
+ */
+export const DeleteDraftParams = WriteParams.extend({
+  message_id: z.string().min(1).describe("Draft message ID to delete"),
+});
+
+export type DeleteDraftParamsType = z.infer<typeof DeleteDraftParams>;
 
 /**
  * Schema for adding an attachment to a message.

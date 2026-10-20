@@ -10,10 +10,10 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 
 ### Available (Sprint 9.4 Complete - Presence Integration)
 
-**108 tools across 11 modules** with response caching:
+**113 tools across 11 modules** with response caching:
 
-#### Mail (20 tools)
-`list_emails` · `read_email` · `search_emails` · `list_mail_folders` · `send_email` · `reply_email` · `forward_email` · `move_email` · `list_attachments` · `download_attachment` · `delete_email` · `create_draft` · `send_draft` · `add_attachment` · `flag_email` · `create_mail_folder` · `list_mail_rules` · `attach_item` · `attach_reference`
+#### Mail (22 tools)
+`list_emails` · `read_email` · `search_emails` · `list_mail_folders` · `send_email` · `reply_email` · `forward_email` · `move_email` · `list_attachments` · `download_attachment` · `delete_email` · `create_draft` · `update_draft` · `delete_draft` · `send_draft` · `add_attachment` · `flag_email` · `create_mail_folder` · `list_mail_rules` · `attach_item` · `attach_reference`
 
 #### Calendar (9 tools)
 `list_calendars` · `list_events` · `get_event` · `get_calendar_view` · `create_event` · `update_event` · `delete_event` · `respond_to_event` · `check_availability`
@@ -172,7 +172,7 @@ pnpm test
 
 ### Developer Experience
 - **Zod as SSoT:** Single source of truth for schemas → TypeScript types → JSON Schema → Runtime validation
-- **MCP Tool Pattern:** Consistent pattern across all 108 tools (schema → handler → registration → tests)
+- **MCP Tool Pattern:** Consistent pattern across all 113 tools (schema → handler → registration → tests)
 - **Test Coverage:** Happy path, error cases, pagination, validation for each tool
 - **Dev Server:** Hot-reload with `pnpm dev`
 

@@ -153,6 +153,58 @@ describe("CachingMiddleware", () => {
       // List cache should remain (PATCH only invalidates detail)
       expect(cache.get("GET:/me/events:me")).toBeDefined();
     });
+
+    it("should invalidate $select/query variants of the detail on PATCH", async () => {
+      // Tools always read with $select, so the cache key carries the query string.
+      const getContext = createContext("GET", "/me/messages/abc?$select=id,subject,isDraft");
+      await middleware.execute(getContext);
+      expect(cache.get("GET:/me/messages/abc?$select=id,subject,isDraft:me")).toBeDefined();
+
+      await middleware.execute(createContext("PATCH", "/me/messages/abc"));
+
+      expect(cache.get("GET:/me/messages/abc?$select=id,subject,isDraft:me")).toBeUndefined();
+
+      // The next GET must reach the network again.
+      await middleware.execute(createContext("GET", "/me/messages/abc?$select=id,subject,isDraft"));
+      expect(executeCount).toBe(3);
+    });
+
+    it("should not invalidate a different resource sharing the id prefix on PATCH", async () => {
+      await middleware.execute(createContext("GET", "/me/messages/abcdef?$select=id"));
+
+      await middleware.execute(createContext("PATCH", "/me/messages/abc"));
+
+      expect(cache.get("GET:/me/messages/abcdef?$select=id:me")).toBeDefined();
+    });
+  });
+
+  describe("Cache-Control: no-cache request header", () => {
+    function createSdkGetContext(url: string, headers: Record<string, string>): Context {
+      return {
+        request: url,
+        options: { method: "GET", headers },
+      } as unknown as Context;
+    }
+
+    it("should bypass a cached entry and fetch fresh data", async () => {
+      await middleware.execute(createContext("GET", "/me/messages/abc?$select=isDraft"));
+      expect(executeCount).toBe(1);
+
+      const ctx = createSdkGetContext("/me/messages/abc?$select=isDraft", {
+        "Cache-Control": "no-cache",
+      });
+      await middleware.execute(ctx);
+
+      expect(executeCount).toBe(2);
+      expect(ctx.response).toBeDefined();
+    });
+
+    it("should still serve from cache without the header", async () => {
+      await middleware.execute(createContext("GET", "/me/messages/abc?$select=isDraft"));
+      await middleware.execute(createSdkGetContext("/me/messages/abc?$select=isDraft", {}));
+
+      expect(executeCount).toBe(1);
+    });
   });
 
   describe("DELETE request invalidation", () => {

@@ -11,6 +11,7 @@ import { formatErrorForUser, McpToolError } from "../utils/errors.js";
 import { encodeGraphId } from "../utils/graph-id.js";
 import { idempotencyCache } from "../utils/idempotency.js";
 import { createLogger } from "../utils/logger.js";
+import { toStyledHtmlBody } from "../utils/mail-html.js";
 import { toRecipients } from "../utils/recipients.js";
 
 const logger = createLogger("tools:mail-drafts");
@@ -128,7 +129,7 @@ async function handleSendConfirmed(
 function buildDraftBody(parsed: {
   subject?: string;
   body?: string;
-  body_type: string;
+  body_type: "text" | "html";
   to?: Array<{ address: string; name?: string }>;
   cc?: Array<{ address: string; name?: string }>;
   bcc?: Array<{ address: string; name?: string }>;
@@ -137,10 +138,7 @@ function buildDraftBody(parsed: {
 }) {
   const draft: Record<string, unknown> = {
     subject: parsed.subject ?? "",
-    body: {
-      contentType: parsed.body_type === "html" ? "HTML" : "Text",
-      content: parsed.body ?? "",
-    },
+    body: toStyledHtmlBody(parsed.body ?? "", parsed.body_type),
     importance: parsed.importance,
     // Note: saveToSentItems is NOT a valid property for draft creation (POST /me/messages).
     // It is only used when sending via POST /me/sendMail. Omitted here intentionally.
@@ -166,7 +164,7 @@ export function registerMailDraftTools(
 ): void {
   server.tool(
     "create_draft",
-    "Create a draft email message. The draft is saved to the Drafts folder and can be edited or sent later using send_draft.",
+    "Create a brand-new draft email that does not exist yet. To change the subject, body, recipients or importance of a draft that ALREADY exists, use update_draft instead — do not create a second draft. The draft is saved to the Drafts folder and can be changed with update_draft, removed with delete_draft, or sent with send_draft. The body is always saved as HTML in Aptos 11pt black; plain-text input keeps its line breaks.",
     CreateDraftParams.shape,
     async (params) => {
       try {
@@ -236,17 +234,14 @@ export function registerMailDraftTools(
 
   server.tool(
     "send_draft",
-    "Send a draft email message that was previously created with create_draft. The message will be sent immediately.",
+    "Send a draft email message that was previously created with create_draft (and optionally changed with update_draft). The message will be sent immediately.",
     SendDraftParams.shape,
     async (params) => {
       try {
         const parsed = SendDraftParams.parse(params);
         const idempotencyKey = parsed.idempotency_key;
 
-        if (
-          idempotencyKey &&
-          idempotencyCache.get("create_draft", idempotencyKey, parsed.user_id)
-        ) {
+        if (idempotencyKey && idempotencyCache.get("send_draft", idempotencyKey, parsed.user_id)) {
           return {
             content: [
               {
@@ -305,7 +300,7 @@ export function registerMailDraftTools(
 
         if (
           idempotencyKey &&
-          idempotencyCache.get("create_draft", idempotencyKey, parsed.user_id)
+          idempotencyCache.get("add_attachment", idempotencyKey, parsed.user_id)
         ) {
           return {
             content: [
