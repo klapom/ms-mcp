@@ -42,17 +42,17 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
-    "@azure/msal-node": "^5.1.5",
-    "@azure/msal-node-extensions": "^5.1.5",
+    "@azure/msal-node": "^5.6.0",
+    "@azure/msal-node-extensions": "^5.5.2",
     "@microsoft/microsoft-graph-client": "^3.0.7",
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "@types/express": "^5.0.6",
     "express": "^5.2.1",
-    "html-to-text": "^10.0.0",
-    "jose": "^6.2.3",
-    "lru-cache": "^11.3.6",
-    "pino": "^10.3.1",
-    "zod": "^4.4.3",
+    "html-to-text": "^10.0.1",
+    "jose": "^6.2.12",
+    "lru-cache": "^11.5.3",
+    "pino": "^10.4.0",
+    "zod": "^4.6.5",
     "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
@@ -87,13 +87,14 @@
       "@azure/msal-node-runtime"
     ],
     "overrides": {
-      "hono": "^4.12.16",
+      "hono": "^4.13.7",
       "@hono/node-server": "^1.19.14",
       "router>path-to-regexp": "^8.4.0",
       "express-rate-limit": "^8.2.2",
       "ajv": "^8.18.0",
-      "fast-uri": "^3.1.2",
-      "ip-address": "^10.1.1"
+      "fast-uri": "^3.1.4",
+      "ip-address": "^10.7.1",
+      "proxy-addr": "^2.0.8"
     }
   }
 }
