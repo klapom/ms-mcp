@@ -128,6 +128,16 @@ Dieses Dokument sammelt Beobachtungen aus der laufenden Implementierung:
 - **Status:** Mailbox-Pinning kennt keine Read/Write-Trennung — ferdinand kann dort `delete_email`, `update_draft`, `delete_draft` ausführen, obwohl nur Lesen gewollt war.
 - **Vorschlag:** Separat entscheiden (Klaus).
 
+### Memory-Monitor: Fehlalarm „Heap > 90 %"
+- **Quelle:** Service-Log 2026-10-20 (21 Alerts in 2 h)
+- **Status:** `memory-monitor.ts` rechnet `heapUsed / heapTotal`; `heapTotal` ist nur der aktuell reservierte Heap (127 MB), das Limit liegt bei 4288 MB (`v8.getHeapStatistics().heap_size_limit`). Der Alarm ist daher bedeutungslos. Auffällig dennoch: `heapUsed` stieg in 36 h von 46 → 124 MB.
+- **Vorschlag:** Gegen `heap_size_limit` rechnen.
+
+### ~~HTTP-Sessions ohne DELETE werden nie freigegeben (Speicherleck)~~ — ERLEDIGT 2026-10-20
+- **Status (gemessen 2026-10-20):** Die `sessions`-Map in `src/index.ts` (HTTP-Modus) hat weder Idle-Timeout noch Obergrenze; ein Eintrag verschwindet nur per DELETE oder `transport.onclose`. Jede Session hält einen eigenen `McpServer` mit allen Tool-Registrierungen. Isolierte Messung (Kopie, `--expose-gc`, keine Graph-Calls): 200 Sessions mit DELETE +5 KB/Session, ohne DELETE +557 KB/Session; Gegenprobe danach 200 mit DELETE +1 KB/Session. Live nach 41 h: 150 offene Sessions (`/health`), heapUsed 46 → 131 MB — deckt sich (150 × 0,56 MB ≈ 84 MB). Verursacher: ein Claude-Code-Client öffnet alle ~18 min eine neue Session ohne die alte zu schließen (Ursache des 18-min-Takts nicht verifiziert). Wachstum ≈ 43 MB/Tag, OOM gegen 4288 MB Limit nach ~3 Monaten Laufzeit.
+- **Umgesetzt:** `src/utils/session-registry.ts` — Idle-Eviction nach `MCP_SESSION_IDLE_TIMEOUT_MIN` (Default 60), Sweep alle 5 min, Sessions mit offenem Request/Stream bleiben; unbekannte Session-ID → 404. Messung: 200 Sessions ohne DELETE +113 MB, nach Eviction zurück auf Basis (+2,4 MB). Offen: harte Obergrenze nicht gebaut; Verhalten von Claude Code/Desktop bei 404 nach Idle nicht verifiziert.
+- **Ursprünglicher Vorschlag:** `lastActivity` pro Session, `setInterval(...).unref()` schließt Sessions > 30 min idle via `transport.close()` (keine mit offenem Stream); zusätzlich harte Obergrenze (z.B. 50, älteste zuerst). Test: 200 Sessions ohne DELETE → nach Timeout muss heapUsed zurückgehen.
+
 ### Doc-Generator schneidet Tool-Beschreibungen ab
 - **Quelle:** Issue #38 (`pnpm docs:generate`)
 - **Status:** `scripts/generate-docs.ts` liest nur das erste String-Literal bis zum ersten `'` — Beschreibungen mit Apostroph (`read_email`) oder `+`-Verkettung (`list_mail_folders`) landen gekürzt in `docs/TOOLS.md`.

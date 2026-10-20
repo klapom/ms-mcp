@@ -46,6 +46,7 @@ pnpm build && node dist/index.js
 - `MAX_ITEMS` — Max items per list response, default: `25`
 - `MAX_BODY_LENGTH` — Max body length in responses, default: `500`
 - `HTTP_BODY_LIMIT` — Max size of an incoming HTTP request body (Express), default: `12mb`. The Express default of 100 kB rejected uploads above ~70 kB (base64 in the request) with `413 Payload Too Large`.
+- `MCP_SESSION_IDLE_TIMEOUT_MIN` — HTTP mode: MCP sessions without any request for longer than this many minutes are closed (checked every 5 min), default: `60`, `0` disables. Each session holds its own tool registrations (~0.56 MB); clients that open new sessions without `DELETE` otherwise grow the heap without bound. A request with a closed or unknown `mcp-session-id` gets `404 Session not found` (client must re-initialize, per MCP spec).
 
 ---
 
