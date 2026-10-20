@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BEHAVIOUR: `send_email`, `create_draft` and `update_draft` always send the body as HTML in Aptos 11pt black (`src/utils/mail-html.ts`, same font stack as new Outlook). `body_type` now describes the input: `text` is HTML-escaped with line breaks kept as `<br>`, `html` is wrapped as-is (inside `<body>` for full documents). `reply_email`/`forward_email` comments are unchanged.
 
 ### Fixed
+- HTTP mode memory leak: MCP sessions that a client never closed with `DELETE` stayed in memory for the lifetime of the process (~0.56 MB each; live: 150 open sessions, heap 46 → 131 MB in 41 h, from a client opening a new session every 18 min). Sessions idle for longer than `MCP_SESSION_IDLE_TIMEOUT_MIN` (default 60) are now closed; sessions with an open request/stream are kept. Measured: 200 leaked sessions +113 MB, back to baseline (+2.4 MB) after eviction.
+- BEHAVIOUR: a request with an unknown/closed `mcp-session-id` now gets `404 Session not found` (JSON-RPC `-32001`, as the SDK transport and the MCP spec define) instead of `400 Server not initialized`.
 - Response cache: a `PATCH` now also invalidates `$select`/query variants of the detail resource (previously reads with `$select` returned stale data for up to the TTL after an update). GET requests with `Cache-Control: no-cache` bypass the cache.
 - `send_draft` / `add_attachment`: idempotency keys were looked up under `create_draft` but stored under the tool's own name — a repeated call sent/attached twice, and a key reused from `create_draft` silently skipped the send.
 

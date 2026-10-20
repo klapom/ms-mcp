@@ -96,6 +96,11 @@ import type { ToolRegistrationFn } from "./types/tools.js";
 import { CacheManager } from "./utils/cache.js";
 import { createLogger } from "./utils/logger.js";
 import { resolveTildePath } from "./utils/path.js";
+import {
+  dispatchSessionRequest,
+  idleTimeoutFromEnv,
+  SessionRegistry,
+} from "./utils/session-registry.js";
 
 const logger = createLogger("server");
 
@@ -287,7 +292,13 @@ async function main() {
 
   if (port) {
     // HTTP mode: Express + stateful session management (equivalent to Python StreamableHTTPSessionManager)
-    const sessions = new Map<string, StreamableHTTPServerTransport>();
+    const sessions = new SessionRegistry<StreamableHTTPServerTransport>({
+      idleTimeoutMs: idleTimeoutFromEnv(process.env.MCP_SESSION_IDLE_TIMEOUT_MIN),
+      logger,
+    });
+    // Clients that open a new session without DELETE-ing the old one would otherwise
+    // keep every session (~0.56 MB each) until the process exits.
+    sessions.startSweeper(5 * 60 * 1000);
     const app = express();
     // Express' Default-Limit (100 kB) lehnte Uploads ab ~70 kB Dateigroesse mit 413 ab
     // (upload_file/upload_large_file tragen den Inhalt base64 im Request). 4-MB-Datei = ~5,4 MB.
@@ -332,27 +343,18 @@ async function main() {
       return isBearerAuthorized(req.headers.authorization, [authToken, bootAuthToken]);
     };
 
-    const handleDelete = async (sessionId: string | undefined): Promise<void> => {
-      if (!sessionId) return;
-      const t = sessions.get(sessionId);
-      if (!t) return;
-      await t.close();
-      sessions.delete(sessionId);
-    };
-
     const createTransport = async (): Promise<StreamableHTTPServerTransport> => {
       const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
         onsessioninitialized: (id) => {
-          sessions.set(id, transport);
+          sessions.add(id, transport);
           logger.info({ sessionId: id }, "MCP session opened");
         },
       });
       transport.onclose = () => {
         const id = transport.sessionId;
         if (id) {
-          sessions.delete(id);
-          logger.info({ sessionId: id }, "MCP session closed");
+          if (sessions.remove(id)) logger.info({ sessionId: id }, "MCP session closed");
         }
       };
       const sessionServer = new McpServer({ name: "pommer-m365-mcp", version: VERSION });
@@ -377,17 +379,7 @@ async function main() {
         return;
       }
 
-      const sessionId = req.headers["mcp-session-id"] as string | undefined;
-
-      if (req.method === "DELETE") {
-        await handleDelete(sessionId);
-        res.status(200).end();
-        return;
-      }
-
-      const existing = sessionId ? sessions.get(sessionId) : undefined;
-      const transport = existing ?? (await createTransport());
-      await transport.handleRequest(req, res, req.body);
+      await dispatchSessionRequest(req, res, sessions, createTransport);
     });
 
     const httpServer = createServer(app);
