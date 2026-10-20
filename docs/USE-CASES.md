@@ -853,4 +853,4 @@ Status: ✓ Created successfully
 
 ## Questions or Feedback?
 
-For implementation details, see `/docs/TECHNICAL_DEBT.md` and sprint documentation in `/docs/sprints/`.
+For implementation details, see `/docs/TECHNICAL_DEBT.md` and sprint documentation in `/docs/archive/sprints/`.

@@ -138,7 +138,7 @@ function generateToolsMd(tools: ToolInfo[]): string {
     lines.push("");
     lines.push("## Geplante Tools");
     lines.push("");
-    lines.push("Siehe Project_Description.md Abschnitte 2.3 und 8 für die vollständige Liste.");
+    lines.push("Siehe docs/archive/Project_Description.md Abschnitte 2.3 und 8 für die vollständige Liste.");
   } else {
     lines.push("## Implementierte Tools");
     lines.push("");
