@@ -162,6 +162,11 @@ const TOOL_CAPABILITY: Record<string, RequiredCapability> = {
   copy_file: "driveWrite",
   share_file: "driveWrite",
   batch_move_files: "driveWrite",
+  // Excel workbook writes (in place via the workbook API).
+  create_excel_table: "driveWrite",
+  add_excel_table_rows: "driveWrite",
+  update_excel_table_row: "driveWrite",
+  write_excel_range: "driveWrite",
   // SharePoint list writes — drive-write-shaped mutations of site content.
   create_list_item: "driveWrite",
   update_list_item: "driveWrite",
@@ -179,6 +184,8 @@ const TOOL_CAPABILITY: Record<string, RequiredCapability> = {
   get_recent_files: "driveRead",
   track_file_changes: "driveRead",
   poll_copy_status: "driveRead",
+  list_excel_tables: "driveRead",
+  read_excel_range: "driveRead",
 };
 
 /**

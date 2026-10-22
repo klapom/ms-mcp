@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Excel workbook tools (in place via the workbook API)
+- `list_excel_tables`, `read_excel_range` (drive:read): worksheets/tables of an .xlsx; read a named table (columns + rows) or a worksheet range (default used range, max 500 rows, `as_text` for displayed text).
+- `create_excel_table`, `add_excel_table_rows`, `update_excel_table_row`, `write_excel_range` (drive:write, `confirm` + `idempotency_key`): each runs in one persisted workbook session that is always closed. Unlike re-saving the file with a library, the cached values of all other formulas stay intact (measured on a copy of a real time sheet: 922/922).
+- `text_columns` / `as_text`: cells are formatted `@` before the value is written, otherwise Excel turns `0001` into `1` (measured).
+- Values starting with `=` are rejected (no formula injection).
+- A table created from a header-only range carries one empty data row; the first appended row fills it.
+- All workbook GETs send `Cache-Control: no-cache` (a PATCH only invalidates its own path; cached table reads would otherwise show pre-write data for up to 10 min).
+- Reading a just-created table can 404 for ~1-2 s after `closeSession` (measured 2 of 4); table reads retry twice (1.5 s, 3 s).
+- Row addresses are derived from the table's `dataBodyRange`: Graph rejects `GET rows/itemAt(index=n)/range` with 400 (measured 4/4). Graph has no data-validation (dropdown) API.
+
 ### Added - Draft editing (#38)
 - `update_draft`: partial `PATCH` of an existing draft (subject, body, to/cc/bcc, importance). Recipient lists replace the whole list (`[]` clears); display names are kept. Preview shows current vs new values and `lastModifiedDateTime`, never echoes body content. Refuses non-drafts; the confirmed path re-checks `isDraft` bypassing the response cache.
 - `delete_draft`: moves a draft to Deleted Items (reversible, returns the new message ID and a restore hint). `delete_email` is unchanged (permanent).

@@ -43,6 +43,7 @@ import { registerDriveSearchTools } from "./tools/drive-search.js";
 import { registerDriveShareTools } from "./tools/drive-share.js";
 import { registerDriveUploadTools } from "./tools/drive-upload.js";
 import { registerDriveUploadLargeTools } from "./tools/drive-upload-large.js";
+import { registerExcelTools } from "./tools/excel.js";
 import { registerFilesDeltaTools } from "./tools/files-delta.js";
 import { registerMailTools } from "./tools/mail.js";
 import { registerMailAttachItemTools } from "./tools/mail-attach-item.js";
@@ -182,6 +183,7 @@ const MODULE_GROUPS: Record<string, ToolRegistrationFn[]> = {
     registerDriveCopyTools,
     registerDriveCopyStatusTools,
     registerDriveShareTools,
+    registerExcelTools,
     registerFilesDeltaTools,
     registerBatchFilesTools,
   ],

@@ -10,7 +10,7 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 
 ### Available (Sprint 9.4 Complete - Presence Integration)
 
-**113 tools across 11 modules** with response caching:
+**119 tools across 11 modules** with response caching:
 
 #### Mail (22 tools)
 `list_emails` · `read_email` · `search_emails` · `list_mail_folders` · `send_email` · `reply_email` · `forward_email` · `move_email` · `list_attachments` · `download_attachment` · `delete_email` · `create_draft` · `update_draft` · `delete_draft` · `send_draft` · `add_attachment` · `flag_email` · `create_mail_folder` · `list_mail_rules` · `attach_item` · `attach_reference`
@@ -20,6 +20,9 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 
 #### OneDrive (12 tools)
 `list_files` · `search_files` · `get_file_metadata` · `download_file` · `get_recent_files` · `upload_file` · `upload_large_file` · `create_folder` · `move_file` · `copy_file` · `poll_copy_status` · `share_file`
+
+#### Excel (6 tools, drive module)
+`list_excel_tables` · `read_excel_range` · `create_excel_table` · `add_excel_table_rows` · `update_excel_table_row` · `write_excel_range`
 
 #### Teams (8 tools)
 `list_teams` · `list_channels` · `list_channel_messages` · `send_channel_message` · `reply_to_channel_message` · `list_chats` · `list_chat_messages` · `send_chat_message`
