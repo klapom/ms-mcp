@@ -46,6 +46,12 @@
 | `share_file` | Create a sharing link for a file or folder in OneDrive. Requires confirm=true to actually share — without it, returns a preview. Supports view/edit link types and organization/anonymous scopes. Anonymous links show a warning. Use idempotency_key to prevent duplicate shares. | drive-share | 🔴 destructive |
 | `upload_large_file` | Upload a large file (>4MB) to OneDrive using resumable upload with chunked transfer. Requires confirm=true to actually upload — without it, returns a preview. Content must be base64-encoded. No size limit. Supports conflict resolution (fail, replace, rename). Use idempotency_key to prevent duplicate uploads. | drive-upload-large | 🟡 moderate |
 | `upload_file` | Upload a file to OneDrive. Requires confirm=true to actually upload — without it, returns a preview. Content must be base64-encoded. Max 4 MB (simple upload). Use idempotency_key to prevent duplicate uploads. | drive-upload | 🟡 moderate |
+| `list_excel_tables` | List the worksheets and named tables of an .xlsx file in OneDrive/SharePoint. | excel | 🟢 safe |
+| `read_excel_range` | Read cell values of an .xlsx file: either a named table (columns + data rows, row position = index for update_excel_table_row) or a worksheet range (default: used range). Max 500 rows per call. | excel | 🟢 safe |
+| `create_excel_table` | Create a named table with the given headers in row 1 of a worksheet (worksheet is created if missing). Writes in place through the Excel API, other sheets and formulas stay untouched. Requires confirm=true, otherwise returns a preview. | excel | 🟡 moderate |
+| `add_excel_table_rows` | Append rows to a named table in an .xlsx file. Use text_columns for codes with leading zeros. Values starting with  | excel | 🔴 destructive |
+| `update_excel_table_row` | Overwrite one data row of a named table (0-based index; null keeps a cell). Values starting with  | excel | 🟡 moderate |
+| `write_excel_range` | Write values into a worksheet range of an .xlsx file in place (null keeps a cell; as_text keeps leading zeros). Values starting with  | excel | 🔴 destructive |
 | `track_file_changes` | Track OneDrive file changes using delta queries. Returns added, modified, and deleted files since last sync. Provide the delta_token from a previous response for incremental sync, or omit it for an initial full listing. The response includes a new delta_token for the next request. | files-delta | 🟢 safe |
 | `attach_item` | Attach an email, event, or contact as an embedded itemAttachment to a message. Requires confirm=true to actually attach — without it, returns a preview. The source item is fetched and embedded in full. Use idempotency_key to prevent duplicate attachments. | mail-attach-item | 🟢 safe |
 | `attach_reference` | Attach a OneDrive/SharePoint file as a reference (link) to a message. Requires confirm=true to actually attach — without it, returns a preview. Automatically creates a sharing link with specified permission (view/edit). Recipients access the file via link. Use idempotency_key to prevent duplicate attachments. | mail-attach-reference | 🟢 safe |
@@ -120,4 +126,4 @@
 | `get_manager` | Get the manager of a user. Returns manager | user-profile | 🟢 safe |
 | `search_users` | Search for users in the directory by name, email, or job title. Supports partial matches and fuzzy search. | user-search | 🟢 safe |
 
-_113 Tools registriert._
+_119 Tools registriert._

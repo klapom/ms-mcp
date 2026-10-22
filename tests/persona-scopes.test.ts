@@ -29,6 +29,7 @@ import { registerDriveMoveTools } from "../src/tools/drive-move.js";
 import { registerDriveShareTools } from "../src/tools/drive-share.js";
 import { registerDriveUploadTools } from "../src/tools/drive-upload.js";
 import { registerDriveUploadLargeTools } from "../src/tools/drive-upload-large.js";
+import { registerExcelTools } from "../src/tools/excel.js";
 import { registerMailAttachmentToDriveTools } from "../src/tools/mail-attachment-to-drive.js";
 import { registerMailForwardTools } from "../src/tools/mail-forward.js";
 import { registerMailReplyTools } from "../src/tools/mail-reply.js";
@@ -641,6 +642,7 @@ describe("TOOL_CAPABILITY completeness for risky module groups", () => {
     registerDriveMoveTools,
     registerDriveCopyTools,
     registerDriveShareTools,
+    registerExcelTools,
     registerBatchFilesTools,
     registerSharePointListWriteTools,
   ];
