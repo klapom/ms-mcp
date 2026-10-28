@@ -104,6 +104,13 @@ export const DownloadFileParams = BaseParams.extend({
       "Either a Graph item ID (opaque string) OR a drive-root-relative path starting with '/' " +
         "(e.g. '/Brand/Logos/logo.svg'). Do NOT prefix paths with '/Documents'.",
     ),
+  format: z
+    .enum(["pdf"])
+    .optional()
+    .describe(
+      "Set to 'pdf' to have Microsoft 365 convert the file to PDF before download " +
+        "(Word, Excel, PowerPoint, RTF, ODF, HTML, …). Omit to download the original bytes.",
+    ),
 });
 export type DownloadFileParamsType = z.infer<typeof DownloadFileParams>;
 
