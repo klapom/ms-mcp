@@ -132,6 +132,80 @@ describe("download_file", () => {
     });
   });
 
+  describe("format=pdf (server-side conversion)", () => {
+    function pdfClient(name: string, pdfBytes: Buffer) {
+      const meta = {
+        id: "id-doc",
+        name,
+        size: 2048,
+        webUrl: "https://example/doc",
+        file: {
+          mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        },
+      };
+      const get = vi.fn().mockResolvedValue(meta);
+      const select = vi.fn().mockReturnValue({ get });
+      async function* stream() {
+        yield pdfBytes;
+      }
+      const getStream = vi.fn().mockResolvedValue(stream());
+      const query = vi.fn();
+      const api = vi.fn().mockReturnValue({ select, get, getStream, query });
+      return { client: { api } as unknown as Client, api, query };
+    }
+
+    function handlerFor(client: Client): ToolHandler {
+      const { server, handlers } = createCapturingServer();
+      registerDriveDownloadTools(server, client, testConfig);
+      const handler = handlers.get("download_file");
+      if (!handler) throw new Error("download_file not registered");
+      return handler;
+    }
+
+    it("accepts format 'pdf' and rejects other formats", () => {
+      expect(DownloadFileParams.parse({ file_id: "x", format: "pdf" }).format).toBe("pdf");
+      expect(DownloadFileParams.safeParse({ file_id: "x", format: "docx" }).success).toBe(false);
+    });
+
+    it("requests ?format=pdf and returns the PDF as base64 with PDF metadata", async () => {
+      const pdf = Buffer.from("%PDF-1.7 test");
+      const { client, api, query } = pdfClient("RE-2610002.docx", pdf);
+      const result = await handlerFor(client)({ file_id: "id-doc", format: "pdf" });
+
+      expect(result.isError).toBeUndefined();
+      expect(api).toHaveBeenLastCalledWith("/me/drive/items/id-doc/content");
+      expect(query).toHaveBeenCalledWith({ format: "pdf" });
+      const text = (result.content[0] as { text: string }).text;
+      expect(text).toContain("Name: RE-2610002.pdf");
+      expect(text).toContain("MIME type: application/pdf");
+      expect(text).toContain(pdf.toString("base64"));
+    });
+
+    it("keeps the path addressing for path-style file_id", async () => {
+      const { client, api, query } = pdfClient("Muster.docx", Buffer.from("%PDF"));
+      await handlerFor(client)({ file_id: "/Rechnungen/Muster.docx", format: "pdf" });
+
+      expect(api).toHaveBeenLastCalledWith("/me/drive/root:/Rechnungen/Muster.docx:/content");
+      expect(query).toHaveBeenCalledWith({ format: "pdf" });
+    });
+
+    it("does not add a query without format", async () => {
+      const { client, query } = pdfClient("a.docx", Buffer.from("PK"));
+      const result = await handlerFor(client)({ file_id: "id-doc" });
+
+      expect(query).not.toHaveBeenCalled();
+      expect((result.content[0] as { text: string }).text).toContain("Name: a.docx");
+    });
+
+    it("rejects a converted PDF above 10 MB", async () => {
+      const { client } = pdfClient("big.pptx", Buffer.alloc(10 * 1024 * 1024 + 1));
+      const result = await handlerFor(client)({ file_id: "id-doc", format: "pdf" });
+
+      expect(result.isError).toBe(true);
+      expect((result.content[0] as { text: string }).text).toContain("Converted PDF too large");
+    });
+  });
+
   describe("Graph API integration", () => {
     let client: Client;
 

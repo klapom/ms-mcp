@@ -43,6 +43,34 @@ export function buildDriveItemUrl(drivePath: string, fileId: string, siteId?: st
   return `${drivePath}/items/${encodeGraphId(fileId)}`;
 }
 
+async function readStream(response: unknown): Promise<Buffer> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of response as AsyncIterable<Buffer | Uint8Array | string>) {
+    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
+}
+
+/** Rewrites meta to describe the converted PDF; returns an error result if it is too large. */
+function applyPdfConversion(meta: DriveItemMetadata, buffer: Buffer): ToolResult | null {
+  // The converted PDF can be larger than the source; apply the same hard limit to it.
+  if (buffer.length > SIZE_ABORT_THRESHOLD) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Converted PDF too large: ${formatFileSize(buffer.length)} (max 10 MB). Download aborted.\n\nYou can access the file via: ${meta.webUrl}`,
+        },
+      ],
+      isError: true,
+    };
+  }
+  meta.name = `${meta.name.replace(/\.[^./]+$/, "")}.pdf`;
+  meta.size = buffer.length;
+  meta.file = { mimeType: "application/pdf" };
+  return null;
+}
+
 async function handleDownloadFile(
   graphClient: Client,
   parsed: DownloadFileParamsType,
@@ -92,13 +120,18 @@ async function handleDownloadFile(
       : "";
 
   // Step 2: Download content. Path-addressed items use /root:/path:/content.
+  // format=pdf lets Graph convert server-side (GET …/content?format=pdf).
   const contentUrl = isPathRef ? `${itemUrl}:/content` : `${itemUrl}/content`;
-  const response = await graphClient.api(contentUrl).getStream();
-  const chunks: Buffer[] = [];
-  for await (const chunk of response as AsyncIterable<Buffer | Uint8Array | string>) {
-    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : Buffer.from(chunk));
+  const request = graphClient.api(contentUrl);
+  if (parsed.format) {
+    request.query({ format: parsed.format });
   }
-  const buffer = Buffer.concat(chunks);
+  const buffer = await readStream(await request.getStream());
+
+  if (parsed.format === "pdf") {
+    const rejected = applyPdfConversion(meta, buffer);
+    if (rejected) return rejected;
+  }
 
   const mimeType = meta.file?.mimeType ?? "application/octet-stream";
   const isText = isTextContent(mimeType, meta.name);
@@ -117,6 +150,7 @@ async function handleDownloadFile(
       tool: "download_file",
       sizeBytes: meta.size,
       mimeType,
+      format: parsed.format ?? "original",
       status: 200,
       duration_ms: endTime - startTime,
     },
@@ -135,7 +169,7 @@ export function registerDriveDownloadTools(
 ): void {
   server.tool(
     "download_file",
-    "Download a file from OneDrive by ID. Text files are returned as UTF-8, binary files as base64. Files >4MB show a warning, >10MB are rejected. Use get_file_metadata first to check size.",
+    "Download a file from OneDrive by ID. Text files are returned as UTF-8, binary files as base64. Files >4MB show a warning, >10MB are rejected. Use get_file_metadata first to check size. format='pdf' converts Office documents to PDF server-side and returns the PDF as base64.",
     DownloadFileParams.shape,
     async (params) => {
       try {
