@@ -42,7 +42,7 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
-    "@azure/msal-node": "^5.6.0",
+    "@azure/msal-node": "^7.1.2",
     "@azure/msal-node-extensions": "^5.5.2",
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "@modelcontextprotocol/sdk": "^1.32.1",
@@ -52,7 +52,7 @@
     "jose": "^6.2.12",
     "lru-cache": "^11.5.3",
     "pino": "^10.4.0",
-    "zod": "^4.6.5",
+    "zod": "^4.6.6",
     "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
@@ -92,9 +92,11 @@
       "router>path-to-regexp": "^8.4.0",
       "express-rate-limit": "^8.2.2",
       "ajv": "^8.18.0",
-      "fast-uri": "^3.1.4",
-      "ip-address": "^10.7.1",
-      "proxy-addr": "^2.0.8"
+      "fast-uri": "^3.1.9",
+      "ip-address": "^10.7.4",
+      "proxy-addr": "^2.0.8",
+      "body-parser": "^2.4.0",
+      "qs": "^6.16.1"
     }
   }
 }
