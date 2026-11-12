@@ -13,7 +13,7 @@ An MCP Server (Model Context Protocol) that exposes the Microsoft Graph API thro
 **119 tools across 11 modules** with response caching:
 
 #### Mail (22 tools)
-`list_emails` · `read_email` · `search_emails` · `list_mail_folders` · `send_email` · `reply_email` · `forward_email` · `move_email` · `list_attachments` · `download_attachment` · `delete_email` · `create_draft` · `update_draft` · `delete_draft` · `send_draft` · `add_attachment` · `flag_email` · `create_mail_folder` · `list_mail_rules` · `attach_item` · `attach_reference`
+`list_emails` · `read_email` · `search_emails` · `list_mail_folders` · `send_email` · `reply_email` · `forward_email` · `move_email` · `list_attachments` · `download_attachment` · `delete_email` · `create_draft` · `update_draft` · `delete_draft` · `send_draft` · `add_attachment` · `flag_email` · `mark_email_read` · `create_mail_folder` · `list_mail_rules` · `attach_item` · `attach_reference`
 
 #### Calendar (9 tools)
 `list_calendars` · `list_events` · `get_event` · `get_calendar_view` · `create_event` · `update_event` · `delete_event` · `respond_to_event` · `check_availability`

@@ -32,6 +32,7 @@ import { registerDriveUploadLargeTools } from "../src/tools/drive-upload-large.j
 import { registerExcelTools } from "../src/tools/excel.js";
 import { registerMailAttachmentToDriveTools } from "../src/tools/mail-attachment-to-drive.js";
 import { registerMailForwardTools } from "../src/tools/mail-forward.js";
+import { registerMailReadStateTools } from "../src/tools/mail-read-state.js";
 import { registerMailReplyTools } from "../src/tools/mail-reply.js";
 import { registerMailSendTools } from "../src/tools/mail-send.js";
 import { registerPresenceTools } from "../src/tools/presence.js";
@@ -80,8 +81,9 @@ function gatedHandler(
 function createSpyClient(getReturn?: unknown) {
   const post = vi.fn().mockResolvedValue({});
   const put = vi.fn().mockResolvedValue({});
+  const patch = vi.fn().mockResolvedValue({});
   const get = vi.fn().mockResolvedValue(getReturn ?? { value: [] });
-  const req: Record<string, unknown> = { get, post, put };
+  const req: Record<string, unknown> = { get, post, put, patch };
   for (const m of [
     "header",
     "query",
@@ -96,7 +98,7 @@ function createSpyClient(getReturn?: unknown) {
     req[m] = vi.fn().mockReturnValue(req);
   }
   const api = vi.fn().mockReturnValue(req);
-  return { client: { api } as unknown as Client, api, post, put, get };
+  return { client: { api } as unknown as Client, api, post, put, patch, get };
 }
 
 beforeEach(() => {
@@ -620,6 +622,42 @@ describe("SharePoint reads honor the site allow-list", () => {
 });
 
 // ---------------------------------------------------------------------------
+// mark_email_read (H17) — mailboxWrite + mailbox pinning
+// ---------------------------------------------------------------------------
+
+describe("mark_email_read gating", () => {
+  it("ferdinand on Ulla's mailbox (in scope) → PATCH reaches Graph", async () => {
+    const spy = createSpyClient();
+    const handler = gatedHandler(registerMailReadStateTools, "mark_email_read", spy.client);
+    const result = await runWithIdentity(id("ferdinand"), () =>
+      handler({ message_id: "m1", user_id: ULLA }),
+    );
+    expect(result.isError).toBeUndefined();
+    expect(spy.api).toHaveBeenCalledWith(`/users/${ULLA}/messages/m1`);
+    expect(spy.patch).toHaveBeenCalledWith({ isRead: true });
+  });
+
+  it("ferdinand on an out-of-scope mailbox → error, zero Graph calls", async () => {
+    const spy = createSpyClient();
+    const handler = gatedHandler(registerMailReadStateTools, "mark_email_read", spy.client);
+    const result = await runWithIdentity(id("ferdinand"), () =>
+      handler({ message_id: "m1", user_id: SUKI }),
+    );
+    expect(result.isError).toBe(true);
+    expect(spy.api).not.toHaveBeenCalled();
+  });
+
+  it("a no-mailbox persona → 403 at the gate, zero Graph calls", async () => {
+    const spy = createSpyClient();
+    const handler = gatedHandler(registerMailReadStateTools, "mark_email_read", spy.client);
+    const result = await runWithIdentity(id("cora"), () => handler({ message_id: "m1" }));
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain("mailbox");
+    expect(spy.api).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // capability-table completeness — a risky tool must never ship unguarded
 // ---------------------------------------------------------------------------
 
@@ -635,6 +673,7 @@ describe("TOOL_CAPABILITY completeness for risky module groups", () => {
     registerMailReplyTools,
     registerMailForwardTools,
     registerBatchMailTools,
+    registerMailReadStateTools,
     registerDriveUploadTools,
     registerDriveUploadLargeTools,
     registerMailAttachmentToDriveTools,

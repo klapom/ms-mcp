@@ -59,6 +59,7 @@ import { registerMailFolderTools } from "./tools/mail-folders.js";
 import { registerMailForwardTools } from "./tools/mail-forward.js";
 import { registerMailMoveTools } from "./tools/mail-move.js";
 import { registerMailReadTools } from "./tools/mail-read.js";
+import { registerMailReadStateTools } from "./tools/mail-read-state.js";
 import { registerMailReplyTools } from "./tools/mail-reply.js";
 import { registerMailRulesListTools } from "./tools/mail-rules-list.js";
 import { registerMailSearchTools } from "./tools/mail-search.js";
@@ -149,6 +150,7 @@ const MODULE_GROUPS: Record<string, ToolRegistrationFn[]> = {
     registerMailDraftUpdateTools,
     registerMailFolderCreateTools,
     registerMailFlagTools,
+    registerMailReadStateTools,
     registerMailRulesListTools,
     registerAdvancedSearchEmailsTools,
     registerBatchMailTools,

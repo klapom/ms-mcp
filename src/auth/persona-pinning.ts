@@ -175,6 +175,8 @@ const TOOL_CAPABILITY: Record<string, RequiredCapability> = {
   batch_move_emails: "mailboxWrite",
   batch_delete_emails: "mailboxWrite",
   batch_flag_emails: "mailboxWrite",
+  // read state (H17) — mutates a mailbox the persona must own.
+  mark_email_read: "mailboxWrite",
   // drive reads.
   list_files: "driveRead",
   download_file: "driveRead",

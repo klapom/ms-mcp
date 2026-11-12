@@ -152,3 +152,15 @@ export const ListMailRulesParams = BaseParams.extend({
   top: z.number().int().positive().max(999).optional().describe("Maximum number of results"),
   skip: z.number().int().nonnegative().optional().describe("Number of results to skip"),
 });
+
+/**
+ * Schema for marking an email as read or unread (H17). Reversible, so no
+ * confirm/preview step — a wrong call is undone with is_read=false.
+ */
+export const MarkEmailReadParams = BaseParams.extend({
+  message_id: z.string().min(1).describe("Message ID to mark"),
+  is_read: z
+    .boolean()
+    .default(true)
+    .describe("true = mark as read (default), false = mark as unread"),
+});
